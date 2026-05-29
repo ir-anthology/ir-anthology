@@ -1,0 +1,121 @@
+PREFIX dblp: <https://dblp.org/rdf/schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+CONSTRUCT {
+  ?pub dblp:title ?title ;
+       dblp:yearOfPublication ?year ;
+       dblp:yearOfEvent ?yearEvent ;
+       dblp:authoredBy ?author ;
+       dblp:editedBy ?editor ;
+       dblp:publishedInStream ?stream ;
+       dblp:publishedBy ?publisher ;
+       dblp:publishedInJournalVolume ?volume ;
+       dblp:publishedInSeriesVolume ?seriesVolume ;
+       dblp:publishedInJournalVolumeIssue ?issue ;
+       dblp:pagination ?page ;
+       dblp:monthOfPublication ?month ;
+       dblp:bibtexType ?bibtexType ;
+       dblp:publishedInSeries ?series ;
+       dblp:doi ?doi ;
+       dblp:isbn ?isbn ;
+       dblp:primaryDocumentPage ?url;
+       dblp:listedOnTocPage ?dblpUrl;
+       dblp:publishedAsPartOf ?booktitle ;
+       rdf:type ?pubclass .
+  ?author dblp:primaryCreatorName ?name ;
+          rdf:type dblp:Creator .
+  ?editor dblp:primaryCreatorName ?editorName ;
+          rdf:type dblp:Creator .
+  ?stream dblp:streamTitle ?streamTitle ;
+          rdf:type ?streamclass .
+}
+WHERE {
+
+  VALUES ?stream {
+    <https://dblp.org/streams/journals/ftir>
+    <https://dblp.org/streams/journals/ijirr>
+    <https://dblp.org/streams/journals/ijmir>
+    <https://dblp.org/streams/journals/ipm>
+    <https://dblp.org/streams/journals/ir>
+    <https://dblp.org/streams/journals/jasis>
+    <https://dblp.org/streams/journals/sigir>
+    <https://dblp.org/streams/journals/tismir>
+    <https://dblp.org/streams/journals/tist>
+    <https://dblp.org/streams/journals/tois>
+    <https://dblp.org/streams/journals/tweb>
+    <https://dblp.org/streams/journals/wwwj>
+    <https://dblp.org/streams/conf/adcs>
+    <https://dblp.org/streams/conf/airs>
+    <https://dblp.org/streams/conf/ccir>
+    <https://dblp.org/streams/conf/ceri>
+    <https://dblp.org/streams/conf/chiir>
+    <https://dblp.org/streams/conf/cikm>
+    <https://dblp.org/streams/conf/civr>
+    <https://dblp.org/streams/conf/clef>
+    <https://dblp.org/streams/conf/coria>
+    <https://dblp.org/streams/conf/desires>
+    <https://dblp.org/streams/conf/dir>
+    <https://dblp.org/streams/conf/ecir>
+    <https://dblp.org/streams/conf/fdia>
+    <https://dblp.org/streams/conf/fire>
+    <https://dblp.org/streams/conf/ictir>
+    <https://dblp.org/streams/conf/irfc>
+    <https://dblp.org/streams/conf/ismir>
+    <https://dblp.org/streams/conf/mir>
+    <https://dblp.org/streams/conf/ntcir>
+    <https://dblp.org/streams/conf/sigir>
+    <https://dblp.org/streams/conf/spire>
+    <https://dblp.org/streams/conf/trec>
+    <https://dblp.org/streams/conf/wsdm>
+    <https://dblp.org/streams/conf/www>
+  }
+
+
+  ?stream dblp:streamTitle ?streamTitle .
+  OPTIONAL {
+    ?stream rdf:type ?streamclass .
+    FILTER(?streamclass != dblp:Stream)
+  }
+
+  {
+    SELECT DISTINCT ?pub ?stream ?title ?year ?bibtexType
+                    ?publisher ?volume ?issue ?page ?month
+                    ?yearEvent ?seriesVolume ?series ?doi ?isbn 
+                    ?url ?dblpUrl ?booktitle
+    WHERE {
+      ?pub dblp:publishedInStream ?stream ;
+           dblp:title ?title ;
+           dblp:yearOfPublication ?year ;
+           dblp:bibtexType ?bibtexType .
+      OPTIONAL { ?pub dblp:publishedBy ?publisher }
+      OPTIONAL { ?pub dblp:publishedInJournalVolume ?volume }
+      OPTIONAL { ?pub dblp:publishedInJournalVolumeIssue ?issue }
+      OPTIONAL { ?pub dblp:pagination ?page }
+      OPTIONAL { ?pub dblp:monthOfPublication ?month }
+      OPTIONAL { ?pub dblp:yearOfEvent ?yearEvent }
+      OPTIONAL { ?pub dblp:publishedInSeriesVolume ?seriesVolume }
+      OPTIONAL { ?pub dblp:publishedInSeries ?series }
+      OPTIONAL { ?pub dblp:doi ?doi }
+      OPTIONAL { ?pub dblp:isbn ?isbn }
+      OPTIONAL { ?pub dblp:primaryDocumentPage ?url }
+      OPTIONAL { ?pub dblp:listedOnTocPage ?dblpUrl }
+      OPTIONAL { ?pub dblp:publishedAsPartOf ?booktitle }
+    }
+  }
+
+  OPTIONAL {
+    ?pub rdf:type ?pubclass .
+    FILTER(?pubclass != dblp:Publication)
+  }
+
+  OPTIONAL {
+    ?pub dblp:authoredBy ?author .
+    OPTIONAL { ?author dblp:primaryCreatorName ?name }
+  }
+  OPTIONAL {
+    ?pub dblp:editedBy ?editor .
+    OPTIONAL { ?editor dblp:primaryCreatorName ?editorName }
+  }
+}
+LIMIT __LIMIT__
+OFFSET __OFFSET__

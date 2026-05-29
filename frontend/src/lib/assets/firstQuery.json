@@ -1,0 +1,2520 @@
+{
+    "head": {
+        "vars": [
+            "Entity",
+            "URI",
+            "Publication",
+            "Venue",
+            "Author",
+            "Year",
+            "2020s",
+            "2010s",
+            "2000s",
+            "Pre2000s"
+        ]
+    },
+    "results": {
+        "bindings": [
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Maarten de Rijke"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/r/MdRijke"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "507"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "22"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "25"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "9"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "W. Bruce Croft"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/c/WBruceCroft"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "294"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "16"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "48"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "5"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "23"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Iadh Ounis"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/21/141"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "286"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "21"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "27"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "9"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "2"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Yiqun Liu"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/49/1579-1"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "271"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "16"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "25"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "8"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Xueqi Cheng"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/44/912"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "255"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "15"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "26"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "9"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Craig Macdonald"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/02/2224"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "248"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "21"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "22"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "5"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Min Zhang"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/83/5342-6"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "245"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "16"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "25"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "9"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Shaoping Ma"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/40/1949"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "227"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "16"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "24"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "8"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Jimmy Lin"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/00/7739"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "217"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "17"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "27"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Philip S. Yu"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/y/PhilipSYu"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "213"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "30"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "8"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "5"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "ChengXiang Zhai"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/z/ChengXiangZhai"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "210"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "15"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "30"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "4"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Gareth J. F. Jones"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/81/4050"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "203"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "21"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "31"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "4"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Tetsuya Sakai"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/18/6321"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "201"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "16"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "29"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "2"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Benno Stein"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/69/4806-1"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "201"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "20"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "21"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "4"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Guido Zuccon"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/22/6562"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "193"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "17"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "17"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Ji-Rong Wen"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/w/JRWen"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "192"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "14"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "25"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "9"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Fabio Crestani"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/c/FabioCrestani"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "191"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "18"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "33"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Leif Azzopardi"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/29/4018"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "186"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "15"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "24"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Tat-Seng Chua"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/24/6606"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "185"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "13"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "25"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "8"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Jaap Kamps"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/70/779"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "185"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "16"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "25"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "8"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Mark Sanderson"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/s/MarkSanderson"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "184"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "19"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "32"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Martin Potthast"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/87/6573"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "183"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "18"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "20"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "3"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "James Allan"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/10/4537"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "182"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "13"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "34"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "8"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Nicola Ferro"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/f/NicolaFerro"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "178"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "14"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "24"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Joemon M. Jose"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/84/5102"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "178"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "23"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "28"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Charles L. A. Clarke"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/96/3666"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "172"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "18"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "31"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "5"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Douglas W. Oard"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/o/DouglasWOard"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "171"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "18"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "30"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "4"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Jamie Callan"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/c/JamesPCallan"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "171"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "16"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "33"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Paolo Rosso"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/05/3463"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "165"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "14"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "21"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "4"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Jian-Yun Nie"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/n/JianYunNie"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "160"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "18"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "37"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Nick Craswell"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/c/NickCraswell"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "158"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "13"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "28"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "9"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "3"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Ryen W. White"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/w/RyenWWhite"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "157"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "14"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "24"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "5"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "9"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Alistair Moffat"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/m/AlistairMoffat"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "156"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "18"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "33"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Jiafeng Guo"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/02/146"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "152"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "15"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "20"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "3"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Gerhard Weikum"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/w/GerhardWeikum"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "150"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "22"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Hsin-Hsi Chen"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/84/3130"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "146"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "13"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "27"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Krisztian Balog"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/85/4125"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "146"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "20"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "21"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "5"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Enhong Chen"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/07/258"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "145"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "9"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "20"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "3"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Mounia Lalmas-Roelleke"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/l/MLalmas"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "144"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "20"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "31"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "4"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Falk Scholer"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/98/1631"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "142"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "18"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "24"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "8"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Arjen P. de Vries"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/v/ArjenPdeVries"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "141"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "16"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "29"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "2"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Jiawei Han"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/h/JiaweiHan"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "140"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "27"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "8"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "3"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Adam Jatowt"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/j/AdamJatowt"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "136"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "19"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "21"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "4"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Henning Müller"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/93/4446"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "132"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "27"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Hongzhi Yin"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/04/10606"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "131"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "13"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "7"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Xing Xie"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/08/6809-1"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "129"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "11"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "21"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "9"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Noriko Kando"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/40/4968"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "128"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "16"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "27"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "9"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "2"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Ricardo Baeza-Yates"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/b/RABaezaYates"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "128"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "15"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "31"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "5"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "10"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Yong Yu"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/43/5685-1"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "127"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "12"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "21"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "9"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            },
+            {
+                "Entity": {
+                    "type": "literal",
+                    "value": "Zhicheng Dou"
+                },
+                "URI": {
+                    "type": "uri",
+                    "value": "https://dblp.org/pid/18/5740"
+                },
+                "Publication": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "126"
+                },
+                "Venue": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "12"
+                },
+                "Author": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "1"
+                },
+                "Year": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "18"
+                },
+                "2020s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "6"
+                },
+                "2010s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "9"
+                },
+                "2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "3"
+                },
+                "Pre2000s": {
+                    "datatype": "http://www.w3.org/2001/XMLSchema#int",
+                    "type": "literal",
+                    "value": "0"
+                }
+            }
+        ]
+    }
+}
