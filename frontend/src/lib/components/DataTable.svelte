@@ -1,5 +1,4 @@
 <script lang="ts">
-    //import * as testjson from '$lib/assets/firstQuery.json';
     import {page} from '$app/state'
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import { goto } from '$app/navigation';
@@ -94,23 +93,17 @@
         <thead class="bg-gray-50">
             <tr>
                 {#each columns as col (col)}
-                        <th class="px-4 py-3 {COLUMN_WIDTHS[col] ?? 'w-24'}">
-                            <button 
-                            class="text-left text-xs font-medium tracking-wider cursor-pointer {current_entity ===
-								col
-									? 'font-bold text-blue-700'
-									: 'text-gray-500'}"
-                                    onclick={() => handleEntityChange(col)}>
-                                {col}
-                            </button>
-                            <button
-								class="ml-1 text-xs cursor-pointer {current_sort_by === col
-									? 'text-blue-600'
-									: 'text-gray-400 hover:text-gray-600'}"
-								onclick={() => handleSortClick(col)}
-							>
-								{current_sort_by === col ? (current_order === 'asc' ? '▲' : '▼') : '↕'}
-							</button>
+                        <th class="{COLUMN_WIDTHS[col] ?? 'w-24'} whitespace-nowrap">
+                            <div class="flex items-center justify-center gap-1">
+                                <button
+                                    class="text-xs font-medium tracking-wider cursor-pointer {current_entity === col ? 'font-bold text-blue-700' : 'text-gray-500'}"
+                                    onclick={() => handleEntityChange(col)}
+                                >{col}</button>
+                                <button
+                                    class="text-2xl cursor-pointer shrink-0 {current_sort_by === col ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}"
+                                    onclick={() => handleSortClick(col)}
+                                >{current_sort_by === col ? (current_order === 'asc' ? '▲' : '▼') : '↕'}</button>
+                            </div>
                         </th>
                 {/each}
             </tr>

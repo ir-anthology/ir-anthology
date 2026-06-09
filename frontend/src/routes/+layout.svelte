@@ -4,7 +4,11 @@
 	let { children } = $props();
 </script>
 
-<svelte:head></svelte:head>
+<svelte:head>
+    <!--<link rel="stylesheet" href="https://assets.webis.de/css/style.css">-->
+</svelte:head>
+
+<div class="min-h-screen flex flex-col">
 
 <nav
 	class="w-full shadow-sm mb-3 md:mb-4 xl:mb-5"
@@ -19,10 +23,12 @@
 		</a>
 		<a href="/anthology/">Old View</a>
 	</div>
-	
+
 </nav>
 
-{@render children()}
+<main class="flex-1 px-6 md:px-10">
+	{@render children()}
+</main>
 
 <footer
 	class="mt-3 md:mt-6 xl:mt-12 py-4"
@@ -68,3 +74,5 @@
 		</p>
 	</div>
 </footer>
+
+</div>

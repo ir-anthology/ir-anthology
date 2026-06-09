@@ -1,4 +1,4 @@
-import { fetchDataForVenueYear, fetchDataForInproceedingsFromProceedings, fetchDataForJournalYear } from '$lib/sparql/fetch.server.js'
+import { fetchDataForConferenceYear, fetchDataForInproceedingsFromProceedings, fetchDataForJournalYear } from '$lib/sparql/fetch.server.js'
 import { parseSparqlResult, getURIFromID, getIDFromURI } from '$lib/helperFunctions.js';
 export async function load({params}) {
     const name = params.name
@@ -12,12 +12,12 @@ export async function load({params}) {
 }
 
 async function loadConference(uri: string, year: string){
-    const data = await fetchDataForVenueYear(uri, year);
+    const data = await fetchDataForConferenceYear(uri, year);
     // const binding = data.bindings[0];
     let titles = ''
     const proceedings = parseSparqlResult(data);
     for(const proceeding of proceedings){
-        titles = titles.concat('\n<'+(proceeding.pub)+'>')
+        titles += '\n<'+(proceeding.pub)+'>'
     }
     const inproceedingsData = await fetchDataForInproceedingsFromProceedings(titles);
     const inproceedings = parseSparqlResult(inproceedingsData);
@@ -36,7 +36,7 @@ async function loadConference(uri: string, year: string){
 
 async function loadJournal(uri:string, year:string){
     const data = parseSparqlResult(await fetchDataForJournalYear(uri, year))
-    console.log(data)
+    const journalTitle = data[0]?.journalTitle ?? ''
     const groupedData = new Map<string, Map<string, Record<string, string | null>[]>>();
     for(const entry of data){
         const volume = entry.volume;
@@ -50,5 +50,5 @@ async function loadJournal(uri:string, year:string){
         }
         groupedData.get(volume)?.get(issue)?.push(entry)
     }
-    return {"articles": groupedData}
+    return { articles: groupedData, journalTitle }
 }
