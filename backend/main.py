@@ -6,7 +6,7 @@ import sparqlTemplates
 import httpx
 from contextlib import asynccontextmanager
 
-SPARQL_ENDPOINT = "http://database.ir-anthology.srv.webis.de/"
+SPARQL_ENDPOINT = "https://database-ir-anthology.srv.webis.de/"
 
 VALID_ENTITIES = ['Author', 'Venue', 'Publication', 'Year', '2020s', '2010s', '2000s', 'Pre2000s']
 
