@@ -2,7 +2,12 @@ FROM adfreiburg/qlever
 WORKDIR /app
 
 COPY Qleverfile .
-COPY query.rq .
+COPY add_authors_from_stream.rq .
+COPY add_editors_from_stream.rq .
+COPY add_publications_from_stream.rq .
+COPY add_signatures_from_stream.rq .
+COPY add_streams_from_stream.rq .
+COPY streams.txt .
 COPY get_data.sh .
 
 EXPOSE 7016

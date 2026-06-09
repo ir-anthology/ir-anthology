@@ -1,0 +1,21 @@
+PREFIX dblp: <https://dblp.org/rdf/schema#>
+CONSTRUCT {
+  ?sig ?p ?o .
+}
+WHERE {
+  {
+    SELECT DISTINCT ?sig WHERE {
+      { BIND(<__STREAM__> AS ?stream) }
+      UNION
+      { <__STREAM__> dblp:subStream ?stream . }
+      UNION
+      { ?stream dblp:superStream <__STREAM__>  . }
+      ?pub dblp:publishedInStream ?stream .
+      ?pub dblp:hasSignature ?sig .
+    }
+  }
+  ?sig ?p ?o .
+}
+ORDER BY ?sig ?p ?o
+LIMIT __LIMIT__
+OFFSET __OFFSET__

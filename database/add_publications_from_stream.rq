@@ -1,0 +1,20 @@
+PREFIX dblp: <https://dblp.org/rdf/schema#>
+CONSTRUCT {
+  ?pub ?p ?o .
+}
+WHERE {
+  {
+    SELECT DISTINCT ?pub WHERE {
+      { BIND(<__STREAM__> AS ?stream) }
+      UNION
+      { <__STREAM__> dblp:subStream ?stream . }
+      UNION
+      { ?stream dblp:superStream <__STREAM__>  . }
+      ?pub dblp:publishedInStream ?stream .
+    }
+  }
+  ?pub ?p ?o .
+}
+ORDER BY ?pub ?p ?o
+LIMIT __LIMIT__
+OFFSET __OFFSET__

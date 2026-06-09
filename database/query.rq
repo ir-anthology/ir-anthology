@@ -21,6 +21,7 @@ CONSTRUCT {
        dblp:primaryDocumentPage ?url;
        dblp:listedOnTocPage ?dblpUrl;
        dblp:publishedAsPartOf ?booktitle ;
+       dblp:hasSignature ?sig ;
        rdf:type ?pubclass .
   ?author dblp:primaryCreatorName ?name ;
           rdf:type dblp:Creator .
@@ -28,10 +29,14 @@ CONSTRUCT {
           rdf:type dblp:Creator .
   ?stream dblp:streamTitle ?streamTitle ;
           rdf:type ?streamclass .
+  ?sig dblp:signatureOrdinal ?ord ;
+         dblp:signatureCreator ?authorUri ;
+         rdf:type ?sigclass ;
+         dblp:signatureDblpName ?authorName .
 }
 WHERE {
 
-  VALUES ?stream {
+  VALUES ?rootStream {
     <https://dblp.org/streams/journals/ftir>
     <https://dblp.org/streams/journals/ijirr>
     <https://dblp.org/streams/journals/ijmir>
@@ -68,6 +73,14 @@ WHERE {
     <https://dblp.org/streams/conf/trec>
     <https://dblp.org/streams/conf/wsdm>
     <https://dblp.org/streams/conf/www>
+  }
+
+  {
+    BIND(?rootStream AS ?stream)
+  }
+  UNION
+  {
+    ?rootStream dblp:subStream ?stream .
   }
 
 
@@ -115,6 +128,15 @@ WHERE {
   OPTIONAL {
     ?pub dblp:editedBy ?editor .
     OPTIONAL { ?editor dblp:primaryCreatorName ?editorName }
+  }
+
+  OPTIONAL {
+    ?pub dblp:hasSignature ?sig .
+    ?sig dblp:signatureOrdinal ?ord ;
+         dblp:signatureCreator ?authorUri ;
+         rdf:type ?sigclass ;
+         dblp:signatureDblpName ?authorName .
+    FILTER(?sigclass != dblp:Signature)
   }
 }
 LIMIT __LIMIT__

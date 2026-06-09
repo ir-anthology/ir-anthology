@@ -1,0 +1,21 @@
+PREFIX dblp: <https://dblp.org/rdf/schema#>
+CONSTRUCT {
+  ?editor ?p ?o .
+}
+WHERE {
+  {
+    SELECT DISTINCT ?editor WHERE {
+      { BIND(<__STREAM__> AS ?stream) }
+      UNION
+      { <__STREAM__> dblp:subStream ?stream . }
+      UNION
+      { ?stream dblp:superStream <__STREAM__>  . }
+      ?pub dblp:publishedInStream ?stream .
+      ?pub dblp:editedBy ?editor .
+    }
+  }
+  ?editor ?p ?o .
+}
+ORDER BY ?editor ?p ?o
+LIMIT __LIMIT__
+OFFSET __OFFSET__
