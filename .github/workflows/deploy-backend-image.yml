@@ -1,4 +1,4 @@
-name: Create and publish a Docker image
+name: Create and publish backend Docker image
 
 on:
   workflow_dispatch:
@@ -49,13 +49,13 @@ jobs:
           context: ${{ github.workspace }}/backend
           file: backend/Dockerfile
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest
           #tags: nightly
           #labels: ${{ steps.meta.outputs.labels }}
 
       - name: Generate artifact attestation
         uses: actions/attest@v4
         with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}-backend
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
