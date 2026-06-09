@@ -1,25 +1,19 @@
-import { fetchDataForConferenceYear, fetchDataForInproceedingsFromProceedings, fetchDataForJournalYear } from '$lib/sparql/fetch.server.js'
-import { parseSparqlResult, getURIFromID, getIDFromURI } from '$lib/helperFunctions.js';
+import { fetchBackend } from '$lib/sparql/fetch.server.js'
+import { parseSparqlResult, getIDFromURI } from '$lib/helperFunctions.js';
 export async function load({params}) {
     const name = params.name
-    const uri = getURIFromID(name) 
     const year = params.year
     if(name.includes("conf")){
-        return loadConference(uri, year)
+        return loadConference(name, year)
     }else if(name.includes("journals")){
-        return loadJournal(uri, year)
+        return loadJournal(name, year)
     }
 }
 
-async function loadConference(uri: string, year: string){
-    const data = await fetchDataForConferenceYear(uri, year);
-    // const binding = data.bindings[0];
-    let titles = ''
+async function loadConference(name: string, year: string){
+    const data = await fetchBackend("conferences/"+name+"/"+year+"/proceedings");
     const proceedings = parseSparqlResult(data);
-    for(const proceeding of proceedings){
-        titles += '\n<'+(proceeding.pub)+'>'
-    }
-    const inproceedingsData = await fetchDataForInproceedingsFromProceedings(titles);
+    const inproceedingsData = await fetchBackend("conferences/"+name+"/"+year+"/inproceedings");
     const inproceedings = parseSparqlResult(inproceedingsData);
     const return_inproceedings:Record<string, Record<string, string | null>[]> = {};
     for(const inproceeding of inproceedings){
@@ -34,8 +28,8 @@ async function loadConference(uri: string, year: string){
     return {"proceedings": proceedings, "inproceedings": return_inproceedings};
 }
 
-async function loadJournal(uri:string, year:string){
-    const data = parseSparqlResult(await fetchDataForJournalYear(uri, year))
+async function loadJournal(name:string, year:string){
+    const data = parseSparqlResult(await fetchBackend("journals/"+name+"/"+year))
     const journalTitle = data[0]?.journalTitle ?? ''
     const groupedData = new Map<string, Map<string, Record<string, string | null>[]>>();
     for(const entry of data){

@@ -1,9 +1,8 @@
-import { fetchDataForPerson } from '$lib/sparql/fetch.server.js'
-import { getURIFromID, parseSparqlResult, decodeOrdered } from '$lib/helperFunctions.js';
+import { fetchBackend } from '$lib/sparql/fetch.server.js'
+import { parseSparqlResult, decodeOrdered } from '$lib/helperFunctions.js';
 
 export async function load({ params }) {
-    const uri = getURIFromID(params.id)
-    const data = parseSparqlResult(await fetchDataForPerson(uri));
+    const data = parseSparqlResult(await fetchBackend("people/"+params.id));
     const name = data[0]?.name ?? ''
     const groupedByYear = new Map<string, Record<string, string | null>[]>()
     for (const pub of data) {
