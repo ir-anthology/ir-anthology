@@ -1,6 +1,10 @@
 # Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,macos,windows,linux,svelte
 # Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,macos,windows,linux,svelte
 ### Custom ###
+.vscode/
+.devcontainer/
+.pnpm-store/
+build/
 
 ### Linux ###
 *~
@@ -103,8 +107,3 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,macos,windows,linux,svelte
-
-
-.vscode/
-.devcontainer/
-.pnpm-store/

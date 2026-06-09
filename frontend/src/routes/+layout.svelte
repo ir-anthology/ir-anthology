@@ -1,5 +1,6 @@
 <script lang="ts">
 	import './layout.css';
+	import { base } from '$app/paths';
 
 	let { children } = $props();
 </script>
@@ -17,11 +18,11 @@
 	<div class="w-full px-4 h-[70px] flex items-center">
 		<a
 			class="flex items-center h-10 text-xl font-normal text-black/90 no-underline"
-			href="/"
+			href="{base}/"
 		>
 			<span><span style="color:#951515"><b>IR</b></span> Anthology</span>
 		</a>
-		<a href="/anthology/">Old View</a>
+		<a href="{base}/anthology/">Old View</a>
 	</div>
 
 </nav>
