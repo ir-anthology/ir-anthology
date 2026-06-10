@@ -44,7 +44,8 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://.*\.webis\.de", "http://localhost.*"],
+    allow_origins=[],
+    allow_origin_regex=r"https://.*\.webis\.de|http://localhost(:\d+)?",
     allow_methods=["GET"],
     allow_headers=["*"],
 )
