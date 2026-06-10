@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Query, Request, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from typing import Annotated
 from pydantic import BaseModel
 from enum import Enum
@@ -40,6 +41,13 @@ def get_uri_from_id(ir_id: str):
     return "https://dblp.org/" + ir_id.replace("+", "/")
 
 app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://.*\.webis\.de", "http://localhost.*"],
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
 
 @app.get("/api/table")
 async def read_table_data(filter_query: Annotated[FilterParams, Query()], client: httpx.AsyncClient = Depends(get_client), *, request: Request):
