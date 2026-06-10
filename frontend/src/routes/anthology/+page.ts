@@ -1,4 +1,4 @@
-import { fetchBackend } from '$lib/sparql/fetch.server';
+import { fetchBackend } from '$lib/sparql/fetch.js'
 import { parseSparqlResult, getIDFromURI } from '$lib/helperFunctions';
 
 export async function load() {

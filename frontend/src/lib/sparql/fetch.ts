@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 
 //export const BACKEND_ENDPOINT = 'http://backend.ir-anthology.srv.webis.de/';
-const BACKEND_ENDPOINT = 'http://backend.ir-anthology.srv.webis.de/api/';
+const BACKEND_ENDPOINT = 'https://backend-ir-anthology.srv.webis.de/api/';
 
 export async function fetchBackend(resource: string) {
     const response = await fetch(BACKEND_ENDPOINT+resource, {
@@ -15,3 +15,7 @@ export async function fetchBackend(resource: string) {
     }
     return response.json();
 }
+export type SparqlResult = {
+    vars: string[];
+    bindings: Record<string, { type: string; value: string }>[];
+};

@@ -5,6 +5,9 @@
     import { page } from '$app/state';
 	import FilterField from '$lib/components/FilterField.svelte';
 
+    let {data} = $props();
+    console.log("data", data)
+
     const filters:Record<string, string[]> = $derived.by(() => {
         const result:Record<string, string[]> = {};
         const searchParams:URLSearchParams = page.url.searchParams;
@@ -18,10 +21,6 @@
         }
         return result;
     })
-
-    
-
-    let {data} = $props();
 </script>
 
 <div class="max-w-5xl mx-auto">

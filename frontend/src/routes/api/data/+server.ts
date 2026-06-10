@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
-import { fetchSparqlTableData } from '$lib/sparql/fetch.server';
+import { fetchBackend } from '$lib/sparql/fetch.js';
 
 export async function GET({ url }) {
-    const data = await fetchSparqlTableData(url.searchParams);
+    const data = await fetchBackend(`table?${url.searchParams}`);
     return json(data);
 }

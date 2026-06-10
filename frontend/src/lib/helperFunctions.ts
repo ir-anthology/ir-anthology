@@ -1,4 +1,4 @@
-import type { SparqlResult } from './sparql/fetch.server.js';
+import type { SparqlResult } from './sparql/fetch.js';
 
 export function parseSparqlResult(result: SparqlResult): Record<string, string | null>[] {
     return result.bindings.map(binding => {
