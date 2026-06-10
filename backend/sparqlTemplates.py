@@ -30,10 +30,14 @@ WHERE {
   
   BIND(xsd:integer(STR(?year_label)) AS ?y)
   
-  BIND(IF(?y >= 2020, ?year_label, ?unbound) AS ?2020s_label)
-  BIND(IF(?y >= 2010 && ?y < 2020, ?year_label, ?unbound) AS ?2010s_label)
-  BIND(IF(?y >= 2000 && ?y < 2010, ?year_label, ?unbound) AS ?2000s_label)
-  BIND(IF(?y < 2000, ?year_label, ?unbound) AS ?Pre2000s_label)
+  BIND(IF(?y >= 2020, STR(?year_label), ?unbound) AS ?2020s_label)
+  BIND(?2020s_label AS ?2020s_URI)
+  BIND(IF(?y >= 2010 && ?y < 2020, STR(?year_label), ?unbound) AS ?2010s_label)
+  BIND(?2010s_label AS ?2010s_URI)
+  BIND(IF(?y >= 2000 && ?y < 2010, STR(?year_label), ?unbound) AS ?2000s_label)
+  BIND(?2000s_label AS ?2000s_URI)
+  BIND(IF(?y < 2000, STR(?year_label), ?unbound) AS ?Pre2000s_label)
+  BIND(?Pre2000s_label AS ?Pre2000s_URI)
   
   $FILTERS
 

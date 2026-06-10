@@ -69,37 +69,44 @@ async def read_table_data(filter_query: Annotated[FilterParams, Query()], client
 
 @app.get("/api/anthology")
 async def read_anthology(client: httpx.AsyncClient = Depends(get_client)):
-    data = await sparql_post(sparqlTemplates.ANTHOLOGY_QUERY_TEMPLATE, client)
+    query = sparqlTemplates.ANTHOLOGY_QUERY_TEMPLATE
+    data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
 @app.get("/api/conferences/{id}")
 async def read_conference(id: str, client: httpx.AsyncClient = Depends(get_client)):
-    data = await sparql_post(sparqlTemplates.VENUE_PROCEEDINGS_TEMPLATE.replace('$VENUE_URI', get_uri_from_id(id)), client)
+    query = sparqlTemplates.VENUE_PROCEEDINGS_TEMPLATE.replace('$VENUE_URI', get_uri_from_id(id))
+    data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
 @app.get("/api/conferences/{id}/{year}/inproceedings")
 async def read_conference(id: str, year: int, client: httpx.AsyncClient = Depends(get_client)):
-    data = await sparql_post(sparqlTemplates.INPROCEEDINGS_FROM_PROCEEDINGS_TEMPLATE.replace('$VENUE_ID', get_uri_from_id(id)).replace('$YEAR', str(year)), client)
+    query = sparqlTemplates.INPROCEEDINGS_FROM_PROCEEDINGS_TEMPLATE.replace('$VENUE_ID', get_uri_from_id(id)).replace('$YEAR', str(year))
+    data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
 @app.get("/api/conferences/{id}/{year}/proceedings")
 async def read_conference_year(id: str, year: int, client: httpx.AsyncClient = Depends(get_client)):
-    data = await sparql_post(sparqlTemplates.PROCEEDINGS_QUERY_TEMPLATE.replace('$VENUE_ID', get_uri_from_id(id)).replace('$YEAR', str(year)), client)
+    query = sparqlTemplates.PROCEEDINGS_QUERY_TEMPLATE.replace('$VENUE_ID', get_uri_from_id(id)).replace('$YEAR', str(year))
+    data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
 @app.get("/api/journals/{id}")
 async def read_journal(id: str, client: httpx.AsyncClient = Depends(get_client)):
-    data = await sparql_post(sparqlTemplates.JOURNAL_OVERVIEW_TEMPLATE.replace('$JOURNAL', get_uri_from_id(id)), client)
+    query = sparqlTemplates.JOURNAL_OVERVIEW_TEMPLATE.replace('$JOURNAL', get_uri_from_id(id))
+    data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
 @app.get("/api/journals/{id}/{year}")
 async def read_journal_year(id: str, year: int, client: httpx.AsyncClient = Depends(get_client)):
-    data = await sparql_post(sparqlTemplates.ARTICLES_FROM_JOURNAL_TEMPLATE.replace('$JOURNAL', get_uri_from_id(id)).replace('$YEAR', str(year)), client)
+    query = sparqlTemplates.ARTICLES_FROM_JOURNAL_TEMPLATE.replace('$JOURNAL', get_uri_from_id(id)).replace('$YEAR', str(year))
+    data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
 @app.get("/api/people/{id}")
 async def read_venue(id: str, client: httpx.AsyncClient = Depends(get_client)):
-    data = await sparql_post(sparqlTemplates.PERSON_TEMPLATE.replace('$AUTHOR', get_uri_from_id(id)), client)
+    query = sparqlTemplates.PERSON_TEMPLATE.replace('$AUTHOR', get_uri_from_id(id))
+    data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
 @app.get("/api/publications/{id}")
