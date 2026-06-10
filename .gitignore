@@ -5,6 +5,7 @@
 .devcontainer/
 .pnpm-store/
 build/
+__pycache__/
 
 ### Linux ###
 *~
