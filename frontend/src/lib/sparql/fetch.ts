@@ -1,6 +1,5 @@
 import { error } from '@sveltejs/kit';
 
-//export const BACKEND_ENDPOINT = 'http://backend.ir-anthology.srv.webis.de/';
 const BACKEND_ENDPOINT = 'https://backend-ir-anthology.srv.webis.de/api/';
 
 export async function fetchBackend(resource: string) {

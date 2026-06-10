@@ -4,6 +4,7 @@
 	import { goto } from '$app/navigation';
     import {navigating} from '$app/state'
     import { resolve } from '$app/paths';
+    import { fetchBackend } from '$lib/sparql/fetch';
 
     const COLUMN_WIDTHS: Record<string, string> = {
 		Entity: 'w-auto min-w-[100px]',
@@ -38,8 +39,7 @@
             const params = new SvelteURLSearchParams(page.url.searchParams.toString());
             params.set('page', String(nextPage));
             loadingMore = true;
-            const res = await fetch(`/api/data?${params}`);
-            const data = await res.json();
+            const data = await fetchBackend(`table?${params}`);
             loadingMore = false;
             if (data.bindings.length === 0) { exhausted = true; return; }
             rows.push(...data.bindings);
