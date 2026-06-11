@@ -10,7 +10,7 @@
 # generate (or download or copy from somewhere) the input files yourself. Each
 # dataset should have a short DESCRIPTION, ideally with a date.
 [data]
-NAME         = test
+NAME         = data/test
 GET_DATA_CMD = ./get_data.sh
 DESCRIPTION  = Get the test data in form of a smaller graph from dblp via construct
 FORMAT = nt
@@ -23,7 +23,7 @@ FORMAT = nt
 # the same time; increasing this, increases the memory usage but speeds up the
 # loading process.
 [index]
-INPUT_FILES     = *.nt
+INPUT_FILES     = data/*.nt
 CAT_INPUT_FILES = cat ${INPUT_FILES}
 SETTINGS_JSON   = { "num-triples-per-batch": 1000000 }
 

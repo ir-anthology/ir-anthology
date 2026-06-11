@@ -28,8 +28,9 @@ run_query () {
       -e "s/__OFFSET__/$OFFSET/g" \
       "$template")
 
-    local OUT="chunks/${name}_${stream_safe}_${OFFSET}.nt"
+    local OUT="${DATA_PATH}/chunks/${name}_${stream_safe}_${OFFSET}.nt"
     curl -G \
+      --create-dirs \
       --retry 5 \
       --retry-delay 10 \
       -H "Accept: application/n-triples" \
@@ -73,6 +74,5 @@ done < "$WORKSHOP_STREAMS_FILE"
 
 # Combine everything. sort -u removes duplicate triples that appear
 # because the same author/editor shows up across many publications.
-sort -u chunks/*.nt > full_dump.nt
-rm -r chunks
+sort -u ${DATA_PATH}/chunks/*.nt > ${DATA_PATH}/full_dump.nt
 echo "Done. $(wc -l < full_dump.nt) triples in full_dump.nt"
