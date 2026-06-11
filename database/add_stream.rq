@@ -1,0 +1,11 @@
+PREFIX dblp: <https://dblp.org/rdf/schema#>
+CONSTRUCT {
+  ?stream ?p ?o .
+}
+WHERE {
+  VALUES ?stream {<__STREAM__>}
+  ?stream ?p ?o .
+}
+ORDER BY ?stream ?p ?o
+LIMIT __LIMIT__
+OFFSET __OFFSET__

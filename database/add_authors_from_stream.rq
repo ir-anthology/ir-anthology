@@ -5,12 +5,7 @@ CONSTRUCT {
 WHERE {
   {
     SELECT DISTINCT ?author WHERE {
-      { BIND(<__STREAM__> AS ?stream) }
-      UNION
-      { <__STREAM__> dblp:subStream ?stream . }
-      UNION
-      { ?stream dblp:superStream <__STREAM__>  . }
-      ?pub dblp:publishedInStream ?stream .
+      ?pub dblp:publishedInStream <__STREAM__> .
       ?pub dblp:authoredBy ?author .
     }
   }

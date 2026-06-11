@@ -5,6 +5,7 @@ ENDPOINT="https://sparql.dblp.org/sparql"
 LIMIT=100000
 MAX_OFFSET=10000000
 STREAMS_FILE="streams.txt"
+WORKSHOP_STREAMS_FILE="workshop_streams.txt"
 
 mkdir -p chunks
 
@@ -54,8 +55,21 @@ while IFS= read -r STREAM || [ -n "$STREAM" ]; do
   run_query add_authors_from_stream.rq      authors      "$STREAM"
   run_query add_editors_from_stream.rq      editors      "$STREAM"
   run_query add_signatures_from_stream.rq   signatures   "$STREAM"
-  run_query add_streams_from_stream.rq      stream   "$STREAM"
+  run_query add_stream.rq                   stream       "$STREAM"
 done < "$STREAMS_FILE"
+
+# Read workshop_streams.txt: skip blank lines, strip Windows CRs.
+while IFS= read -r STREAM || [ -n "$STREAM" ]; do
+  STREAM=$(printf '%s' "$STREAM" | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+  [ -z "$STREAM" ] && continue
+
+  echo "=== WORKSHOP: $STREAM ==="
+  run_query add_publications_from_stream.rq publications "$STREAM"
+  run_query add_authors_from_stream.rq      authors      "$STREAM"
+  run_query add_editors_from_stream.rq      editors      "$STREAM"
+  run_query add_signatures_from_stream.rq   signatures   "$STREAM"
+  run_query add_workshop_stream.rq          workshop     "$STREAM"
+done < "$WORKSHOP_STREAMS_FILE"
 
 # Combine everything. sort -u removes duplicate triples that appear
 # because the same author/editor shows up across many publications.
