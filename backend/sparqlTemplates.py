@@ -47,7 +47,7 @@ WHERE {
   BIND(
     IF(?entityType = "Publication", ?publication_URI,
     IF(?entityType = "Venue",       ?venue_URI,
-    IF(?entityType = "Year",        ?year_URI,
+    IF(?entityType = "Year",        ?year,
     IF(?entityType = "2020s",       ?2020s_URI,
     IF(?entityType = "2010s",       ?2010s_URI,
     IF(?entityType = "2000s",       ?2000s_URI,
