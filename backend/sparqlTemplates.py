@@ -21,7 +21,7 @@ WHERE {
                    dblp:authoredBy ?author_URI ;
                    dblp:publishedInStream ?venue_URI .
 
-  OPTIONAL { ?pub dblp:yearOfEvent ?eventYear }
+  OPTIONAL { ?publication_URI dblp:yearOfEvent ?eventYear }
   BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
 
   OPTIONAL {
@@ -91,7 +91,7 @@ WHERE {
       <https://dblp.org/streams/journals/tist>
       <https://dblp.org/streams/journals/tois>
       <https://dblp.org/streams/journals/tweb>
-      <https://dblp.org/streams/journals/wwwj>
+      <https://dblp.org/streams/journals/www>
       <https://dblp.org/streams/conf/adcs>
       <https://dblp.org/streams/conf/airs>
       <https://dblp.org/streams/conf/ccir>
@@ -117,7 +117,7 @@ WHERE {
       <https://dblp.org/streams/conf/wsdm>
       <https://dblp.org/streams/conf/www>
   }
-  ?publication_URI dblp:yearOfPublication ?pubYear ;
+  ?pub dblp:yearOfPublication ?pubYear ;
                    dblp:publishedInStream ?stream .
 
   OPTIONAL { ?pub dblp:yearOfEvent ?eventYear }
