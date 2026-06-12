@@ -7,8 +7,6 @@ MAX_OFFSET=10000000
 STREAMS_FILE="streams.txt"
 WORKSHOP_STREAMS_FILE="workshop_streams.txt"
 
-mkdir -p chunks
-
 # Paginate one query template for one stream.
 #   $1 = template file, $2 = short name (used in filenames), $3 = stream URI
 run_query () {
