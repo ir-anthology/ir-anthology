@@ -9,7 +9,7 @@ SELECT (?entity_label AS ?Entity)
   (COUNT(DISTINCT ?publication_label) AS ?Publication)
   (COUNT(DISTINCT ?venue_label)       AS ?Venue)
   (COUNT(DISTINCT ?author_label)      AS ?Author)
-  (COUNT(DISTINCT ?year_label)        AS ?Year)
+  (COUNT(DISTINCT ?year)              AS ?Year)
   (COUNT(DISTINCT ?2020s_label)       AS ?2020s)
   (COUNT(DISTINCT ?2010s_label)       AS ?2010s)
   (COUNT(DISTINCT ?2000s_label)       AS ?2000s)
@@ -17,9 +17,12 @@ SELECT (?entity_label AS ?Entity)
 WHERE {
   VALUES ?entityType { "$ENTITY_TYPE" }
   ?publication_URI dblp:title ?publication_label ;
-                   dblp:yearOfPublication ?year_label ;
+                   dblp:yearOfPublication ?pubYear ;
                    dblp:authoredBy ?author_URI ;
                    dblp:publishedInStream ?venue_URI .
+
+  OPTIONAL { ?pub dblp:yearOfEvent ?eventYear }
+  BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
 
   OPTIONAL {
     ?venue_URI dblp:primaryStreamTitle ?venue_label .
@@ -28,15 +31,15 @@ WHERE {
     ?author_URI dblp:primaryCreatorName ?author_label .
   }
   
-  BIND(xsd:integer(STR(?year_label)) AS ?y)
+  BIND(xsd:integer(STR(?year)) AS ?y)
   
-  BIND(IF(?y >= 2020, STR(?year_label), ?unbound) AS ?2020s_label)
+  BIND(IF(?y >= 2020, STR(?year), ?unbound) AS ?2020s_label)
   BIND(?2020s_label AS ?2020s_URI)
-  BIND(IF(?y >= 2010 && ?y < 2020, STR(?year_label), ?unbound) AS ?2010s_label)
+  BIND(IF(?y >= 2010 && ?y < 2020, STR(?year), ?unbound) AS ?2010s_label)
   BIND(?2010s_label AS ?2010s_URI)
-  BIND(IF(?y >= 2000 && ?y < 2010, STR(?year_label), ?unbound) AS ?2000s_label)
+  BIND(IF(?y >= 2000 && ?y < 2010, STR(?year), ?unbound) AS ?2000s_label)
   BIND(?2000s_label AS ?2000s_URI)
-  BIND(IF(?y < 2000, STR(?year_label), ?unbound) AS ?Pre2000s_label)
+  BIND(IF(?y < 2000, STR(?year), ?unbound) AS ?Pre2000s_label)
   BIND(?Pre2000s_label AS ?Pre2000s_URI)
   
   $FILTERS
@@ -54,7 +57,7 @@ WHERE {
   BIND(
     IF(?entityType = "Publication", ?publication_label,
     IF(?entityType = "Venue",       ?venue_label,
-    IF(?entityType = "Year",        ?year_label,
+    IF(?entityType = "Year",        ?year,
     IF(?entityType = "2020s",       ?2020s_label,
     IF(?entityType = "2010s",       ?2010s_label,
     IF(?entityType = "2000s",       ?2000s_label,
@@ -74,7 +77,7 @@ OFFSET $OFFSET
 ANTHOLOGY_QUERY_TEMPLATE = '''
 PREFIX dblp: <https://dblp.org/rdf/schema#>
 
-SELECT DISTINCT ?stream ?venue_label ?year_label ?type
+SELECT DISTINCT ?stream ?venue_label ?year ?type
 WHERE {
   VALUES ?stream {
       <https://dblp.org/streams/journals/ftir>
@@ -114,29 +117,36 @@ WHERE {
       <https://dblp.org/streams/conf/wsdm>
       <https://dblp.org/streams/conf/www>
   }
-  ?publication_URI dblp:yearOfPublication ?year_label ;
+  ?publication_URI dblp:yearOfPublication ?pubYear ;
                    dblp:publishedInStream ?stream .
+
+  OPTIONAL { ?pub dblp:yearOfEvent ?eventYear }
+  BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
 
   ?stream a ?type ;
           dblp:primaryStreamTitle ?venue_label .
   FILTER(?type != dblp:Stream)
 }
-ORDER BY ?type ?venue_label ?year_label 
+ORDER BY ?type ?venue_label ?year 
 '''
 
 YEARS_QUERY_TEMPLATE = '''
 PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
 
-SELECT DISTINCT ?year_label ?title ?streamTitle ?pub WHERE{
-VALUES ?stream {
-<$VENUE_URI>
-}
-?pub dblp:yearOfPublication ?year_label ;
-                 dblp:publishedInStream ?stream ;
-                 dblp:title ?title ;
-                 dblp:bibtexType bibtex:Proceedings .
-?stream dblp:primaryStreamTitle ?streamTitle .
+SELECT DISTINCT ?year ?title ?streamTitle ?pub WHERE{
+  VALUES ?stream {
+  <$VENUE_URI>
+  }
+  ?pub dblp:yearOfPublication ?pubYear ;
+      dblp:publishedInStream ?stream ;
+      dblp:title ?title ;
+      dblp:bibtexType bibtex:Proceedings .
+
+  OPTIONAL { ?pub dblp:yearOfEvent ?eventYear }
+  BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
+
+  ?stream dblp:primaryStreamTitle ?streamTitle .
 }
 '''
 '''
@@ -144,7 +154,7 @@ const VENUE_PROCEEDINGS_TEMPLATE = `
 PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
 
-SELECT ?year_label ?title ?streamTitle ?pub (COUNT(DISTINCT ?paper) AS ?count) WHERE {
+SELECT ?year ?title ?streamTitle ?pub (COUNT(DISTINCT ?paper) AS ?count) WHERE {
   {
     SELECT DISTINCT ?stream WHERE{
       { BIND(<$VENUE_URI> AS ?stream) }
@@ -154,40 +164,48 @@ SELECT ?year_label ?title ?streamTitle ?pub (COUNT(DISTINCT ?paper) AS ?count) W
       { <$VENUE_URI> dblp:subStream ?stream .}
     }
   }
-  ?pub dblp:yearOfPublication ?year_label ;
+  ?pub dblp:yearOfPublication ?pubYear ;
        dblp:publishedInStream ?stream ;
        dblp:title ?title ;
        dblp:bibtexType bibtex:Proceedings .
+
+  OPTIONAL { ?pub dblp:yearOfEvent ?eventYear }
+  BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
+
   <$VENUE_URI> dblp:primaryStreamTitle ?streamTitle .
   OPTIONAL {
     ?paper dblp:publishedAsPartOf ?pub ;
            dblp:bibtexType bibtex:Inproceedings .
   }
 }
-GROUP BY ?year_label ?title ?streamTitle ?pub
-ORDER BY DESC(?year_label) ?title
+GROUP BY ?year ?title ?streamTitle ?pub
+ORDER BY DESC(?year) ?title
 '''
 
 VENUE_PROCEEDINGS_TEMPLATE = '''
 PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
 
-SELECT ?year_label ?title ?streamTitle ?pub (COUNT(DISTINCT ?paper) AS ?count) WHERE {
+SELECT ?year ?title ?streamTitle ?pub (COUNT(DISTINCT ?paper) AS ?count) WHERE {
   VALUES ?stream {
     <$VENUE_URI>
   }
-  ?pub dblp:yearOfPublication ?year_label ;
+  ?pub dblp:yearOfPublication ?pubYear ;
        dblp:publishedInStream ?stream ;
        dblp:title ?title ;
        dblp:bibtexType bibtex:Proceedings .
+
+  OPTIONAL { ?pub dblp:yearOfEvent ?eventYear }
+  BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
+
   ?stream dblp:primaryStreamTitle ?streamTitle .
   OPTIONAL {
     ?paper dblp:publishedAsPartOf ?pub ;
            dblp:bibtexType bibtex:Inproceedings .
   }
 }
-GROUP BY ?year_label ?title ?streamTitle ?pub
-ORDER BY DESC(?year_label) ?title
+GROUP BY ?year ?title ?streamTitle ?pub
+ORDER BY DESC(?year) ?title
 '''
 
 PROCEEDINGS_QUERY_TEMPLATE = '''
@@ -201,7 +219,11 @@ SELECT ?title ?doi ?pub ?streamTitle WHERE{
   ?pub dblp:title ?title ;
        dblp:publishedInStream ?stream ;
 	   dblp:bibtexType bibtex:Proceedings ;
-	   dblp:yearOfPublication ?year .
+	   dblp:yearOfPublication ?pubYear .
+       
+  OPTIONAL { ?pub dblp:yearOfEvent ?eventYear }
+  BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
+
   ?stream dblp:primaryStreamTitle ?streamTitle .
   FILTER(STR(?year) = "$YEAR")
 
@@ -223,7 +245,11 @@ WHERE{
   }
   ?book dblp:publishedInStream ?stream ;
         dblp:bibtexType bibtex:Proceedings ;
-        dblp:yearOfPublication ?year .
+        dblp:yearOfPublication ?pubYear .
+
+  OPTIONAL { ?pub dblp:yearOfEvent ?eventYear }
+  BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
+
   FILTER(STR(?year) = "$YEAR")
 
   ?pub dblp:publishedAsPartOf ?book ;
@@ -258,7 +284,10 @@ WHERE{
   ?pub dblp:title ?title ;
        dblp:publishedInStream ?stream ;
 	   dblp:bibtexType ?bibtexType ;
-	   dblp:yearOfPublication ?year .
+	   dblp:yearOfPublication ?pubYear .
+
+  OPTIONAL { ?pub dblp:yearOfEvent ?eventYear }
+  BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
 
   ?stream dblp:primaryStreamTitle ?streamTitle .
 
@@ -310,7 +339,11 @@ WHERE{
   ?pub dblp:publishedInStream ?journal ;
        dblp:title ?title ;
 	   dblp:bibtexType bibtex:Article ;
-	   dblp:yearOfPublication ?year .
+	   dblp:yearOfPublication ?pubYear .
+       
+  OPTIONAL { ?pub dblp:yearOfEvent ?eventYear }
+  BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
+
   FILTER(STR(?year) = "$YEAR")
   OPTIONAL{?pub dblp:publishedInJournalVolume ?volume}
   OPTIONAL{?pub dblp:publishedInJournalVolumeIssue ?number}
@@ -337,7 +370,11 @@ SELECT ?year ?volume ?number ?journalTitle (COUNT(DISTINCT ?pub) AS ?count) WHER
   ?journal dblp:primaryStreamTitle ?journalTitle .
   ?pub dblp:publishedInStream ?journal ;
        dblp:bibtexType bibtex:Article ;
-       dblp:yearOfPublication ?year .
+       dblp:yearOfPublication ?pubYear .
+
+  OPTIONAL { ?pub dblp:yearOfEvent ?eventYear }
+  BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
+
   OPTIONAL { ?pub dblp:publishedInJournalVolume ?volume }
   OPTIONAL { ?pub dblp:publishedInJournalVolumeIssue ?number }
 }
@@ -345,9 +382,9 @@ GROUP BY ?year ?volume ?number ?journalTitle
 ORDER BY DESC(?year) ?volume ?number
 '''
 
-# Workaround for multiple stream titles is SAMPLE(...). Don't know if there is a better way
 PERSON_TEMPLATE = '''
 PREFIX dblp: <https://dblp.org/rdf/schema#>
+PREFIX ex: <https://ir.webis.de/kg#>
 
 SELECT ?title ?year ?doi ?pub ?name ?booktitle ?streamTitle ?journalVolume ?journalNumber ?stream
   (GROUP_CONCAT(DISTINCT CONCAT(STR(?ord), "@@", ?authorName); separator=", ") AS ?authors)
@@ -358,15 +395,27 @@ WHERE {
   }
   ?pub dblp:authoredBy ?author ;
        dblp:bibtexType ?bibtexType ;
-       dblp:yearOfPublication ?year ;
+       dblp:yearOfPublication ?pubYear ;
        dblp:publishedInStream ?stream ;
        dblp:title ?title .
+
+  ?stream dblp:primaryStreamTitle ?streamTitle .
+  FILTER(
+    NOT EXISTS { ?stream a ex:Workshop }
+    ||
+    NOT EXISTS {
+      ?pub dblp:publishedInStream ?s2 .
+      FILTER NOT EXISTS { ?s2 a ex:Workshop }
+    }
+  )
+
+  OPTIONAL { ?pub dblp:yearOfEvent ?eventYear }
+  BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
 
   OPTIONAL { ?pub dblp:doi ?doi }
   OPTIONAL { ?author dblp:primaryCreatorName ?name }
   OPTIONAL { ?pub dblp:publishedAsPartOf ?book .
              ?book dblp:title ?booktitle }
-  OPTIONAL { ?stream dblp:primaryStreamTitle ?streamTitle }
   OPTIONAL { ?pub dblp:publishedInJournalVolume ?journalVolume }
   OPTIONAL { ?pub dblp:publishedInJournalVolumeIssue ?journalNumber }
   OPTIONAL {

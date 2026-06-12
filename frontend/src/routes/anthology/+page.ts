@@ -20,8 +20,8 @@ export async function load() {
             });
         }
 
-        if (binding.year_label !== null) {
-            venueMap.get(venueName)!.years.add(binding.year_label);
+        if (binding.year !== null) {
+            venueMap.get(venueName)!.years.add(binding.year);
         }
     }
 

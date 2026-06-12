@@ -16,7 +16,7 @@ async function loadConference(venueId: string) {
     const streamTitle = raw[0]?.streamTitle ?? ''
     const groupedByYear = new Map<string, { title: string, pub: string, count: number }[]>()
     for (const entry of raw) {
-        const y = entry.year_label ?? ''
+        const y = entry.year ?? ''
         if (!groupedByYear.has(y)) groupedByYear.set(y, [])
         groupedByYear.get(y)!.push({
             title: entry.title ?? '',
