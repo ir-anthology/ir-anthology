@@ -5,6 +5,7 @@
     import {navigating} from '$app/state'
     import { resolve } from '$app/paths';
     import { fetchBackend } from '$lib/sparql/fetch';
+    import { getIDFromURI } from '$lib/helperFunctions';
 
     const COLUMN_WIDTHS: Record<string, string> = {
 		Entity: 'w-auto min-w-[100px]',
@@ -86,6 +87,19 @@
         new_params.set('entity', col)
         goto(resolve(`/?${new_params.toString()}`))
     }
+
+    function buildURL(uri: string): string{
+        switch(current_entity){
+            case "Publication":
+                return "/anthology/publications/"+getIDFromURI(uri)
+            case "Venue":
+                return "/anthology/venues/"+getIDFromURI(uri)
+            case "Author":
+                return "/anthology/people/"+getIDFromURI(uri)
+            default:
+                return ""
+        }
+    }
 </script>
 
 <section class="bg-white rounded-lg shadow overflow-x-auto">
@@ -133,10 +147,10 @@
 								>
 									{#if row['URI']?.value}
 										<a
-											href={row['URI'].value}
+											href={buildURL(row['URI'].value)}
 											target="_blank"
 											rel="noopener noreferrer"
-											class="text-blue-600 hover:underline"
+											class="link"
 										>
 											{cellData.value ?? '-'}
 										</a>
@@ -146,7 +160,7 @@
 								</td>
                             {:else if cellData?.value}
                                 <td
-                                    class="px-4 py-3 text-sm text-blue-600 text-center cursor-pointer hover:bg-gray-100 hover:underline transition-colors {COLUMN_WIDTHS[
+                                    class="link px-4 py-3 text-sm text-center cursor-pointer hover:bg-gray-100 transition-colors {COLUMN_WIDTHS[
                                             col
                                         ] ?? 'w-24'}"
                                         onclick={() => handleCellClick(col, row)}
