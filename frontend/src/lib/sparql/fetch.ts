@@ -1,7 +1,6 @@
 import { error } from '@sveltejs/kit';
 
-//const BACKEND_ENDPOINT = 'https://backend-ir-anthology.srv.webis.de/api/';
-const BACKEND_ENDPOINT = 'http://localhost:8000/api/'
+const BACKEND_ENDPOINT = 'https://backend-ir-anthology.srv.webis.de/api/';
 
 export async function fetchBackend(resource: string) {
     const response = await fetch(BACKEND_ENDPOINT+resource, {
