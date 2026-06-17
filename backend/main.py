@@ -67,9 +67,9 @@ async def read_table_data(filter_query: Annotated[FilterParams, Query()], client
     data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
-@app.get("/api/anthology")
-async def read_anthology(client: httpx.AsyncClient = Depends(get_client)):
-    query = sparqlTemplates.ANTHOLOGY_QUERY_TEMPLATE
+@app.get("/api/conferences/overview")
+async def read_conferences_overview(client: httpx.AsyncClient = Depends(get_client)):
+    query = sparqlTemplates.ANTHOLOGY_CONFERENCES_QUERY_TEMPLATE
     data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
@@ -88,6 +88,12 @@ async def read_conference(id: str, year: int, client: httpx.AsyncClient = Depend
 @app.get("/api/conferences/{id}/{year}/proceedings")
 async def read_conference_year(id: str, year: int, client: httpx.AsyncClient = Depends(get_client)):
     query = sparqlTemplates.PROCEEDINGS_QUERY_TEMPLATE.replace('$VENUE_ID', get_uri_from_id(id)).replace('$YEAR', str(year))
+    data = await sparql_post(query, client)
+    return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
+
+@app.get("/api/journals/overview")
+async def read_journals_overview(client: httpx.AsyncClient = Depends(get_client)):
+    query = sparqlTemplates.ANTHOLOGY_JOURNALS_QUERY_TEMPLATE
     data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 

@@ -73,25 +73,13 @@ LIMIT $LIMIT
 OFFSET $OFFSET
 '''
 
-# With the new scheme we can also distinguish between journal and conference
-ANTHOLOGY_QUERY_TEMPLATE = '''
+ANTHOLOGY_CONFERENCES_QUERY_TEMPLATE = '''
 PREFIX dblp: <https://dblp.org/rdf/schema#>
+PREFIX ex: <https://ir.webis.de/kg#>
 
 SELECT DISTINCT ?stream ?venue_label ?year ?type
 WHERE {
   VALUES ?stream {
-      <https://dblp.org/streams/journals/ftir>
-      <https://dblp.org/streams/journals/ijirr>
-      <https://dblp.org/streams/journals/ijmir>
-      <https://dblp.org/streams/journals/ipm>
-      <https://dblp.org/streams/journals/ir>
-      <https://dblp.org/streams/journals/jasis>
-      <https://dblp.org/streams/journals/sigir>
-      <https://dblp.org/streams/journals/tismir>
-      <https://dblp.org/streams/journals/tist>
-      <https://dblp.org/streams/journals/tois>
-      <https://dblp.org/streams/journals/tweb>
-      <https://dblp.org/streams/journals/www>
       <https://dblp.org/streams/conf/adcs>
       <https://dblp.org/streams/conf/airs>
       <https://dblp.org/streams/conf/ccir>
@@ -117,11 +105,39 @@ WHERE {
       <https://dblp.org/streams/conf/wsdm>
       <https://dblp.org/streams/conf/www>
   }
-  ?pub dblp:yearOfPublication ?pubYear ;
-                   dblp:publishedInStream ?stream .
+  ?pub ex:yearOfConference ?year ;
+       dblp:publishedInStream ?stream .
 
-  OPTIONAL { ?pub dblp:yearOfEvent ?eventYear }
-  BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
+  ?stream a ?type ;
+          dblp:primaryStreamTitle ?venue_label .
+
+  FILTER(?type != dblp:Stream)
+}
+ORDER BY ?type ?venue_label ?year 
+'''
+
+ANTHOLOGY_JOURNALS_QUERY_TEMPLATE = '''
+PREFIX dblp: <https://dblp.org/rdf/schema#>
+PREFIX ex: <https://ir.webis.de/kg#>
+
+SELECT DISTINCT ?stream ?venue_label ?year ?type
+WHERE {
+  VALUES ?stream {
+      <https://dblp.org/streams/journals/ftir>
+      <https://dblp.org/streams/journals/ijirr>
+      <https://dblp.org/streams/journals/ijmir>
+      <https://dblp.org/streams/journals/ipm>
+      <https://dblp.org/streams/journals/ir>
+      <https://dblp.org/streams/journals/jasis>
+      <https://dblp.org/streams/journals/sigir>
+      <https://dblp.org/streams/journals/tismir>
+      <https://dblp.org/streams/journals/tist>
+      <https://dblp.org/streams/journals/tois>
+      <https://dblp.org/streams/journals/tweb>
+      <https://dblp.org/streams/journals/www>
+  }
+  ?pub dblp:yearOfPublication ?year ;
+                   dblp:publishedInStream ?stream .
 
   ?stream a ?type ;
           dblp:primaryStreamTitle ?venue_label .
@@ -133,6 +149,7 @@ ORDER BY ?type ?venue_label ?year
 YEARS_QUERY_TEMPLATE = '''
 PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
+PREFIX ex: <https://ir.webis.de/kg#>
 
 SELECT DISTINCT ?year ?title ?streamTitle ?pub WHERE{
   VALUES ?stream {
@@ -143,7 +160,7 @@ SELECT DISTINCT ?year ?title ?streamTitle ?pub WHERE{
       dblp:title ?title ;
       dblp:bibtexType bibtex:Proceedings .
 
-  OPTIONAL { ?pub dblp:yearOfEvent ?eventYear }
+  OPTIONAL { ?pub ex:yearOfConference ?eventYear }
   BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
 
   ?stream dblp:primaryStreamTitle ?streamTitle .
@@ -185,6 +202,7 @@ ORDER BY DESC(?year) ?title
 VENUE_PROCEEDINGS_TEMPLATE = '''
 PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
+PREFIX ex: <https://ir.webis.de/kg#>
 
 SELECT ?year ?title ?streamTitle ?pub (COUNT(DISTINCT ?paper) AS ?count) WHERE {
   VALUES ?stream {
@@ -195,7 +213,7 @@ SELECT ?year ?title ?streamTitle ?pub (COUNT(DISTINCT ?paper) AS ?count) WHERE {
        dblp:title ?title ;
        dblp:bibtexType bibtex:Proceedings .
 
-  OPTIONAL { ?pub dblp:yearOfEvent ?eventYear }
+  OPTIONAL { ?pub ex:yearOfConference ?eventYear }
   BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
 
   ?stream dblp:primaryStreamTitle ?streamTitle .
@@ -211,6 +229,7 @@ ORDER BY DESC(?year) ?title
 PROCEEDINGS_QUERY_TEMPLATE = '''
 PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
+PREFIX ex: <https://ir.webis.de/kg#>
 
 SELECT ?title ?doi ?pub ?streamTitle WHERE{
   VALUES ?stream {
@@ -221,7 +240,7 @@ SELECT ?title ?doi ?pub ?streamTitle WHERE{
 	   dblp:bibtexType bibtex:Proceedings ;
 	   dblp:yearOfPublication ?pubYear .
        
-  OPTIONAL { ?pub dblp:yearOfEvent ?eventYear }
+  OPTIONAL { ?pub ex:yearOfConference ?eventYear }
   BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
 
   ?stream dblp:primaryStreamTitle ?streamTitle .
@@ -235,6 +254,7 @@ GROUP BY ?title ?doi ?pub ?streamTitle
 INPROCEEDINGS_FROM_PROCEEDINGS_TEMPLATE = '''
 PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
+PREFIX ex: <https://ir.webis.de/kg#>
 
 SELECT ?title ?doi ?book ?pub
   (GROUP_CONCAT(DISTINCT CONCAT(STR(?ord), "@@", ?authorName); separator=", ") AS ?authors)
@@ -247,7 +267,7 @@ WHERE{
         dblp:bibtexType bibtex:Proceedings ;
         dblp:yearOfPublication ?pubYear .
 
-  OPTIONAL { ?pub dblp:yearOfEvent ?eventYear }
+  OPTIONAL { ?book ex:yearOfConference ?eventYear }
   BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
 
   FILTER(STR(?year) = "$YEAR")
@@ -370,10 +390,7 @@ SELECT ?year ?volume ?number ?journalTitle (COUNT(DISTINCT ?pub) AS ?count) WHER
   ?journal dblp:primaryStreamTitle ?journalTitle .
   ?pub dblp:publishedInStream ?journal ;
        dblp:bibtexType bibtex:Article ;
-       dblp:yearOfPublication ?pubYear .
-
-  OPTIONAL { ?pub dblp:yearOfEvent ?eventYear }
-  BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
+       dblp:yearOfPublication ?year .
 
   OPTIONAL { ?pub dblp:publishedInJournalVolume ?volume }
   OPTIONAL { ?pub dblp:publishedInJournalVolumeIssue ?number }
