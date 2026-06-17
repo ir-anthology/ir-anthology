@@ -4,7 +4,7 @@
     const venues = $derived(data.venues)
     const conferences = $derived(venues.filter(v => v.type === 'Conference').sort((a, b) => a.label.localeCompare(b.label)))
     const journals = $derived(venues.filter(v => v.type === 'Journal').sort((a, b) => a.label.localeCompare(b.label)))
-    const NUM_COLS = 60
+    const NUM_COLS = 70
     const indicies = [...Array(NUM_COLS).keys()].map((x) => {
         return Math.abs(x - NUM_COLS) + 2029 - NUM_COLS
     })
