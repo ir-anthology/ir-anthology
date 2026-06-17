@@ -50,7 +50,7 @@ add_display_year () {
 
 
   # For each N-Triple "<pub> <predicate> "title" .", extract the 4-digit year from the title and emit a yearOfConference triple.
-  sed -En 's|^(<[^>]+>) <[^>]+> "([^"]*)([12][0-9]{3})([^"]*)".*|\1 <https://ir.webis.de/kg#yearOfConference> "\3" .|p' \
+  sed -En 's|^(<[^>]+>) <[^>]+> ".*([12][0-9]{3})[^"]*".*|\1 <https://ir.webis.de/kg#yearOfConference> "\2" .|p' \
     "$complete" > "${DATA_PATH}/chunks/yearOfConference_${stream_safe}.nt"
   rm -f "${DATA_PATH}/chunks/"*.nt.temp
 }
