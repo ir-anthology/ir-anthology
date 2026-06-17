@@ -2,7 +2,11 @@ import { fetchBackend } from '$lib/sparql/fetch.js'
 import { parseSparqlResult, getIDFromURI } from '$lib/helperFunctions';
 
 export async function load() {
-    const data = parseSparqlResult(await fetchBackend("anthology"));
+    const [conferences, journals] = await Promise.all([
+        fetchBackend("conferences/overview"),
+        fetchBackend("journals/overview"),
+    ]);
+    const data = [...parseSparqlResult(conferences), ...parseSparqlResult(journals)];
 
     const venueMap = new Map<string, { years: Set<string>; label: string; id: string; type:string}>();
 
