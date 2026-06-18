@@ -1,6 +1,7 @@
 <script lang="ts">
     import { resolve } from '$app/paths';
     import { page } from '$app/state';
+    import { getIDFromURI } from '$lib/helperFunctions';
 
     const { data } = $props();
     const venueName = page.params.name;
@@ -53,7 +54,7 @@
                     <li class="flex gap-2">
                         <span class="text-gray-400 shrink-0 pt-0.5">•</span>
                         <div>
-                            <a href={resolve(`/anthology/venues/${data.venue_id}/${year}`)} class="link">{proc.title}</a>
+                            <a href={resolve(`/anthology/venues/${data.venue_id}/${year}#${getIDFromURI(proc.pub ?? '')}`)} class="link">{proc.title}</a>
                             <span class="badge-count ml-1">{proc.count} papers</span>
                         </div>
                     </li>

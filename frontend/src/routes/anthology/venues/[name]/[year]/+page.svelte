@@ -96,7 +96,7 @@
 
     {#each proceedings as proceeding (proceeding.pub)}
         {@const procId = getIDFromURI(proceeding.pub ?? '')}
-        <p class="mb-4">
+        <p id={procId} class="mb-4">
             <a href={resolve(`/anthology/publications/${procId}`)} class="link text-2xl leading-snug">
                 {proceeding.title}
             </a>
