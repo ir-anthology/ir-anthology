@@ -1,8 +1,7 @@
 FROM python:3.14.5-trixie
 WORKDIR /app
 
-COPY main.py .
-COPY sparqlTemplates.py .
+COPY ./ .
 
 RUN pip install "fastapi[standard]"
 
