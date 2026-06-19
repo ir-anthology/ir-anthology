@@ -4,6 +4,7 @@ from typing import Annotated
 from pydantic import BaseModel
 from enum import Enum
 import sparqlTemplates
+import bibtex as bibtex_helper
 import httpx
 from contextlib import asynccontextmanager
 
@@ -116,11 +117,13 @@ async def read_venue(id: str, client: httpx.AsyncClient = Depends(get_client)):
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
 @app.get("/api/publications/{id}")
-async def read_venue(id: str, client: httpx.AsyncClient = Depends(get_client)):
+async def read_publication(id: str, client: httpx.AsyncClient = Depends(get_client)):
     query = sparqlTemplates.BIB_PUBLICATION_TEMPLATE.replace('$PUBLICATION', get_uri_from_id(id))
-    print(query)
     data = await sparql_post(query, client)
-    return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
+    vars_ = data["head"]["vars"]
+    bindings = data["results"]["bindings"]
+    flat = bibtex_helper.bindings_to_dict(vars_, bindings)
+    return {"vars": vars_, "bindings": bindings, "bibtex": bibtex_helper.create_bibtex(flat)}
 
 def parse_order(sort_by: str | None, order: str) -> str:
     if sort_by is None:

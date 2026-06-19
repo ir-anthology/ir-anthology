@@ -1,14 +1,12 @@
 <script lang="ts">
     import { getIDFromURI, decodeOrdered } from '$lib/helperFunctions';
     import { resolve } from '$app/paths';
-    import { createBibtexString } from '$lib/bibtexHelper.js';
-
     const { data } = $props()
     const publication = data.publication
     const bibtexType = publication.bibtexType?.split("#")[1]
     const authors = decodeOrdered(publication.authors, true)
     const authorIds = decodeOrdered(publication.authorIds)
-    const bibtexString = createBibtexString(publication)
+    const bibtexString = data.bibtex ?? ''
 
     const firstLine = bibtexString.split('\n')[0] ?? ''
     const bibkey = firstLine.slice(firstLine.indexOf('{') + 1).replace(/,$/, '')
