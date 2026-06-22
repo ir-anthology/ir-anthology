@@ -3,9 +3,9 @@
 ### Custom ###
 .vscode/
 .devcontainer/
-.pnpm-store/
 build/
 __pycache__/
+node_modules/
 
 ### Linux ###
 *~
