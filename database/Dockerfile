@@ -1,6 +1,5 @@
 FROM adfreiburg/qlever
-ARG APP_HOME=/app
-ENV APP_HOME=${APP_HOME}
+ENV APP_HOME=/app
 ENV DATA_PATH=${APP_HOME}/data
 
 WORKDIR ${APP_HOME}

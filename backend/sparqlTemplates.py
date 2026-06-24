@@ -79,41 +79,32 @@ PREFIX ex: <https://ir.webis.de/kg#>
 
 SELECT DISTINCT ?stream ?venue_label ?year ?type
 WHERE {
-  VALUES ?stream {
-      <https://dblp.org/streams/conf/adcs>
-      <https://dblp.org/streams/conf/airs>
-      <https://dblp.org/streams/conf/ccir>
-      <https://dblp.org/streams/conf/ceri>
-      <https://dblp.org/streams/conf/chiir>
-      <https://dblp.org/streams/conf/cikm>
-      <https://dblp.org/streams/conf/civr>
-      <https://dblp.org/streams/conf/clef>
-      <https://dblp.org/streams/conf/coria>
-      <https://dblp.org/streams/conf/desires>
-      <https://dblp.org/streams/conf/dir>
-      <https://dblp.org/streams/conf/ecir>
-      <https://dblp.org/streams/conf/fdia>
-      <https://dblp.org/streams/conf/fire>
-      <https://dblp.org/streams/conf/ictir>
-      <https://dblp.org/streams/conf/irfc>
-      <https://dblp.org/streams/conf/ismir>
-      <https://dblp.org/streams/conf/mir>
-      <https://dblp.org/streams/conf/ntcir>
-      <https://dblp.org/streams/conf/sigir>
-      <https://dblp.org/streams/conf/spire>
-      <https://dblp.org/streams/conf/trec>
-      <https://dblp.org/streams/conf/wsdm>
-      <https://dblp.org/streams/conf/www>
-  }
-  ?pub ex:yearOfConference ?year ;
-       dblp:publishedInStream ?stream .
-
+  VALUES ?type {dblp:Conference}
   ?stream a ?type ;
           dblp:primaryStreamTitle ?venue_label .
 
-  FILTER(?type != dblp:Stream)
+  FILTER NOT EXISTS { ?stream a ex:Workshop }
+
+  ?pub ex:yearOfConference ?year ;
+       dblp:publishedInStream ?stream .
 }
-ORDER BY ?type ?venue_label ?year 
+ORDER BY ?type ?venue_label ?year
+'''
+
+ANTHOLOGY_WORKSHOPS_QUERY_TEMPLATE = '''
+PREFIX dblp: <https://dblp.org/rdf/schema#>
+PREFIX ex: <https://ir.webis.de/kg#>
+
+SELECT DISTINCT ?stream ?venue_label ?year ?type
+WHERE {
+  VALUES ?type {ex:Workshop}
+  ?stream a ?type ;
+          dblp:primaryStreamTitle ?venue_label .
+
+  ?pub ex:yearOfConference ?year ;
+       dblp:publishedInStream ?stream .
+}
+ORDER BY ?type ?venue_label ?year
 '''
 
 ANTHOLOGY_JOURNALS_QUERY_TEMPLATE = '''
@@ -122,26 +113,12 @@ PREFIX ex: <https://ir.webis.de/kg#>
 
 SELECT DISTINCT ?stream ?venue_label ?year ?type
 WHERE {
-  VALUES ?stream {
-      <https://dblp.org/streams/journals/ftir>
-      <https://dblp.org/streams/journals/ijirr>
-      <https://dblp.org/streams/journals/ijmir>
-      <https://dblp.org/streams/journals/ipm>
-      <https://dblp.org/streams/journals/ir>
-      <https://dblp.org/streams/journals/jasis>
-      <https://dblp.org/streams/journals/sigir>
-      <https://dblp.org/streams/journals/tismir>
-      <https://dblp.org/streams/journals/tist>
-      <https://dblp.org/streams/journals/tois>
-      <https://dblp.org/streams/journals/tweb>
-      <https://dblp.org/streams/journals/www>
-  }
+  VALUES ?type { dblp:Journal }
   ?pub dblp:yearOfPublication ?year ;
                    dblp:publishedInStream ?stream .
 
   ?stream a ?type ;
           dblp:primaryStreamTitle ?venue_label .
-  FILTER(?type != dblp:Stream)
 }
 ORDER BY ?type ?venue_label ?year 
 '''

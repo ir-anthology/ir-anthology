@@ -120,7 +120,11 @@ while IFS= read -r STREAM || [ -n "$STREAM" ]; do
   add_display_year "$STREAM"
 done < "$WORKSHOP_STREAMS_FILE"
 
-# Combine everything. sort -u removes duplicate triples that appear
-# because the same author/editor shows up across many publications.
-sort -u ${DATA_PATH}/chunks/*.nt > ${DATA_PATH}/full_dump.nt
-echo "Done. $(wc -l < full_dump.nt) triples in full_dump.nt"
+patch_files=( "$DATA_PATH/patches/"*.nt )
+if [ -e "${patch_files[0]}" ]; then
+  echo "Merging ${#patch_files[@]} patch file(s)..."
+  triple_count=$(sort -u "${DATA_PATH}/chunks/"*.nt "${patch_files[@]}" | wc -l)
+else
+  triple_count=$(sort -u "${DATA_PATH}/chunks/"*.nt | wc -l)
+fi
+echo "Done. $triple_count triples total."

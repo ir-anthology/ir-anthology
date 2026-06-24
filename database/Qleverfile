@@ -23,7 +23,7 @@ FORMAT = nt
 # the same time; increasing this, increases the memory usage but speeds up the
 # loading process.
 [index]
-INPUT_FILES     = data/*.nt
+INPUT_FILES     = data/*/*.nt
 CAT_INPUT_FILES = cat ${INPUT_FILES}
 SETTINGS_JSON   = { "num-triples-per-batch": 1000000 }
 
@@ -31,9 +31,10 @@ SETTINGS_JSON   = { "num-triples-per-batch": 1000000 }
 # server, you need to specify an ACCESS_TOKEN, which you then have to set via a
 # URL parameter `access_token`. It should not be easily guessable, unless you
 # don't mind others to get privileged access to your server.
+# Set SPARQL_ACCESS_TOKEN=1234 as an environment variable when running the database locally.
 [server]
 PORT               = 7016
-ACCESS_TOKEN       = ${data:NAME}9F8xXCrV5J1g
+ACCESS_TOKEN       = 1234
 MEMORY_FOR_QUERIES = 10G
 CACHE_MAX_SIZE     = 5G
 TIMEOUT            = 30s

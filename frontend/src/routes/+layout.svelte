@@ -1,8 +1,26 @@
 <script lang="ts">
 	import './layout.css';
-	import { base } from '$app/paths';
+	import { resolve } from '$app/paths';
+	import { onMount } from 'svelte';
+	import { getUser, logout, userManager } from '$lib/auth';
 
 	let { children } = $props();
+
+	let userName = $state<string | null>(null);
+	let userPicture = $state<string | null>(null);
+
+	function applyUser(profile: { name?: string | null; nickname?: string | null; sub?: string; picture?: string | null }) {
+		userName = profile.name ?? profile.nickname ?? profile.sub ?? null;
+		userPicture = profile.picture ?? null;
+	}
+
+	onMount(() => {
+		getUser()?.then((user) => { if (user && !user.expired) applyUser(user.profile); });
+
+		const onUserLoaded = (u: { profile: Parameters<typeof applyUser>[0] }) => applyUser(u.profile);
+		userManager?.events.addUserLoaded(onUserLoaded);
+		return () => userManager?.events.removeUserLoaded(onUserLoaded);
+	});
 </script>
 
 <svelte:head>
@@ -15,14 +33,33 @@
 	class="w-full shadow-sm mb-3 md:mb-4 xl:mb-5"
 	style="background: linear-gradient(to bottom, #f8f9fa, #e9ecef)"
 >
-	<div class="w-full px-4 h-[70px] flex items-center">
-		<a
-			class="flex items-center h-10 text-xl font-normal text-black/90 no-underline"
-			href="{base}/"
-		>
-			<span><span style="color:#951515"><b>IR</b></span> Anthology</span>
-		</a>
-		<a href="{base}/anthology/">Old View</a>
+	<div class="w-full px-4 h-[70px] flex items-center justify-between">
+		<div class="flex items-center gap-4">
+			<a
+				class="flex items-center h-10 text-xl font-normal text-black/90 no-underline"
+				href={resolve('/')}
+			>
+				<span><span style="color:#951515"><b>IR</b></span> Anthology</span>
+			</a>
+			<a href={resolve('/anthology')} class="text-sm text-gray-600 no-underline border border-gray-300 rounded px-3 py-1 hover:bg-gray-200 transition-colors">Browse by Venue</a>
+		</div>
+		{#if userName}
+			<div class="relative group">
+				<button class="flex items-center gap-2 text-black/80 hover:text-black bg-transparent border-none cursor-pointer">
+					{#if userPicture}
+						<img src={userPicture} alt="avatar" class="w-8 h-8 rounded-full border border-gray-300">
+					{/if}
+					<span class="text-sm font-medium">{userName}</span>
+				</button>
+				<div class="absolute right-0 top-full w-40 bg-white rounded shadow-lg border border-gray-100 z-50
+				opacity-0 invisible [transition:opacity_0s_100ms,visibility_0s_100ms]
+				group-hover:opacity-100 group-hover:visible group-hover:[transition:opacity_0s,visibility_0s]
+				before:absolute before:inset-x-0 before:-top-2 before:h-2 before:content-['']">
+					<a href={resolve('/admin')} class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 no-underline">Admin</a>
+					<button onclick={logout} class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-none bg-transparent cursor-pointer">Log out</button>
+				</div>
+			</div>
+		{/if}
 	</div>
 
 </nav>
