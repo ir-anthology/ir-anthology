@@ -2,10 +2,10 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,macos,windows,linux,svelte
 ### Custom ###
 .vscode/
-.devcontainer/
 build/
 __pycache__/
 node_modules/
+data/
 
 ### Linux ###
 *~
