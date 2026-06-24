@@ -203,6 +203,54 @@ GROUP BY ?year ?title ?streamTitle ?pub
 ORDER BY DESC(?year) ?title
 '''
 
+WORKSHOPS_PROCEEDINGS_TEMPLATE = '''
+PREFIX dblp: <https://dblp.org/rdf/schema#>
+PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
+PREFIX ex: <https://ir.webis.de/kg#>
+
+SELECT ?year ?title ?streamTitle ?pub (COUNT(DISTINCT ?paper) AS ?count) WHERE {
+  VALUES ?streamTitle {'Workshops'}
+  ?stream a ex:Workshop .
+  ?pub dblp:yearOfPublication ?pubYear ;
+       dblp:publishedInStream ?stream ;
+       dblp:title ?title ;
+       dblp:bibtexType bibtex:Proceedings .
+
+  OPTIONAL { ?pub ex:yearOfConference ?eventYear }
+  BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
+
+  OPTIONAL {
+    ?paper dblp:publishedAsPartOf ?pub ;
+           dblp:bibtexType bibtex:Inproceedings .
+  }
+}
+GROUP BY ?year ?title ?streamTitle ?pub
+ORDER BY DESC(?year) ?title
+'''
+
+WORKSHOPS_YEAR_PROCEEDINGS_QUERY_TEMPLATE = '''
+PREFIX dblp: <https://dblp.org/rdf/schema#>
+PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
+PREFIX ex: <https://ir.webis.de/kg#>
+
+SELECT ?title ?doi ?pub ?streamTitle WHERE{
+  ?stream a ex:Workshop .
+  VALUES ?streamTitle {'Workshops'}
+  ?pub dblp:title ?title ;
+       dblp:publishedInStream ?stream ;
+	   dblp:bibtexType bibtex:Proceedings ;
+	   dblp:yearOfPublication ?pubYear .
+       
+  OPTIONAL { ?pub ex:yearOfConference ?eventYear }
+  BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
+
+  FILTER(STR(?year) = "$YEAR")
+
+  OPTIONAL{?pub dblp:doi ?doi}
+}
+GROUP BY ?title ?doi ?pub ?streamTitle
+'''
+
 PROCEEDINGS_QUERY_TEMPLATE = '''
 PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
@@ -240,6 +288,41 @@ WHERE{
   VALUES ?stream {
     <$VENUE_ID>
   }
+  ?book dblp:publishedInStream ?stream ;
+        dblp:bibtexType bibtex:Proceedings ;
+        dblp:yearOfPublication ?pubYear .
+
+  OPTIONAL { ?book ex:yearOfConference ?eventYear }
+  BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
+
+  FILTER(STR(?year) = "$YEAR")
+
+  ?pub dblp:publishedAsPartOf ?book ;
+       dblp:title ?title ;
+	   dblp:bibtexType bibtex:Inproceedings .
+
+  OPTIONAL{?pub dblp:doi ?doi}
+  OPTIONAL {
+    ?pub dblp:hasSignature ?sig .
+    ?sig a dblp:AuthorSignature ;
+         dblp:signatureOrdinal ?ord ;
+         dblp:signatureCreator ?authorUri ;
+         dblp:signatureDblpName ?authorName .
+  }
+}
+GROUP BY ?title ?doi ?book ?pub
+'''
+
+WORKSHOPS_INPROCEEDINGS_FROM_PROCEEDINGS_TEMPLATE = '''
+PREFIX dblp: <https://dblp.org/rdf/schema#>
+PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
+PREFIX ex: <https://ir.webis.de/kg#>
+
+SELECT ?title ?doi ?book ?pub
+  (GROUP_CONCAT(DISTINCT CONCAT(STR(?ord), "@@", ?authorName); separator=", ") AS ?authors)
+  (GROUP_CONCAT(DISTINCT CONCAT(STR(?ord), "@@", STR(?authorUri)); separator=", ") AS ?authorIds)
+WHERE{
+  ?stream a ex:Workshop .
   ?book dblp:publishedInStream ?stream ;
         dblp:bibtexType bibtex:Proceedings ;
         dblp:yearOfPublication ?pubYear .

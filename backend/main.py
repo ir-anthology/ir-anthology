@@ -87,38 +87,39 @@ async def read_conference(id: str, client: httpx.AsyncClient = Depends(get_clien
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
 @app.get("/api/conferences/{id}/{year}/inproceedings")
-async def read_conference(id: str, year: int, client: httpx.AsyncClient = Depends(get_client)):
+async def read_conference_year_inproceedings(id: str, year: int, client: httpx.AsyncClient = Depends(get_client)):
     query = sparqlTemplates.INPROCEEDINGS_FROM_PROCEEDINGS_TEMPLATE.replace('$VENUE_ID', get_uri_from_id(id)).replace('$YEAR', str(year))
     data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
 @app.get("/api/conferences/{id}/{year}/proceedings")
-async def read_conference_year(id: str, year: int, client: httpx.AsyncClient = Depends(get_client)):
+async def read_conference_year_proceedings(id: str, year: int, client: httpx.AsyncClient = Depends(get_client)):
     query = sparqlTemplates.PROCEEDINGS_QUERY_TEMPLATE.replace('$VENUE_ID', get_uri_from_id(id)).replace('$YEAR', str(year))
     data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
 @app.get("/api/workshops/overview")
-async def read_conferences_overview(client: httpx.AsyncClient = Depends(get_client)):
+async def read_workshops_overview(client: httpx.AsyncClient = Depends(get_client)):
     query = sparqlTemplates.ANTHOLOGY_WORKSHOPS_QUERY_TEMPLATE
     data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
-@app.get("/api/conferences/{id}")
-async def read_conference(id: str, client: httpx.AsyncClient = Depends(get_client)):
-    query = sparqlTemplates.VENUE_PROCEEDINGS_TEMPLATE.replace('$VENUE_URI', get_uri_from_id(id))
+@app.get("/api/workshops/proceedings")
+async def read_workshops_proceedings(client: httpx.AsyncClient = Depends(get_client)):
+    query = sparqlTemplates.WORKSHOPS_PROCEEDINGS_TEMPLATE
+    print(query)
     data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
-@app.get("/api/conferences/{id}/{year}/inproceedings")
-async def read_conference(id: str, year: int, client: httpx.AsyncClient = Depends(get_client)):
-    query = sparqlTemplates.INPROCEEDINGS_FROM_PROCEEDINGS_TEMPLATE.replace('$VENUE_ID', get_uri_from_id(id)).replace('$YEAR', str(year))
+@app.get("/api/workshops/{year}/inproceedings")
+async def read_conference(year: int, client: httpx.AsyncClient = Depends(get_client)):
+    query = sparqlTemplates.WORKSHOPS_INPROCEEDINGS_FROM_PROCEEDINGS_TEMPLATE.replace('$YEAR', str(year))
     data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
-@app.get("/api/conferences/{id}/{year}/proceedings")
-async def read_conference_year(id: str, year: int, client: httpx.AsyncClient = Depends(get_client)):
-    query = sparqlTemplates.PROCEEDINGS_QUERY_TEMPLATE.replace('$VENUE_ID', get_uri_from_id(id)).replace('$YEAR', str(year))
+@app.get("/api/workshops/{year}/proceedings")
+async def read_conference_year(year: int, client: httpx.AsyncClient = Depends(get_client)):
+    query = sparqlTemplates.WORKSHOPS_YEAR_PROCEEDINGS_QUERY_TEMPLATE.replace('$YEAR', str(year))
     data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 

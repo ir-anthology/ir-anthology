@@ -3,7 +3,9 @@ import { parseSparqlResult, getIDFromURI } from '$lib/helperFunctions.js';
 export async function load({params}) {
     const name = params.name
     const year = params.year
-    if(name.includes("conf")){
+    if (name === "workshops"){
+        return loadWorkshops(year)
+    }else if(name.includes("conf")){
         return loadConference(name, year)
     }else if(name.includes("journals")){
         return loadJournal(name, year)
@@ -45,4 +47,22 @@ async function loadJournal(name:string, year:string){
         groupedData.get(volume)?.get(issue)?.push(entry)
     }
     return { articles: groupedData, journalTitle }
+}
+
+async function loadWorkshops(year: string){
+    const data = await fetchBackend("workshops/"+year+"/proceedings");
+    const proceedings = parseSparqlResult(data);
+    const inproceedingsData = await fetchBackend("workshops/"+year+"/inproceedings");
+    const inproceedings = parseSparqlResult(inproceedingsData);
+    const return_inproceedings:Record<string, Record<string, string | null>[]> = {};
+    for(const inproceeding of inproceedings){
+        const book = inproceeding.book;
+        if(book === null){ continue; }
+        if (!(book in return_inproceedings)){
+            return_inproceedings[book] = [];
+        }
+        inproceeding["id"] = getIDFromURI(inproceeding.pub)
+        return_inproceedings[book].push(inproceeding)
+    }
+    return {"proceedings": proceedings, "inproceedings": return_inproceedings};
 }

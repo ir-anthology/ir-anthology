@@ -4,6 +4,7 @@
     import { getIDFromURI } from '$lib/helperFunctions';
 
     const { data } = $props();
+    console.log(data)
     const venueName = page.params.name;
 </script>
 <nav class="text-sm mb-4">

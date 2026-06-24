@@ -2,7 +2,15 @@
     import { resolve } from '$app/paths';
     let {data} = $props();
     const venues = $derived(data.venues)
+    const workshops = $derived(venues.filter(v => v.type === 'Workshop').sort((a, b) => a.label.localeCompare(b.label)))
+    const workshop_row = {
+        years: [...new Set(workshops.flatMap(v => v.years))],
+        label: 'Workshops',
+        id: 'workshops',
+        type: 'Workshop',
+    };
     const conferences = $derived(venues.filter(v => v.type === 'Conference').sort((a, b) => a.label.localeCompare(b.label)))
+    conferences.push(workshop_row)
     const journals = $derived(venues.filter(v => v.type === 'Journal').sort((a, b) => a.label.localeCompare(b.label)))
     const NUM_COLS = 70
     const indicies = [...Array(NUM_COLS).keys()].map((x) => {

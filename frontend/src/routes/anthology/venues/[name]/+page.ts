@@ -3,8 +3,9 @@ import { parseSparqlResult } from '$lib/helperFunctions.js';
 
 export async function load({ params }) {
     const name = params.name
-
-    if (name.includes('journals')) {
+    if (name === "workshops"){
+        return loadWorkshops()
+    } else if (name.includes('journals')) {
         return loadJournal(name)
     } else {
         return loadConference(name)
@@ -43,4 +44,22 @@ async function loadJournal(id: string) {
     }
     const sorted = new Map([...groupedByYear.entries()].sort((a, b) => parseInt(b[0]) - parseInt(a[0])))
     return { type: 'journal', articles: sorted, journalTitle }
+}
+
+async function loadWorkshops(){
+    const raw = parseSparqlResult(await fetchBackend("workshops/proceedings"))
+    console.log(raw)
+    const streamTitle = raw[0]?.streamTitle ?? ''
+    const groupedByYear = new Map<string, { title: string, pub: string, count: number }[]>()
+    for (const entry of raw) {
+        const y = entry.year ?? ''
+        if (!groupedByYear.has(y)) groupedByYear.set(y, [])
+        groupedByYear.get(y)!.push({
+            title: entry.title ?? '',
+            pub: entry.pub ?? '',
+            count: parseInt(entry.count ?? '0', 10)
+        })
+    }
+    const sorted = new Map([...groupedByYear.entries()].sort((a, b) => parseInt(b[0]) - parseInt(a[0])))
+    return { type: 'conference', name: streamTitle, yearGroups: sorted, venue_id: "workshops" }
 }
