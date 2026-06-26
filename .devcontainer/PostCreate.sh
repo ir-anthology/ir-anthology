@@ -9,4 +9,4 @@ echo "deb [arch=amd64 signed-by=/usr/share/keyrings/qlever.gpg] https://packages
   | sudo tee /etc/apt/sources.list.d/qlever.list > /dev/null
 sudo apt-get update
 sudo apt-get install -y --no-install-recommends qlever
-pip install "fastapi[standard]" "PyJWT" "cryptography"
+pip install "fastapi[standard]"
