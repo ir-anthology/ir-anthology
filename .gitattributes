@@ -1,1 +1,8 @@
-* text eol=lf
+# Auto-detect text; force LF in the working tree for text files
+* text=auto eol=lf
+
+# Shell scripts must be LF (you already had this — keep it explicit)
+*.sh text eol=lf
+
+# Never normalize the committed pnpm store — would break integrity hashes
+.pnpm-store/** -text
