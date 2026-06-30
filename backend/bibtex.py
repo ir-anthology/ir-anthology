@@ -48,6 +48,10 @@ BIBTEX_CHAR_MAP: dict[str, str] = {
 }
 
 
+def _normalize_pages(s: str) -> str:
+    return re.sub(r'-+', '--', s)
+
+
 def escape_bibtex(s: str) -> str:
     return ''.join(BIBTEX_CHAR_MAP.get(c, c) for c in (s or ''))
 
@@ -128,10 +132,10 @@ def _inproceedings(data: dict) -> str:
     if data.get('editors'):
         editors = decode_ordered(data.get('editors'), strip_disambig=True)
         fields.append(('editor', ' and\n'.join(editors)))
-    fields.append(('title', data.get('title', '')))
-    fields.append(('booktitle', data.get('booktitle', '')))
+    fields.append(('title', '{' + data.get('title', '') + '}'))
+    fields.append(('booktitle', '{' + data.get('booktitle', '') + '}'))
     if data.get('series'):    fields.append(('series', data['series']))
-    if data.get('pages'):     fields.append(('pages', data['pages']))
+    if data.get('pages'):     fields.append(('pages', _normalize_pages(data['pages'])))
     if data.get('publisher'): fields.append(('publisher', data['publisher']))
     fields.append(('year', data.get('year', '')))
     if data.get('month'):     fields.append(('month', data['month']))
@@ -145,7 +149,7 @@ def _proceedings(data: dict) -> str:
     if data.get('editors'):
         editors = decode_ordered(data.get('editors'), strip_disambig=True)
         fields.append(('editor', ' and\n'.join(editors)))
-    fields.append(('title', data.get('title', '')))
+    fields.append(('title', '{' + data.get('title', '') + '}'))
     if data.get('series'):    fields.append(('series', data['series']))
     if data.get('volume'):    fields.append(('volume', data['volume']))
     if data.get('publisher'): fields.append(('publisher', data['publisher']))
@@ -160,11 +164,11 @@ def _proceedings(data: dict) -> str:
 def _article(data: dict) -> str:
     authors = decode_ordered(data.get('authors'), strip_disambig=True)
     fields: list[tuple[str, str]] = [('author', ' and\n'.join(authors))]
-    fields.append(('title', data.get('title', '')))
+    fields.append(('title', '{' + data.get('title', '') + '}'))
     fields.append(('journal', data.get('streamTitle', '')))
     if data.get('volume'):    fields.append(('volume', data['volume']))
     if data.get('number'):    fields.append(('number', data['number']))
-    if data.get('pages'):     fields.append(('pages', data['pages']))
+    if data.get('pages'):     fields.append(('pages', _normalize_pages(data['pages'])))
     fields.append(('year', data.get('year', '')))
     if data.get('url'):       fields.append(('url', data['url']))
     if data.get('doi'):       fields.append(('doi', data['doi']))
