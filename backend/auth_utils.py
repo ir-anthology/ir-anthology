@@ -1,5 +1,4 @@
-import jwt
-from jwt import PyJWKClient
+import httpx
 from fastapi import HTTPException, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -7,24 +6,21 @@ GITLAB_URL = "https://git.webis.de"
 ADMIN_GROUP = "auth/auth-webis-admin"
 
 _bearer = HTTPBearer()
-_jwks_client = PyJWKClient(f"{GITLAB_URL}/oauth/discovery/keys", cache_keys=True)
 
 
 async def require_admin(
     creds: HTTPAuthorizationCredentials = Security(_bearer),
 ) -> dict:
-    """FastAPI dependency — verifies the GitLab ID token (JWT) and checks admin group."""
-    try:
-        signing_key = _jwks_client.get_signing_key_from_jwt(creds.credentials)
-        payload = jwt.decode(
-            creds.credentials,
-            signing_key.key,
-            algorithms=["RS256"],
-            options={"verify_aud": False},
+    """FastAPI dependency — verifies the token via GitLab userinfo and checks admin group."""
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            f"{GITLAB_URL}/oauth/userinfo",
+            headers={"Authorization": f"Bearer {creds.credentials}"},
         )
-    except jwt.PyJWTError as e:
-        raise HTTPException(401, f"Invalid or expired token: {e}")
+    if resp.status_code != 200:
+        raise HTTPException(401, "Invalid or expired token")
 
-    if ADMIN_GROUP not in (payload.get("groups_direct") or []):
+    payload = resp.json()
+    if ADMIN_GROUP not in (payload.get("groups") or []):
         raise HTTPException(403, "Admin group membership required")
     return payload
