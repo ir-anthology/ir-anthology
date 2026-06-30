@@ -6,6 +6,9 @@ build/
 __pycache__/
 node_modules/
 data/
+**/index.db
+**/index.db-shm
+**/index.db-wal
 
 ### Linux ###
 *~
