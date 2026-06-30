@@ -18,6 +18,16 @@ export function getURIFromID(ir_id: string){
     return "https://dblp.org/"+ir_id.replaceAll("+", "/")
 }
 
+export function slugifyName(name: string): string {
+    return name
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-z0-9\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-')
+}
+
 export function decodeOrdered(raw: string | null, stripDisambig = false): string[] {
     if (!raw) return []
     return raw

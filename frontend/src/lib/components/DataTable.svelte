@@ -5,7 +5,7 @@
     import {navigating} from '$app/state'
     import { resolve } from '$app/paths';
     import { fetchBackend } from '$lib/sparql/fetch';
-    import { getIDFromURI } from '$lib/helperFunctions';
+    import { getIDFromURI, slugifyName } from '$lib/helperFunctions';
 
     const COLUMN_WIDTHS: Record<string, string> = {
 		Entity: 'w-auto min-w-[100px]',
@@ -88,14 +88,14 @@
         goto(resolve(`/?${new_params.toString()}`))
     }
 
-    function buildURL(uri: string): string{
+    function buildURL(uri: string, entityName: string = ''): string{
         switch(current_entity){
             case "Publication":
                 return "/anthology/publications/"+getIDFromURI(uri)
             case "Venue":
                 return "/anthology/venues/"+getIDFromURI(uri)
             case "Author":
-                return "/anthology/people/"+getIDFromURI(uri)
+                return "/anthology/people/"+slugifyName(entityName)+"/"+getIDFromURI(uri)
             default:
                 return ""
         }
@@ -147,7 +147,7 @@
 								>
 									{#if row['URI']?.value}
 										<a
-											href={buildURL(row['URI'].value)}
+											href={buildURL(row['URI'].value, row['Entity']?.value ?? '')}
 											target="_blank"
 											rel="noopener noreferrer"
 											class="link"

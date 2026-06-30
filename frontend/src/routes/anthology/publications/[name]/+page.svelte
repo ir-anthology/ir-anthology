@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { getIDFromURI, decodeOrdered } from '$lib/helperFunctions';
+    import { getIDFromURI, decodeOrdered, slugifyName } from '$lib/helperFunctions';
     import { resolve } from '$app/paths';
     const { data } = $props()
     const publication = data.publication
@@ -51,7 +51,7 @@
 
 <p class="mb-4">
     {#each authors as author, i (i)}
-        <a href={resolve(`/anthology/people/${getIDFromURI(authorIds[i])}`)} class="link">{author}</a>{#if i < authors.length - 1}<span class="text-gray-400 font-bold px-1.5">|</span>{/if}
+        <a href={resolve(`/anthology/people/${slugifyName(author)}/${getIDFromURI(authorIds[i])}`)} class="link">{author}</a>{#if i < authors.length - 1}<span class="text-gray-400 font-bold px-1.5">|</span>{/if}
     {/each}
 </p>
 

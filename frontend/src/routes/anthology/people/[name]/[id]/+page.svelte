@@ -1,6 +1,6 @@
 <script lang="ts">
     import { resolve } from '$app/paths';
-    import { getIDFromURI } from '$lib/helperFunctions';
+    import { getIDFromURI, slugifyName } from '$lib/helperFunctions';
 
     const { data } = $props()
     const pubsByYear = $derived(data.pubsByYear ?? new Map())
@@ -38,7 +38,7 @@
                 {#if authors.length > 0}
                     <div class="text-sm mt-0.5">
                         {#each authors as author, i (i)}
-                            {#if i > 0}<span class="text-gray-400 font-bold px-1.5">|</span>{/if}{#if authorIds[i]}<a href={resolve(`/anthology/people/${getIDFromURI(authorIds[i])}`)} class="link">{author}</a>{:else}{author}{/if}
+                            {#if i > 0}<span class="text-gray-400 font-bold px-1.5">|</span>{/if}{#if authorIds[i]}<a href={resolve(`/anthology/people/${slugifyName(author)}/${getIDFromURI(authorIds[i])}`)} class="link">{author}</a>{:else}{author}{/if}
                         {/each}
                     </div>
                 {/if}

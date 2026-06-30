@@ -1,7 +1,7 @@
 <script lang="ts">
     import { resolve } from '$app/paths';
     import { page } from '$app/state';
-    import { getIDFromURI, decodeOrdered } from '$lib/helperFunctions';
+    import { getIDFromURI, decodeOrdered, slugifyName } from '$lib/helperFunctions';
 
     const { data } = $props()
     const urlParts = page.url.pathname.split('/')
@@ -69,7 +69,7 @@
                         {#if authors.length > 0}
                             <div class="text-sm mt-0.5">
                                 {#each authors as author, i (i)}
-                                    {#if i > 0}<span class="text-gray-400 px-1.5"> | </span>{/if}{#if authorIds[i]}<a href={resolve(`/anthology/people/${getIDFromURI(authorIds[i])}`)} class="link">{author}</a>{:else}{author}{/if}
+                                    {#if i > 0}<span class="text-gray-400 px-1.5"> | </span>{/if}{#if authorIds[i]}<a href={resolve(`/anthology/people/${slugifyName(author)}/${getIDFromURI(authorIds[i])}`)} class="link">{author}</a>{:else}{author}{/if}
                                 {/each}
                             </div>
                         {/if}
@@ -133,7 +133,7 @@
                     {#if authors.length > 0}
                         <div class="text-sm mt-0.5">
                             {#each authors as author, i (i)}
-                                {#if i > 0}<span class="text-gray-400 px-1.5"> | </span>{/if}{#if authorIds[i]}<a href={resolve(`/anthology/people/${getIDFromURI(authorIds[i])}`)} class="link">{author}</a>{:else}{author}{/if}
+                                {#if i > 0}<span class="text-gray-400 px-1.5"> | </span>{/if}{#if authorIds[i]}<a href={resolve(`/anthology/people/${slugifyName(author)}/${getIDFromURI(authorIds[i])}`)} class="link">{author}</a>{:else}{author}{/if}
                             {/each}
                         </div>
                     {/if}
