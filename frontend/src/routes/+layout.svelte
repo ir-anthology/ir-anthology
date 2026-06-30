@@ -8,10 +8,12 @@
 
 	let userName = $state<string | null>(null);
 	let userPicture = $state<string | null>(null);
+	let isAdmin = $state(false);
 
-	function applyUser(profile: { name?: string | null; nickname?: string | null; sub?: string; picture?: string | null }) {
+	function applyUser(profile: { name?: string | null; nickname?: string | null; sub?: string; picture?: string | null; groups_direct?: string[] | null }) {
 		userName = profile.name ?? profile.nickname ?? profile.sub ?? null;
 		userPicture = profile.picture ?? null;
+		isAdmin = (profile.groups_direct ?? []).includes('auth/auth-webis-admin');
 	}
 
 	onMount(() => {
@@ -46,6 +48,9 @@
 		{#if userName}
 			<div class="relative group">
 				<button class="flex items-center gap-2 text-black/80 hover:text-black bg-transparent border-none cursor-pointer">
+					{#if isAdmin}
+						<span class="text-xs font-medium bg-red-100 text-red-700 border border-red-200 rounded px-2 py-0.5">Admin</span>
+					{/if}
 					{#if userPicture}
 						<img src={userPicture} alt="avatar" class="w-8 h-8 rounded-full border border-gray-300">
 					{/if}
