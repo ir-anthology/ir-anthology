@@ -8,7 +8,7 @@ RUN mkdir -p ${DATA_PATH}
 
 COPY ./ .
 
-RUN pip install "fastapi[standard]" "PyJWT" "cryptography"
+RUN pip install "fastapi[standard]"
 
 EXPOSE 8000
 
