@@ -107,7 +107,6 @@ async def read_workshops_overview(client: httpx.AsyncClient = Depends(get_client
 @app.get("/api/workshops/proceedings")
 async def read_workshops_proceedings(client: httpx.AsyncClient = Depends(get_client)):
     query = sparqlTemplates.WORKSHOPS_PROCEEDINGS_TEMPLATE
-    print(query)
     data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
@@ -206,20 +205,23 @@ def build_filters(search_params: dict[str, str], filter_mode = 'label') -> str :
             contains_string = f"{contains_clauses[0]}"
             for i in range(1, len(contains_clauses)):
                 contains_string +=  f" || {contains_clauses[i]}"
-            print(contains_string)
             filter_clauses.append(f"FILTER({contains_string})")
 
-    print(filter_clauses)
     filter_string = f"{filter_clauses[0]}"
     for i in range(1, len(filter_clauses)):
         filter_string += f"\n  {filter_clauses[i]}"
-    print(filter_string)
     return filter_string;
 
 
 class ImportRequest(BaseModel):
     iri: str
     type: str   # "journal" | "conference" | "workshop" | "person" | "publication"
+    year: int | None = None
+
+
+class CustomWorkshopRequest(BaseModel):
+    abbreviation: str
+    title: str
     year: int | None = None
 
 
@@ -254,6 +256,32 @@ async def import_from_dblp(
         raise HTTPException(404, "No triples found for the given IRI — check that it exists in DBLP")
 
     slug = body.iri.rstrip("/").split("/")[-1]
+    if body.year:
+        slug += f"-{body.year}"
+    filename = patch_store.save_patch(slug, nt)
+
+    sparql = patch_store.nt_to_sparql_insert(nt)
+    live_ok = True
+    try:
+        await sparql_update(sparql, client)
+    except HTTPException:
+        live_ok = False
+
+    triple_count = sum(1 for line in nt.splitlines() if line.strip())
+    return {"filename": filename, "triples": triple_count, "live_applied": live_ok}
+
+
+@app.post("/api/admin/workshop/custom")
+async def add_custom_workshop(
+    body: CustomWorkshopRequest,
+    _user: dict = Depends(auth_utils.require_admin),
+    client: httpx.AsyncClient = Depends(get_client),
+):
+    nt = await dblp_fetch.fetch_custom_workshop(client, body.abbreviation, body.title, body.year)
+    if not nt.strip():
+        raise HTTPException(404, "No proceedings found on DBLP matching the given name/abbreviation")
+
+    slug = f"custom-workshop-{body.abbreviation}"
     if body.year:
         slug += f"-{body.year}"
     filename = patch_store.save_patch(slug, nt)

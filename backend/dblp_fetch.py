@@ -3,6 +3,7 @@ import httpx
 from fastapi import HTTPException
 
 DBLP_ENDPOINT = "https://sparql.dblp.org/sparql"
+CUSTOM_STREAM_BASE = "https://ir.webis.de/anthology/venues/workshops+"
 _PAGE = 100_000
 
 _YEAR_RE = re.compile(r'[12][0-9]{3}')
@@ -14,7 +15,6 @@ _YEAR_IN_TITLE = re.compile(r'^(<[^>]+>) <[^>]+> ".*?([12][0-9]{3})[^"]*"')
 # ---------------------------------------------------------------------------
 
 async def _construct(client: httpx.AsyncClient, query: str) -> str:
-    print(query)
     resp = await client.post(
         DBLP_ENDPOINT,
         data={"query": query},
@@ -22,7 +22,6 @@ async def _construct(client: httpx.AsyncClient, query: str) -> str:
     )
     if not resp.is_success:
         raise HTTPException(502, f"DBLP CONSTRUCT failed ({resp.status_code}): {resp.text[:300]}")
-    print("resp_text: " + resp.text.strip()+"\n END")
     return resp.text.strip()
 
 
@@ -527,6 +526,106 @@ async def fetch_person(
         editor_nt = await _paginate(client, lambda l, o: _q_person_editors(person_iri, sv, l, o))
         sig_nt    = await _paginate(client, lambda l, o: _q_person_signatures(person_iri, sv, l, o))
         parts += [pub_nt, author_nt, editor_nt, sig_nt]
+    return _dedup("\n".join(p for p in parts if p))
+
+
+def _sparql_str_escape(s: str) -> str:
+    return s.replace('\\', '\\\\').replace('"', '\\"')
+
+
+async def _find_proceedings_by_title(
+    client: httpx.AsyncClient,
+    title: str,
+    abbreviation: str,
+    year: int | None,
+) -> list[dict]:
+    abbreviation_filter = f'CONTAINS(?title, " {_sparql_str_escape(abbreviation)} ") || CONTAINS(?title, " {_sparql_str_escape(abbreviation)}@") || CONTAINS(?title, " {_sparql_str_escape(abbreviation)},")'
+    title_filter = f'CONTAINS(?title, " {_sparql_str_escape(title)} ") || CONTAINS(?title, " {_sparql_str_escape(title)},")'
+    query = f"""PREFIX dblp: <https://dblp.org/rdf/schema#>
+PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
+SELECT DISTINCT ?proc ?title WHERE {{
+  ?proc dblp:bibtexType bibtex:Proceedings ;
+        dblp:title ?title .
+  FILTER({abbreviation_filter} || {title_filter})
+}}"""
+    print(query)
+    bindings = await _select(client, query)
+    result = []
+    for b in bindings:
+        title = b["title"]["value"]
+        m = _YEAR_RE.search(title)
+        if not m:
+            continue
+        extracted_year = m.group(0)
+        if year is not None and extracted_year != str(year):
+            continue
+        result.append({"proc": b["proc"]["value"], "title": title, "year": extracted_year})
+    return result
+
+
+async def _find_papers_in_proceedings(
+    client: httpx.AsyncClient,
+    proc_iris: list[str],
+) -> list[str]:
+    vals = _vals(proc_iris)
+    query = f"""PREFIX dblp: <https://dblp.org/rdf/schema#>
+SELECT DISTINCT ?pub WHERE {{
+  VALUES ?proc {{ {vals} }}
+  ?pub dblp:publishedAsPartOf ?proc .
+}}"""
+    bindings = await _select(client, query)
+    return [b["pub"]["value"] for b in bindings]
+
+
+async def fetch_custom_workshop(
+    client: httpx.AsyncClient,
+    abbreviation: str,
+    title: str,
+    year: int | None,
+) -> str:
+    """Fetch inproceedings from DBLP proceedings whose titles match abbreviation/title,
+    then construct a custom ir.webis.de Workshop stream linking all found publications."""
+    stream_iri = CUSTOM_STREAM_BASE + abbreviation.lower()
+    DBLP_NS = "https://dblp.org/rdf/schema#"
+    RDF_NS  = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    EX_NS   = "https://ir.webis.de/kg#"
+
+    proceedings = await _find_proceedings_by_title(client,title, abbreviation, year)
+    if not proceedings:
+        return ""
+
+    proc_iris = [p["proc"] for p in proceedings]
+
+    # Stream definition
+    display_title = title or abbreviation
+    custom_triples = [
+        f'<{stream_iri}> <{RDF_NS}type> <{EX_NS}Workshop> .',
+        f'<{stream_iri}> <{DBLP_NS}primaryStreamTitle> "{_sparql_str_escape(display_title)}" .',
+    ]
+    for p in proceedings:
+        custom_triples.append(f'<{p["proc"]}> <{DBLP_NS}publishedInStream> <{stream_iri}> .')
+        custom_triples.append(f'<{p["proc"]}> <{EX_NS}yearOfConference> "{p["year"]}" .')
+
+    # Full triples from DBLP
+    proc_nt   = await _paginate(client, lambda l, o: _q_conf_proceedings(proc_iris, l, o))
+    paper_nt  = await _paginate(client, lambda l, o: _q_conf_papers(proc_iris, l, o))
+    author_nt = await _paginate(client, lambda l, o: _q_conf_authors(proc_iris, l, o))
+    editor_nt = await _paginate(client, lambda l, o: _q_conf_editors(proc_iris, l, o))
+    sig_nt    = await _paginate(client, lambda l, o: _q_conf_signatures(proc_iris, l, o))
+
+    # publishedInStream for each inproceedings
+    paper_iris = await _find_papers_in_proceedings(client, proc_iris)
+    paper_stream_triples = [
+        f'<{iri}> <{DBLP_NS}publishedInStream> <{stream_iri}> .'
+        for iri in paper_iris
+    ]
+
+    parts = [
+        "\n".join(custom_triples),
+        proc_nt, paper_nt,
+        "\n".join(paper_stream_triples),
+        author_nt, editor_nt, sig_nt,
+    ]
     return _dedup("\n".join(p for p in parts if p))
 
 
