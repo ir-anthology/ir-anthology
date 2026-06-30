@@ -11,8 +11,10 @@ import dblp_fetch
 import httpx
 import os
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 
-SPARQL_ENDPOINT = "https://database-ir-anthology.srv.webis.de/"
+# SPARQL_ENDPOINT = "https://database-ir-anthology.srv.webis.de/"
+SPARQL_ENDPOINT = "http://localhost:7016"
 SPARQL_ACCESS_TOKEN = os.environ.get("SPARQL_ACCESS_TOKEN", "")
 
 VALID_ENTITIES = ['Author', 'Venue', 'Publication', 'Year', '2020s', '2010s', '2000s', 'Pre2000s']
@@ -218,10 +220,29 @@ class ImportRequest(BaseModel):
     year: int | None = None
 
 
+class CustomWorkshopPreviewRequest(BaseModel):
+    abbreviation: str
+    title: str
+    year: int | None = None
+
+
 class CustomWorkshopRequest(BaseModel):
     abbreviation: str
     title: str
     year: int | None = None
+    proc_iris: list[str]
+
+
+@app.post("/api/admin/workshop/custom/preview")
+async def preview_custom_workshop(
+    body: CustomWorkshopPreviewRequest,
+    _user: dict = Depends(auth_utils.require_admin),
+    client: httpx.AsyncClient = Depends(get_client),
+) -> dict:
+    proceedings = await dblp_fetch._find_proceedings_by_title(
+        client, body.title, body.abbreviation, body.year
+    )
+    return {"proceedings": proceedings}
 
 
 @app.get("/api/admin/patches")
@@ -232,7 +253,7 @@ async def get_patches(_user: dict = Depends(auth_utils.require_admin)):
 @app.post("/api/admin/import")
 async def import_from_dblp(
     body: ImportRequest,
-    _user: dict = Depends(auth_utils.require_admin),
+    user: dict = Depends(auth_utils.require_admin),
     client: httpx.AsyncClient = Depends(get_client),
 ):
     if body.type in ("journal", "conference"):
@@ -267,18 +288,29 @@ async def import_from_dblp(
         live_ok = False
 
     triple_count = sum(1 for line in nt.splitlines() if line.strip())
+    patch_store.save_patch_meta(filename, {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "user_name": user.get("name", ""),
+        "user_email": user.get("email", ""),
+        "action": "import",
+        "details": {"type": body.type, "iri": body.iri, "year": body.year},
+        "triples": triple_count,
+        "live_applied": live_ok,
+    })
     return {"filename": filename, "triples": triple_count, "live_applied": live_ok}
 
 
 @app.post("/api/admin/workshop/custom")
 async def add_custom_workshop(
     body: CustomWorkshopRequest,
-    _user: dict = Depends(auth_utils.require_admin),
+    user: dict = Depends(auth_utils.require_admin),
     client: httpx.AsyncClient = Depends(get_client),
 ):
-    nt = await dblp_fetch.fetch_custom_workshop(client, body.abbreviation, body.title, body.year)
+    if not body.proc_iris:
+        raise HTTPException(400, "No proceedings selected")
+    nt = await dblp_fetch.fetch_custom_workshop(client, body.abbreviation, body.title, body.proc_iris)
     if not nt.strip():
-        raise HTTPException(404, "No proceedings found on DBLP matching the given name/abbreviation")
+        raise HTTPException(404, "No triples found for the given proceedings")
 
     slug = f"custom-workshop-{body.abbreviation}"
     if body.year:
@@ -293,6 +325,20 @@ async def add_custom_workshop(
         live_ok = False
 
     triple_count = sum(1 for line in nt.splitlines() if line.strip())
+    patch_store.save_patch_meta(filename, {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "user_name": user.get("name", ""),
+        "user_email": user.get("email", ""),
+        "action": "custom_workshop",
+        "details": {
+            "abbreviation": body.abbreviation,
+            "title": body.title,
+            "year": body.year,
+            "proc_iris": body.proc_iris,
+        },
+        "triples": triple_count,
+        "live_applied": live_ok,
+    })
     return {"filename": filename, "triples": triple_count, "live_applied": live_ok}
 
 

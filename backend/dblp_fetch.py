@@ -581,20 +581,13 @@ async def fetch_custom_workshop(
     client: httpx.AsyncClient,
     abbreviation: str,
     title: str,
-    year: int | None,
+    proc_iris: list[str],
 ) -> str:
-    """Fetch inproceedings from DBLP proceedings whose titles match abbreviation/title,
-    then construct a custom ir.webis.de Workshop stream linking all found publications."""
+    """Construct a custom ir.webis.de Workshop stream for the given proceedings IRIs."""
     stream_iri = CUSTOM_STREAM_BASE + abbreviation.lower()
     DBLP_NS = "https://dblp.org/rdf/schema#"
     RDF_NS  = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
     EX_NS   = "https://ir.webis.de/kg#"
-
-    proceedings = await _find_proceedings_by_title(client,title, abbreviation, year)
-    if not proceedings:
-        return ""
-
-    proc_iris = [p["proc"] for p in proceedings]
 
     # Stream definition
     display_title = title or abbreviation
@@ -602,9 +595,11 @@ async def fetch_custom_workshop(
         f'<{stream_iri}> <{RDF_NS}type> <{EX_NS}Workshop> .',
         f'<{stream_iri}> <{DBLP_NS}primaryStreamTitle> "{_sparql_str_escape(display_title)}" .',
     ]
-    for p in proceedings:
-        custom_triples.append(f'<{p["proc"]}> <{DBLP_NS}publishedInStream> <{stream_iri}> .')
-        custom_triples.append(f'<{p["proc"]}> <{EX_NS}yearOfConference> "{p["year"]}" .')
+    for iri in proc_iris:
+        custom_triples.append(f'<{iri}> <{DBLP_NS}publishedInStream> <{stream_iri}> .')
+        m = _YEAR_RE.search(iri)
+        if m:
+            custom_triples.append(f'<{iri}> <{EX_NS}yearOfConference> "{m.group(0)}" .')
 
     # Full triples from DBLP
     proc_nt   = await _paginate(client, lambda l, o: _q_conf_proceedings(proc_iris, l, o))

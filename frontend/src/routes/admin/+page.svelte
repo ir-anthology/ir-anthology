@@ -1,6 +1,6 @@
 <script lang="ts">
     import { getToken } from '$lib/auth';
-    import { importFromDblp, importCustomWorkshop, fetchPatches, type ImportResult } from '$lib/sparql/fetch';
+    import { importFromDblp, importCustomWorkshop, previewCustomWorkshop, fetchPatches, type ImportResult, type WorkshopProceeding, type PatchRecord } from '$lib/sparql/fetch';
 
     const { data } = $props();
     const profile = $derived(data.user.profile);
@@ -23,6 +23,9 @@
         loading: boolean;
         result: ImportResult | null;
         error: string | null;
+        step: 'form' | 'select' | 'done';
+        proceedings: WorkshopProceeding[];
+        selectedProcs: Set<string>;
     };
 
     function makeForm(): FormState {
@@ -36,6 +39,7 @@
     const publication = $state(makeForm());
     const customWorkshop = $state<CustomWorkshopState>({
         abbreviation: '', title: '', year: '', loading: false, result: null, error: null,
+        step: 'form', proceedings: [], selectedProcs: new Set(),
     });
 
     async function submit(form: FormState, type: string) {
@@ -53,7 +57,7 @@
         }
     }
 
-    let patches = $state<string[] | null>(null);
+    let patches = $state<PatchRecord[] | null>(null);
     let patchesLoading = $state(false);
     let patchesError = $state<string | null>(null);
 
@@ -77,17 +81,56 @@
         try {
             const token = await getToken();
             const year = parseInt(customWorkshop.year);
-            customWorkshop.result = await importCustomWorkshop(
+            const { proceedings } = await previewCustomWorkshop(
                 customWorkshop.abbreviation.trim(),
                 customWorkshop.title.trim(),
                 isNaN(year) ? undefined : year,
                 token,
             );
+            if (proceedings.length === 0) {
+                customWorkshop.error = 'No proceedings found on DBLP matching the given name/abbreviation';
+                return;
+            }
+            customWorkshop.proceedings = proceedings;
+            customWorkshop.selectedProcs = new Set(proceedings.map(p => p.proc));
+            customWorkshop.step = 'select';
         } catch (e) {
             customWorkshop.error = e instanceof Error ? e.message : 'Unknown error';
         } finally {
             customWorkshop.loading = false;
         }
+    }
+
+    async function confirmCustomWorkshop() {
+        customWorkshop.result = null;
+        customWorkshop.error = null;
+        customWorkshop.loading = true;
+        try {
+            const token = await getToken();
+            const year = parseInt(customWorkshop.year);
+            customWorkshop.result = await importCustomWorkshop(
+                customWorkshop.abbreviation.trim(),
+                customWorkshop.title.trim(),
+                isNaN(year) ? undefined : year,
+                [...customWorkshop.selectedProcs],
+                token,
+            );
+            customWorkshop.step = 'form';
+            customWorkshop.proceedings = [];
+            customWorkshop.selectedProcs = new Set();
+        } catch (e) {
+            customWorkshop.error = e instanceof Error ? e.message : 'Unknown error';
+        } finally {
+            customWorkshop.loading = false;
+        }
+    }
+
+    function resetCustomWorkshop() {
+        customWorkshop.step = 'form';
+        customWorkshop.proceedings = [];
+        customWorkshop.selectedProcs = new Set();
+        customWorkshop.result = null;
+        customWorkshop.error = null;
     }
 </script>
 
@@ -168,14 +211,16 @@
                         placeholder="Full title"
                         bind:value={customWorkshop.title}
                         required
-                        class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-gray-500"
+                        disabled={customWorkshop.step !== 'form'}
+                        class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-gray-500 disabled:bg-gray-50 disabled:text-gray-400"
                     />
                     <input
                         type="text"
                         placeholder="Abbreviation"
                         bind:value={customWorkshop.abbreviation}
                         required
-                        class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-gray-500"
+                        disabled={customWorkshop.step !== 'form'}
+                        class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-gray-500 disabled:bg-gray-50 disabled:text-gray-400"
                     />
                     <div class="flex gap-2">
                         <input
@@ -184,16 +229,60 @@
                             bind:value={customWorkshop.year}
                             min="1900"
                             max="2100"
-                            class="w-36 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-gray-500"
+                            disabled={customWorkshop.step !== 'form'}
+                            class="w-36 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-gray-500 disabled:bg-gray-50 disabled:text-gray-400"
                         />
-                        <button
-                            type="submit"
-                            disabled={customWorkshop.loading}
-                            class="px-4 py-1.5 text-sm bg-gray-800 text-white rounded hover:bg-gray-700 disabled:opacity-50 cursor-pointer"
-                        >
-                            {customWorkshop.loading ? 'Importing…' : 'Import'}
-                        </button>
+                        {#if customWorkshop.step === 'form'}
+                            <button
+                                type="submit"
+                                disabled={customWorkshop.loading}
+                                class="px-4 py-1.5 text-sm bg-gray-800 text-white rounded hover:bg-gray-700 disabled:opacity-50 cursor-pointer"
+                            >
+                                {customWorkshop.loading ? 'Searching…' : 'Search'}
+                            </button>
+                        {/if}
                     </div>
+
+                    {#if customWorkshop.step === 'select'}
+                        <div class="mt-1 flex flex-col gap-1">
+                            <p class="text-xs text-gray-500">Select the proceedings to include:</p>
+                            <ul class="flex flex-col gap-1">
+                                {#each customWorkshop.proceedings as p (p.proc)}
+                                    <li>
+                                        <label class="flex items-center gap-2 text-sm cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={customWorkshop.selectedProcs.has(p.proc)}
+                                                onchange={(e) => {
+                                                    if (e.currentTarget.checked) customWorkshop.selectedProcs.add(p.proc);
+                                                    else customWorkshop.selectedProcs.delete(p.proc);
+                                                }}
+                                            />
+                                            <a href={p.proc} target="_blank" rel="noopener noreferrer" class="link">{p.title}</a> ({p.year})
+                                        </label>
+                                    </li>
+                                {/each}
+                            </ul>
+                            <div class="flex gap-2 mt-1">
+                                <button
+                                    type="button"
+                                    onclick={confirmCustomWorkshop}
+                                    disabled={customWorkshop.loading || customWorkshop.selectedProcs.size === 0}
+                                    class="px-4 py-1.5 text-sm bg-gray-800 text-white rounded hover:bg-gray-700 disabled:opacity-50 cursor-pointer"
+                                >
+                                    {customWorkshop.loading ? 'Importing…' : 'Confirm'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onclick={resetCustomWorkshop}
+                                    class="px-4 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 cursor-pointer text-sm"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    {/if}
+
                     {#if customWorkshop.result}
                         <p class="text-sm text-green-700">
                             Added {customWorkshop.result.triples} triple{customWorkshop.result.triples === 1 ? '' : 's'}
@@ -224,11 +313,59 @@
                     {#if patches.length === 0}
                         <p class="text-sm text-gray-500">No patches found.</p>
                     {:else}
-                        <ul class="max-h-64 overflow-y-auto flex flex-col gap-1">
-                            {#each patches as patch (patch)}
-                                <li class="text-sm font-mono bg-gray-50 border border-gray-100 rounded px-2 py-1">{patch}</li>
-                            {/each}
-                        </ul>
+                        <div class="max-h-96 overflow-y-auto">
+                            <table class="w-full text-xs border-collapse">
+                                <thead class="sticky top-0 bg-gray-50">
+                                    <tr class="text-left text-gray-500 border-b border-gray-200">
+                                        <th class="py-1.5 pr-3 font-medium">Time</th>
+                                        <th class="py-1.5 pr-3 font-medium">User</th>
+                                        <th class="py-1.5 pr-3 font-medium">Action</th>
+                                        <th class="py-1.5 pr-3 font-medium">Details</th>
+                                        <th class="py-1.5 pr-3 font-medium text-right">Triples</th>
+                                        <th class="py-1.5 font-medium">Live</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {#each patches as p (p.filename)}
+                                        {@const det = p.details}
+                                        <tr class="border-b border-gray-100 align-top">
+                                            <td class="py-1.5 pr-3 whitespace-nowrap text-gray-500 font-mono">
+                                                {p.timestamp ? p.timestamp.replace('T', ' ').replace('+00:00', 'Z').slice(0, 19) + 'Z' : p.filename.slice(0, 19)}
+                                            </td>
+                                            <td class="py-1.5 pr-3 whitespace-nowrap">{p.user_name ?? '—'}</td>
+                                            <td class="py-1.5 pr-3 whitespace-nowrap">{p.action ?? '—'}</td>
+                                            <td class="py-1.5 pr-3 text-gray-700">
+                                                {#if det}
+                                                    {#if p.action === 'import'}
+                                                        <span class="font-medium">{String(det.type)}</span>
+                                                        {#if det.iri}<a href={String(det.iri)} target="_blank" rel="noopener noreferrer" class="link ml-1 break-all">{String(det.iri).split('/').at(-1)}</a>{/if}
+                                                        {#if det.year}<span class="text-gray-400 ml-1">({det.year})</span>{/if}
+                                                    {:else if p.action === 'custom_workshop'}
+                                                        <span class="font-medium">{String(det.abbreviation ?? '')}</span>
+                                                        {#if det.title}<span class="text-gray-500 ml-1">{String(det.title)}</span>{/if}
+                                                        {#if det.year}<span class="text-gray-400 ml-1">({det.year})</span>{/if}
+                                                    {:else}
+                                                        {JSON.stringify(det)}
+                                                    {/if}
+                                                {:else}
+                                                    <span class="font-mono text-gray-400">{p.filename}</span>
+                                                {/if}
+                                            </td>
+                                            <td class="py-1.5 pr-3 text-right">{p.triples ?? '—'}</td>
+                                            <td class="py-1.5">
+                                                {#if p.live_applied === true}
+                                                    <span class="text-green-600">✓</span>
+                                                {:else if p.live_applied === false}
+                                                    <span class="text-red-500">✗</span>
+                                                {:else}
+                                                    <span class="text-gray-400">—</span>
+                                                {/if}
+                                            </td>
+                                        </tr>
+                                    {/each}
+                                </tbody>
+                            </table>
+                        </div>
                     {/if}
                 {/if}
             </div>

@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from pathlib import Path
+import json
 import os
 
 _data_path = os.environ.get("DATA_PATH")
@@ -17,10 +18,24 @@ def save_patch(slug: str, nt_content: str) -> str:
     return filename
 
 
-def list_patches() -> list[str]:
+def save_patch_meta(filename: str, meta: dict) -> None:
+    stem = filename.removesuffix(".nt")
+    (PATCHES_DIR / f"{stem}.meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+
+
+def read_patch_meta(filename: str) -> dict | None:
+    stem = filename.removesuffix(".nt")
+    path = PATCHES_DIR / f"{stem}.meta.json"
+    if not path.exists():
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def list_patches() -> list[dict]:
     if not PATCHES_DIR.exists():
         return []
-    return sorted(p.name for p in PATCHES_DIR.glob("*.nt"))
+    names = sorted(p.name for p in PATCHES_DIR.glob("*.nt"))
+    return [{"filename": n, **(read_patch_meta(n) or {})} for n in names]
 
 
 def read_patch(filename: str) -> str:
