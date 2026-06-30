@@ -12,8 +12,7 @@ import httpx
 import os
 from contextlib import asynccontextmanager
 
-#SPARQL_ENDPOINT = "https://database-ir-anthology.srv.webis.de/"
-SPARQL_ENDPOINT = "http://localhost:7016"
+SPARQL_ENDPOINT = "https://database-ir-anthology.srv.webis.de/"
 SPARQL_ACCESS_TOKEN = os.environ.get("SPARQL_ACCESS_TOKEN", "")
 
 VALID_ENTITIES = ['Author', 'Venue', 'Publication', 'Year', '2020s', '2010s', '2000s', 'Pre2000s']
