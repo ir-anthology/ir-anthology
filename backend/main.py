@@ -74,7 +74,7 @@ async def read_table_data(filter_query: Annotated[FilterParams, Query()], client
     data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
-@app.get("/api/conferences/overview")
+@app.get("/api/conferences")
 async def read_conferences_overview(client: httpx.AsyncClient = Depends(get_client)):
     query = sparqlTemplates.ANTHOLOGY_CONFERENCES_QUERY_TEMPLATE
     data = await sparql_post(query, client)
@@ -98,7 +98,7 @@ async def read_conference_year_proceedings(id: str, year: int, client: httpx.Asy
     data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
-@app.get("/api/workshops/overview")
+@app.get("/api/workshops")
 async def read_workshops_overview(client: httpx.AsyncClient = Depends(get_client)):
     query = sparqlTemplates.ANTHOLOGY_WORKSHOPS_QUERY_TEMPLATE
     data = await sparql_post(query, client)
@@ -122,7 +122,7 @@ async def read_conference_year(year: int, client: httpx.AsyncClient = Depends(ge
     data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
-@app.get("/api/journals/overview")
+@app.get("/api/journals")
 async def read_journals_overview(client: httpx.AsyncClient = Depends(get_client)):
     query = sparqlTemplates.ANTHOLOGY_JOURNALS_QUERY_TEMPLATE
     data = await sparql_post(query, client)
@@ -140,9 +140,21 @@ async def read_journal_year(id: str, year: int, client: httpx.AsyncClient = Depe
     data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
+@app.get("/api/people")
+async def read_people(client: httpx.AsyncClient = Depends(get_client)):
+    query = sparqlTemplates.PERSONS_TEMPLATE
+    data = await sparql_post(query, client)
+    return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
+
 @app.get("/api/people/{id}")
-async def read_venue(id: str, client: httpx.AsyncClient = Depends(get_client)):
+async def read_person(id: str, client: httpx.AsyncClient = Depends(get_client)):
     query = sparqlTemplates.PERSON_TEMPLATE.replace('$AUTHOR', get_uri_from_id(id))
+    data = await sparql_post(query, client)
+    return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
+
+@app.get("/api/publications")
+async def read_publications(client: httpx.AsyncClient = Depends(get_client)):
+    query = sparqlTemplates.PUBLICATIONS_TEMPLATE
     data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 

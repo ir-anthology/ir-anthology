@@ -348,6 +348,14 @@ WHERE{
 GROUP BY ?title ?doi ?book ?pub
 '''
 
+PUBLICATIONS_TEMPLATE = '''
+PREFIX dblp: <https://dblp.org/rdf/schema#>
+SELECT ?pub ?title WHERE {
+  ?pub a dblp:Publication .
+  ?pub dblp:title ?title .
+}
+'''
+
 BIB_PUBLICATION_TEMPLATE = '''
 PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
@@ -457,6 +465,14 @@ SELECT ?year ?volume ?number ?journalTitle (COUNT(DISTINCT ?pub) AS ?count) WHER
 }
 GROUP BY ?year ?volume ?number ?journalTitle
 ORDER BY DESC(?year) ?volume ?number
+'''
+
+PERSONS_TEMPLATE = '''
+PREFIX dblp: <https://dblp.org/rdf/schema#>
+SELECT ?person ?name WHERE {
+  ?person a dblp:Creator .
+  ?person dblp:primaryCreatorName ?name .
+}
 '''
 
 PERSON_TEMPLATE = '''

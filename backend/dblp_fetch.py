@@ -548,7 +548,6 @@ SELECT DISTINCT ?proc ?title WHERE {{
         dblp:title ?title .
   FILTER({abbreviation_filter} || {title_filter})
 }}"""
-    print(query)
     bindings = await _select(client, query)
     result = []
     for b in bindings:
