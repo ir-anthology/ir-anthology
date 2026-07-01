@@ -6,5 +6,5 @@ if [ $rebuild = true ] ; then
     qlever get-data
 else
     qlever index --overwrite-existing
-    exec qlever-server -i data/test -j 8 -p 7016 -m 10G -c 5G -e 1G -k 200 -s 30s -a $SPARQL_ACCESS_TOKEN
+    exec qlever-server -i data/test -j 24 -p 7016 -m 10G -c 30G -e 1G -k 1000 -s 60s -a $SPARQL_ACCESS_TOKEN
 fi
