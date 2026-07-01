@@ -486,7 +486,7 @@ WHERE {
   VALUES ?author {
     <$AUTHOR>
   }
-  ?pub dblp:authoredBy ?author ;
+  ?pub dblp:createdBy ?author ;
        dblp:bibtexType ?bibtexType ;
        dblp:yearOfPublication ?pubYear ;
        dblp:publishedInStream ?stream ;
