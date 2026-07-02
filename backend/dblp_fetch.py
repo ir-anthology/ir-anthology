@@ -244,8 +244,7 @@ CONSTRUCT {{ ?sig ?p ?o }}
 WHERE {{
   {{ SELECT DISTINCT ?sig WHERE {{
       VALUES ?proc {{ {vals} }}
-      {{?pub dblp:publishedAsPartOf ?proc 
-
+      {{?pub dblp:publishedAsPartOf ?proc ;
            dblp:hasSignature ?sig .}}
       UNION
       {{?proc dblp:hasSignature ?sig .}}
