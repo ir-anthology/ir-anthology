@@ -497,7 +497,7 @@ PERSON_TEMPLATE = '''
 PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX ex: <https://ir.webis.de/kg#>
 
-SELECT ?title ?year ?doi ?pub ?name ?booktitle ?streamTitle ?journalVolume ?journalNumber ?stream
+SELECT ?title ?year ?doi ?pub ?name ?book ?booktitle ?streamTitle ?journalVolume ?journalNumber ?stream
   (GROUP_CONCAT(DISTINCT CONCAT(STR(?ord), "@@", ?authorName); separator=", ") AS ?authors)
   (GROUP_CONCAT(DISTINCT CONCAT(STR(?ord), "@@", STR(?authorUri)); separator=", ") AS ?authorIds)
 WHERE {
@@ -537,5 +537,5 @@ WHERE {
          dblp:signatureDblpName ?authorName .
   }
 }
-GROUP BY ?title ?year ?doi ?pub ?name ?booktitle ?streamTitle ?journalVolume ?journalNumber ?stream
+GROUP BY ?title ?year ?doi ?pub ?name ?booktitle ?streamTitle ?journalVolume ?journalNumber ?stream ?book
 '''
