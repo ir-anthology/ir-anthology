@@ -7,6 +7,8 @@
     import { fetchBackend } from '$lib/sparql/fetch';
     import { getIDFromURI, slugifyName } from '$lib/helperFunctions';
     import { browser } from '$app/environment';
+    import { DEFAULT_COLUMNS, ALL_COLUMNS, getVisibleColumns, loadPreferences, savePreferences } from '$lib/columnPreferences';
+    import ColumnSettings from './ColumnSettings.svelte';
 
     const COLUMN_WIDTHS: Record<string, string> = {
 		Entity: 'w-auto min-w-[100px]',
@@ -60,8 +62,13 @@
     const current_order:string = $derived(_searchParams.get("order") ?? "desc");
 
     const HIDDEN_COLUMNS = ['URI'];
-    let columns = $derived(vars.filter((v) => !HIDDEN_COLUMNS.includes(v)) ?? []);
-    const entityOptions = $derived(columns.filter((c) => c !== "Entity"));
+    let userPrefs = $state(loadPreferences());
+    let visibleColumns = $derived.by(() => {
+        const prefs = userPrefs[current_entity] ?? DEFAULT_COLUMNS[current_entity];
+        return ['Entity', ...prefs];
+    });
+    let columns = $derived(vars.filter((v) => visibleColumns.includes(v) && !HIDDEN_COLUMNS.includes(v)) ?? []);
+    const entityOptions = $derived(ALL_COLUMNS);
 
     console.log('[DataTable] Initial state:', {
         current_entity,
@@ -127,6 +134,23 @@
                 return ""
         }
     }
+
+    function handleColumnToggle(column: string) {
+        const currentPrefs = userPrefs[current_entity] ?? DEFAULT_COLUMNS[current_entity];
+        let newPrefs: string[];
+        if (currentPrefs.includes(column)) {
+            newPrefs = currentPrefs.filter((c) => c !== column);
+        } else {
+            newPrefs = [...currentPrefs, column];
+        }
+        userPrefs = { ...userPrefs, [current_entity]: newPrefs };
+        savePreferences(userPrefs);
+    }
+
+    function handleResetDefaults() {
+        userPrefs = { ...userPrefs, [current_entity]: DEFAULT_COLUMNS[current_entity] };
+        savePreferences(userPrefs);
+    }
 </script>
 
 <section class="bg-white rounded-lg shadow overflow-x-auto">
@@ -151,6 +175,11 @@
                                             <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
                                         </svg>
                                     </div>
+                                    <ColumnSettings
+                                        {visibleColumns}
+                                        onToggle={handleColumnToggle}
+                                        onReset={handleResetDefaults}
+                                    />
                                 {:else}
                                     <span class="text-xs font-medium tracking-wider text-gray-500">{col}</span>
                                 {/if}
