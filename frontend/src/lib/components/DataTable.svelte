@@ -114,15 +114,20 @@
                         <th class="{COLUMN_WIDTHS[col] ?? 'w-24'} whitespace-nowrap">
                             <div class="flex items-center justify-center gap-1">
                                 {#if col === 'Entity'}
-                                    <select
-                                        class="text-xs font-medium tracking-wider cursor-pointer bg-transparent border-none focus:outline-none {current_entity === col ? 'font-bold text-blue-700' : 'text-gray-500'}"
-                                        value={current_entity}
-                                        onchange={(e) => handleEntityChange(e.currentTarget.value)}
-                                    >
-                                        {#each entityOptions as opt}
-                                            <option value={opt}>{opt}</option>
-                                        {/each}
-                                    </select>
+                                    <div class="relative inline-flex items-center">
+                                        <select
+                                            class="appearance-none text-xs font-medium tracking-wider cursor-pointer border border-gray-300 rounded px-2 pr-6 py-0.5 bg-white focus:outline-none focus:ring-2 focus:ring-link/30 focus:border-link transition-colors {current_entity === col ? 'text-link font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:border-gray-400'}"
+                                            value={current_entity}
+                                            onchange={(e) => handleEntityChange(e.currentTarget.value)}
+                                        >
+                                            {#each entityOptions as opt}
+                                                <option value={opt}>{opt}</option>
+                                            {/each}
+                                        </select>
+                                        <svg class="absolute right-1.5 w-3 h-3 pointer-events-none {current_entity === col ? 'text-link' : 'text-gray-400'}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
                                 {:else}
                                     <span class="text-xs font-medium tracking-wider text-gray-500">{col}</span>
                                 {/if}
