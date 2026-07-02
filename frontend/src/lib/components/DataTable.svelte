@@ -63,6 +63,29 @@
     let columns = $derived(vars.filter((v) => !HIDDEN_COLUMNS.includes(v)) ?? []);
     const entityOptions = $derived(columns.filter((c) => c !== "Entity"));
 
+    console.log('[DataTable] Initial state:', {
+        current_entity,
+        current_sort_by,
+        current_order,
+        columns,
+        entityOptions,
+    });
+
+    $effect(() => {
+        const state = {
+            current_entity,
+            current_sort_by,
+            current_order,
+            columns,
+            entityOptions,
+            rowCount: rows.length,
+            currentPage,
+            exhausted,
+            loadingMore,
+        };
+        console.log('[DataTable] State changed:', state);
+    });
+
     function handleEntityChange(col: string){
         const new_params = new SvelteURLSearchParams(page.url.searchParams.toString())
         new_params.set("entity", col)
