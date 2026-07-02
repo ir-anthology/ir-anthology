@@ -39,7 +39,7 @@
 </script>
 
 <nav class="text-sm mb-4">
-    <a href={resolve('/')}>Main</a> »
+    <a href={resolve('/anthology')} class="link">Main</a> »
     {#if venueId}
         <a href={resolve(`/anthology/venues/${venueId}`)} class="link">{venueAbbrev}</a> »
         <a href={resolve(`/anthology/venues/${venueId}/${publication.year}`)} class="link">{publication.year}</a> »

@@ -12,26 +12,35 @@
     const conferences = $derived(venues.filter(v => v.type === 'Conference').sort((a, b) => a.label.localeCompare(b.label)))
     conferences.push(workshop_row)
     const journals = $derived(venues.filter(v => v.type === 'Journal').sort((a, b) => a.label.localeCompare(b.label)))
-    const NUM_COLS = 70
-    const indicies = [...Array(NUM_COLS).keys()].map((x) => {
-        return Math.abs(x - NUM_COLS) + 2029 - NUM_COLS
-    })
-    const TABLE_HEADERS = ["Venue", "2029 - 2020", "2019-2010", "2009-2000", "1999-1990", "1989 and older"]
+    const allYears = $derived(data.venues.flatMap(v => v.years.map(Number)).filter(y => !isNaN(y)));
+    const maxYear = $derived(allYears.length > 0 ? Math.max(...allYears) : new Date().getFullYear());
+    const minYear = $derived(allYears.length > 0 ? Math.min(...allYears) : 1960);
+    const indicies = $derived(Array.from({ length: maxYear - minYear + 1 }, (_, i) => maxYear - i));
+    const decadeGroups = $derived.by(() => {
+        const groups: { label: string; span: number }[] = [];
+        for (let d = Math.floor(maxYear / 10) * 10; d >= Math.floor(minYear / 10) * 10; d -= 10) {
+            const hi = Math.min(d + 9, maxYear);
+            const lo = Math.max(d, minYear);
+            groups.push({ label: `${hi}–${lo}`, span: hi - lo + 1 });
+        }
+        return groups;
+    });
 </script>
 
 {#snippet venueTable(rows: typeof venues)}
 <div class="overflow-x-auto">
 <table class="min-w-full divide-y divide-gray-200 table-fixed border border-gray-300">
+    <colgroup>
+        <col style="width: 7rem">
+        {#each indicies as index (index)}
+            <col style="width: 1.75rem">
+        {/each}
+    </colgroup>
     <thead class="bg-gray-50 divide-x divide-gray-600">
         <tr class="divide-x divide-gray-300">
-            {#each TABLE_HEADERS as header (header)}
-                {#if header === "Venue"}
-                    <th class="px-2 py-1 w-20 sticky left-0 z-10 bg-gray-50">{header}</th>
-                {:else}
-                    <th scope="col" colspan="10" class="px-2 py-1">
-                        {header}
-                    </th>
-                {/if}
+            <th class="px-2 py-1 w-20 sticky left-0 z-10 bg-gray-50">Venue</th>
+            {#each decadeGroups as group (group.label)}
+                <th scope="col" colspan={group.span} class="px-2 py-1">{group.label}</th>
             {/each}
         </tr>
     </thead>
@@ -42,7 +51,7 @@
                     <a href={resolve(`/anthology/venues/${venue.id}`)} class="link font-bold">{venue.label}</a>
                 </td>
                 {#each indicies as index, j (index)}
-                    {@const border = j % 10 === 0 ? 'border-l border-gray-300' : ''}
+                    {@const border = (j === 0 || index % 10 === 9) ? 'border-l border-gray-300' : ''}
                     {#if venue.years.includes(index.toString())}
                         <td class="px-0.5 {border}">
                             <a href={resolve(`/anthology/venues/${venue.id}/${index}`)} class="link">{String(index % 100).padStart(2, '0')}</a>

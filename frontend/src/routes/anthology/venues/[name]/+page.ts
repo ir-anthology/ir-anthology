@@ -1,5 +1,22 @@
 import { fetchBackend } from '$lib/sparql/fetch.js'
-import { parseSparqlResult } from '$lib/helperFunctions.js';
+import { parseSparqlResult, getIDFromURI } from '$lib/helperFunctions.js';
+
+export async function entries() {
+    const [conferences, journals, workshops] = await Promise.all([
+        fetchBackend("conferences"),
+        fetchBackend("journals"),
+        fetchBackend("workshops")
+    ]);
+    const ids = new Set<string>();
+    for (const row of parseSparqlResult(conferences)) {
+        if (row.stream) ids.add(getIDFromURI(row.stream));
+    }
+    for (const row of parseSparqlResult(journals)) {
+        if (row.stream) ids.add(getIDFromURI(row.stream));
+    }
+    if (parseSparqlResult(workshops).length > 0) ids.add('workshops');
+    return [...ids].map(name => ({ name }));
+}
 
 export async function load({ params }) {
     const name = params.name
@@ -37,8 +54,8 @@ async function loadJournal(id: string) {
         const y = entry.year ?? ''
         if (!groupedByYear.has(y)) groupedByYear.set(y, [])
         groupedByYear.get(y)!.push({
-            volume: entry.volume,
-            number: entry.number,
+            volume: entry.volume ?? "-1",
+            number: entry.number ?? "0",
             count: parseInt(entry.count ?? '0', 10)
         })
     }
@@ -48,7 +65,6 @@ async function loadJournal(id: string) {
 
 async function loadWorkshops(){
     const raw = parseSparqlResult(await fetchBackend("workshops/proceedings"))
-    console.log(raw)
     const streamTitle = raw[0]?.streamTitle ?? ''
     const groupedByYear = new Map<string, { title: string, pub: string, count: number }[]>()
     for (const entry of raw) {

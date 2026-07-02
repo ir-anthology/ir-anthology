@@ -6,6 +6,7 @@
     import { resolve } from '$app/paths';
     import { fetchBackend } from '$lib/sparql/fetch';
     import { getIDFromURI, slugifyName } from '$lib/helperFunctions';
+    import { browser } from '$app/environment';
 
     const COLUMN_WIDTHS: Record<string, string> = {
 		Entity: 'w-auto min-w-[100px]',
@@ -50,11 +51,13 @@
         return () => observer.disconnect();
     });
 
-    const current_entity:string = $derived(page.url.searchParams.get("entity") ?? "Author");
+    const _searchParams = $derived(browser ? page.url.searchParams : new URLSearchParams());
 
-    const current_sort_by:string = $derived(page.url.searchParams.get("sort_by") ?? "Publication");
+    const current_entity:string = $derived(_searchParams.get("entity") ?? "Author");
 
-    const current_order:string = $derived(page.url.searchParams.get("order") ?? "desc");
+    const current_sort_by:string = $derived(_searchParams.get("sort_by") ?? "Publication");
+
+    const current_order:string = $derived(_searchParams.get("order") ?? "desc");
 
     const HIDDEN_COLUMNS = ['URI'];
     let columns = $derived(vars.filter((v) => !HIDDEN_COLUMNS.includes(v)) ?? []);

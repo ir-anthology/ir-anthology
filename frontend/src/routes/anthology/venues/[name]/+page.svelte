@@ -4,11 +4,10 @@
     import { getIDFromURI } from '$lib/helperFunctions';
 
     const { data } = $props();
-    console.log(data)
     const venueName = page.params.name;
 </script>
 <nav class="text-sm mb-4">
-    <a href={resolve('/')} class="link">Main</a> »
+    <a href={resolve('/anthology')} class="link">Main</a> »
 </nav>
 {#if data.type === 'journal'}
     {@const articles = data.articles ?? new Map()}
@@ -30,7 +29,7 @@
                         <span class="text-gray-400">•</span>
                         <a href={resolve(`/anthology/venues/${venueName}/${yearKey}#v${issue.volume}i${issue.number}`)} class="link">
                             {yearKey}{issue.volume != null ? ` Volume ${issue.volume}` : ''}{issue.number != null ? ` Issue ${issue.number}` : ''}
-                                                </a>
+                        </a>
                         <span class="badge-count ml-1">{issue.count} papers</span>
                     </li>
                 {/each}

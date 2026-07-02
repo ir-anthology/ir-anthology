@@ -591,7 +591,7 @@ async def fetch_custom_workshop(
     EX_NS   = "https://ir.webis.de/kg#"
 
     # Stream definition
-    display_title = title or abbreviation
+    display_title = title + " (" + abbreviation + ")"
     custom_triples = [
         f'<{stream_iri}> <{RDF_NS}type> <{EX_NS}Workshop> .',
         f'<{stream_iri}> <{DBLP_NS}primaryStreamTitle> "{_sparql_str_escape(display_title)}" .',

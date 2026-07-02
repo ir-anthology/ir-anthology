@@ -3,8 +3,9 @@
 	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import { goto } from '$app/navigation';
     import { resolve } from '$app/paths';
+    import { browser } from '$app/environment';
 
-    const current_entity = $derived(page.url.searchParams.get("entity") ?? "Author"); //TODO declare defaults somewhere
+    const current_entity = $derived(browser ? (page.url.searchParams.get("entity") ?? "Author") : "Author");
 
     let searchValue:string | null = $state(null);
 

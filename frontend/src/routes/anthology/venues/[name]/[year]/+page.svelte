@@ -15,7 +15,7 @@
     {@const venueAbbrev = journalTitle.split('_')[0].toUpperCase()}
 
     <nav class="text-sm mb-4">
-        <a href={resolve('/')} class="link">Main</a> »
+        <a href={resolve('/anthology')} class="link">Main</a> » 
         <a href={resolve(`/anthology/venues/${venueName}`)} class="link">{venueAbbrev}</a> »
     </nav>
 
@@ -45,7 +45,7 @@
         {#each (articles.get(vol) ?? new Map()).keys() as iss (iss)}
             {@const entries = articles.get(vol)?.get(iss) ?? []}
 
-            <p class="mb-2"><a href="#" class="text-sm text-gray-500 hover:underline">↑ up</a></p>
+            <p class="mb-2"><a href={resolve(`/anthology/venues/${venueName}/${year}#`)} class="text-sm text-gray-500 hover:underline">↑ up</a></p>
 
             <h2 id="v{vol}i{iss}" class="text-2xl font-bold">
                 {year} Volume {vol} Issue {iss}
@@ -84,7 +84,7 @@
     {@const venueAbbrev = streamTitle.split('_')[0].toUpperCase()}
 
     <nav class="text-sm mb-4">
-        <a href={resolve('/')} class="link">Main</a> »
+        <a href={resolve('/anthology')} class="link">Main</a> »
         <a href={resolve(`/anthology/venues/${venueName}`)} class="link">{venueAbbrev}</a> »
     </nav>
 
@@ -92,10 +92,9 @@
 
     <hr class="mb-4">
 
-    <p class="mb-6"><a href={resolve(`/anthology/venues/${venueName}`)} class="text-sm hover:underline">↑ up</a></p>
-
     {#each proceedings as proceeding (proceeding.pub)}
         {@const procId = getIDFromURI(proceeding.pub ?? '')}
+        <p class="mb-6"><a href={resolve(`/anthology/venues/${venueName}/${year}#`)} class="text-sm hover:underline">↑ up</a></p>
         <p id={procId} class="mb-4">
             <a href={resolve(`/anthology/publications/${procId}`)} class="link text-2xl leading-snug">
                 {proceeding.title}

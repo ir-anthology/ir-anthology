@@ -1,5 +1,12 @@
 import { fetchBackend } from '$lib/sparql/fetch.js'
-import { parseSparqlResult, decodeOrdered } from '$lib/helperFunctions.js';
+import { parseSparqlResult, decodeOrdered, getIDFromURI, slugifyName } from '$lib/helperFunctions.js';
+
+export async function entries() {
+    const data = parseSparqlResult(await fetchBackend("people"));
+    return data
+        .filter(row => row.person && row.name)
+        .map(row => ({ name: slugifyName(row.name!), id: getIDFromURI(row.person!) }));
+}
 
 export async function load({ params }) {
     const data = parseSparqlResult(await fetchBackend("people/"+params.id));

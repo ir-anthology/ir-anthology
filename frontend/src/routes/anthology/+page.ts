@@ -3,9 +3,9 @@ import { parseSparqlResult, getIDFromURI } from '$lib/helperFunctions';
 
 export async function load() {
     const [conferences, journals, workshops] = await Promise.all([
-        fetchBackend("conferences/overview"),
-        fetchBackend("journals/overview"),
-        fetchBackend("workshops/overview")
+        fetchBackend("conferences"),
+        fetchBackend("journals"),
+        fetchBackend("workshops")
     ]);
     const data = [...parseSparqlResult(conferences), ...parseSparqlResult(journals), ...parseSparqlResult(workshops)];
 

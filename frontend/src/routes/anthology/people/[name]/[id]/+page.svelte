@@ -44,7 +44,7 @@
                 {/if}
                 {#if pub.booktitle}
                     <div class="text-sm text-gray-500 mt-0.5">
-                        <a href={resolve(`/anthology/venues/${getIDFromURI(pub.stream ?? '')}/${year}`)} class="hover:underline">{pub.booktitle}</a>
+                        <a href={resolve(`/anthology/venues/${getIDFromURI(pub.stream ?? '')}/${year}#${pub.book ? getIDFromURI(pub.book) : (pub.journalVolume != null && pub.journalNumber != null ? "v"+pub.journalVolume+"i"+pub.journalNumber : '')}`)} class="hover:underline">{pub.booktitle}</a>
                     </div>
                 {/if}
             </div>

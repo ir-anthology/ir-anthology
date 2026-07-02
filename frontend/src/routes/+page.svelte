@@ -4,11 +4,12 @@
     import SearchBar from '$lib/components/SearchBar.svelte';
     import { page } from '$app/state';
 	import FilterField from '$lib/components/FilterField.svelte';
+    import { browser } from '$app/environment';
 
     let {data} = $props();
-    console.log("data", data)
 
     const filters:Record<string, string[]> = $derived.by(() => {
+        if (!browser) return {};
         const result:Record<string, string[]> = {};
         const searchParams:URLSearchParams = page.url.searchParams;
         const keys = searchParams.keys().toArray();
