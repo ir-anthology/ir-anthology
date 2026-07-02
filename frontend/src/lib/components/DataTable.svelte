@@ -61,6 +61,7 @@
 
     const HIDDEN_COLUMNS = ['URI'];
     let columns = $derived(vars.filter((v) => !HIDDEN_COLUMNS.includes(v)) ?? []);
+    const entityOptions = $derived(columns.filter((c) => c !== "Entity"));
 
     function handleEntityChange(col: string){
         const new_params = new SvelteURLSearchParams(page.url.searchParams.toString())
@@ -112,10 +113,19 @@
                 {#each columns as col (col)}
                         <th class="{COLUMN_WIDTHS[col] ?? 'w-24'} whitespace-nowrap">
                             <div class="flex items-center justify-center gap-1">
-                                <button
-                                    class="text-xs font-medium tracking-wider cursor-pointer {current_entity === col ? 'font-bold text-blue-700' : 'text-gray-500'}"
-                                    onclick={() => handleEntityChange(col)}
-                                >{col}</button>
+                                {#if col === 'Entity'}
+                                    <select
+                                        class="text-xs font-medium tracking-wider cursor-pointer bg-transparent border-none focus:outline-none {current_entity === col ? 'font-bold text-blue-700' : 'text-gray-500'}"
+                                        value={current_entity}
+                                        onchange={(e) => handleEntityChange(e.currentTarget.value)}
+                                    >
+                                        {#each entityOptions as opt}
+                                            <option value={opt}>{opt}</option>
+                                        {/each}
+                                    </select>
+                                {:else}
+                                    <span class="text-xs font-medium tracking-wider text-gray-500">{col}</span>
+                                {/if}
                                 <button
                                     class="text-2xl cursor-pointer shrink-0 {current_sort_by === col ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}"
                                     onclick={() => handleSortClick(col)}
