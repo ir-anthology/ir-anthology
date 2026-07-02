@@ -51,6 +51,9 @@ BIBTEX_CHAR_MAP: dict[str, str] = {
 def _normalize_pages(s: str) -> str:
     return re.sub(r'-+', '--', s)
 
+def _normalize_isbn(s: str) -> str:
+    return s.split(":")[-1]
+
 
 def escape_bibtex(s: str) -> str:
     return ''.join(BIBTEX_CHAR_MAP.get(c, c) for c in (s or ''))
@@ -158,7 +161,7 @@ def _proceedings(data: dict) -> str:
     if data.get('month'):     fields.append(('month', data['month']))
     if data.get('url'):       fields.append(('url', data['url']))
     if data.get('doi'):       fields.append(('doi', data['doi']))
-    if data.get('isbn'):      fields.append(('isbn', data['isbn']))
+    if data.get('isbn'):      fields.append(('isbn', _normalize_isbn(data['isbn'])))
     return _format_entry('proceedings', _bibtex_key(data), fields)
 
 
