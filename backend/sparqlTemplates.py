@@ -379,34 +379,52 @@ WHERE{
 
   ?stream dblp:primaryStreamTitle ?streamTitle .
 
-  OPTIONAL{?pub dblp:publishedInSeries ?series}
   OPTIONAL{?pub dblp:pagination ?pages}
   OPTIONAL{?pub dblp:doi ?doi}
-  OPTIONAL{?pub dblp:publishedBy ?publisher}
+  OPTIONAL{?pub dblp:publishedBy ?pubPublisher}
   OPTIONAL{?pub dblp:primaryDocumentPage ?url}
   OPTIONAL{?pub dblp:monthOfPublication ?month}
-  OPTIONAL{?pub dblp:publishedInJournalVolume ?volume}
+  OPTIONAL{?pub dblp:publishedInJournalVolume ?journalVolume}
+  OPTIONAL{?pub dblp:publishedInSeriesVolume ?seriesVolume}
+  BIND(COALESCE(?journalVolume, ?seriesVolume) AS ?pubVolume)
   OPTIONAL{?pub dblp:publishedInJournalVolumeIssue ?number}
+  OPTIONAL{?pub dblp:publishedInSeries ?pubSeries }
   OPTIONAL{?pub dblp:isbn ?isbn}
   OPTIONAL{?pub dblp:hasSignature ?sig .
             ?sig a dblp:AuthorSignature ;
                  dblp:signatureOrdinal ?ord ;
                  dblp:signatureCreator ?authorUri ;
                  dblp:signatureDblpName ?authorName}
+  OPTIONAL {
+                ?pub dblp:editedBy ?pubEditor .
+                ?pubEditor dblp:primaryCreatorName ?pubEditorName .
+                OPTIONAL {
+                    ?pub dblp:hasSignature ?pubEdSig .
+                    ?pubEdSig dblp:signatureCreator ?pubEditor ;
+                              dblp:signatureOrdinal ?pubEdOrd .
+                }
+            }
   OPTIONAL {?pub dblp:publishedAsPartOf ?book .
             ?book dblp:title ?booktitle .
             OPTIONAL {
-                ?book dblp:editedBy ?editor .
-                ?editor dblp:primaryCreatorName ?editorName .
+                ?book dblp:editedBy ?bookEditor .
+                ?bookEditor dblp:primaryCreatorName ?bookEditorName .
                 OPTIONAL {
                     ?book dblp:hasSignature ?bookEdSig .
-                    ?bookEdSig dblp:signatureCreator ?editor ;
-                               dblp:signatureOrdinal ?edOrd .
+                    ?bookEdSig dblp:signatureCreator ?bookEditor ;
+                               dblp:signatureOrdinal ?bookEdOrd .
                 }
             }
-            OPTIONAL { ?book dblp:publishedBy ?publisher }
-            OPTIONAL { ?book dblp:publishedInSeries ?series }
+            OPTIONAL { ?book dblp:publishedBy ?bookPublisher }
+            OPTIONAL { ?book dblp:publishedInSeries ?bookSeries }
+            OPTIONAL{?book dblp:publishedInSeriesVolume ?bookSeriesVolume}
   }
+  BIND(COALESCE(?pubPublisher, ?bookPublisher) AS ?publisher)  
+  BIND(COALESCE(?pubSeries, ?bookSeries) AS ?series)  
+  BIND(COALESCE(?pubEditor, ?bookEditor) AS ?editor)
+  BIND(COALESCE(?pubEditorName, ?bookEditorName) AS ?editorName)
+  BIND(COALESCE(?pubEdOrd, ?bookEdOrd) AS ?edOrd)  
+  BIND(COALESCE(?pubVolume, ?bookSeriesVolume) AS ?volume)
 
 }
 GROUP BY ?title ?booktitle ?series ?pages ?publisher ?doi ?url ?year ?book ?pub ?stream ?streamTitle ?month ?volume ?number ?isbn ?bibtexType

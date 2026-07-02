@@ -135,6 +135,7 @@ def _inproceedings(data: dict) -> str:
     fields.append(('title', '{' + data.get('title', '') + '}'))
     fields.append(('booktitle', '{' + data.get('booktitle', '') + '}'))
     if data.get('series'):    fields.append(('series', data['series']))
+    if data.get('volume'):    fields.append(('volume', data['volume']))
     if data.get('pages'):     fields.append(('pages', _normalize_pages(data['pages'])))
     if data.get('publisher'): fields.append(('publisher', data['publisher']))
     fields.append(('year', data.get('year', '')))
