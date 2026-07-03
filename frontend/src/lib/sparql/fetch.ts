@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 
-const BACKEND_ENDPOINT = 'https://backend-ir-anthology.srv.webis.de/api/';
+const BACKEND_ENDPOINT = 'https://backend-ir-anthology.web.webis.de/api/';
 export async function fetchBackend(resource: string, retries = 3) {
     let lastStatus = 500;
     for (let attempt = 0; attempt < retries; attempt++) {
@@ -17,7 +17,7 @@ export async function fetchBackend(resource: string, retries = 3) {
             // network error, retry
         }
     }
-    error(lastStatus, { message: `Could not get resource from backend after ${retries} attempts` });
+    error(lastStatus, { message: `Could not get resource ${resource} from backend after ${retries} attempts` });
 }
 export type SparqlResult = {
     vars: string[];
