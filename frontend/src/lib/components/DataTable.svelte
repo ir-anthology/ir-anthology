@@ -70,13 +70,13 @@
     let columns = $derived(vars.filter((v) => visibleColumns.includes(v) && !HIDDEN_COLUMNS.includes(v)) ?? []);
     const entityOptions = $derived(ALL_COLUMNS);
 
-    console.log('[DataTable] Initial state:', {
-        current_entity,
-        current_sort_by,
-        current_order,
-        columns,
-        entityOptions,
-    });
+    // console.log('[DataTable] Initial state:', {
+    //     current_entity,
+    //     current_sort_by,
+    //     current_order,
+    //     columns,
+    //     entityOptions,
+    // });
 
     $effect(() => {
         const state = {
@@ -90,7 +90,7 @@
             exhausted,
             loadingMore,
         };
-        console.log('[DataTable] State changed:', state);
+        // console.log('[DataTable] State changed:', state);
     });
 
     function handleEntityChange(col: string){
