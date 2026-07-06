@@ -20,8 +20,14 @@
 		getUser()?.then((user) => { if (user && !user.expired) applyUser(user.profile); });
 
 		const onUserLoaded = (u: { profile: Parameters<typeof applyUser>[0] }) => applyUser(u.profile);
+		const onUserUnloaded = () => { userName = null; userPicture = null; isAdmin = false; };
+
 		userManager?.events.addUserLoaded(onUserLoaded);
-		return () => userManager?.events.removeUserLoaded(onUserLoaded);
+		userManager?.events.addUserUnloaded(onUserUnloaded);
+		return () => {
+			userManager?.events.removeUserLoaded(onUserLoaded);
+			userManager?.events.removeUserUnloaded(onUserUnloaded);
+		};
 	});
 </script>
 

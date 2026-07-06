@@ -17,7 +17,10 @@ export const userManager = browser ? new UserManager({
 }) : null;
 
 export const login  = () => userManager?.signinRedirect();
-export const logout = () => userManager?.signoutRedirect();
+export const logout = async () => {
+    await userManager?.removeUser();
+    await userManager?.signoutRedirect();
+};
 export const getUser = () => userManager?.getUser();
 export const getToken = () => getUser().then(u => u?.access_token ?? null);
 export const getIdToken = () => getUser()?.then(u => u?.id_token ?? null);
