@@ -153,12 +153,12 @@
     }
 </script>
 
-<section class="bg-white rounded-lg shadow overflow-x-auto">
+<section class="bg-white rounded-lg shadow">
     <table class="min-w-full divide-y divide-gray-200 table-fixed">
-        <thead class="bg-gray-50">
+        <thead class="bg-gray-50 sticky z-10" style="top: var(--table-top, 0px)">
             <tr>
                 {#each columns as col (col)}
-                        <th class="{COLUMN_WIDTHS[col] ?? 'w-24'} whitespace-nowrap">
+                        <th class="bg-gray-50 {COLUMN_WIDTHS[col] ?? 'w-24'} whitespace-nowrap">
                             <div class="flex items-center justify-center gap-1">
                                 {#if col === 'Entity'}
                                     <div class="relative inline-flex items-center">
@@ -167,7 +167,7 @@
                                             value={current_entity}
                                             onchange={(e) => handleEntityChange(e.currentTarget.value)}
                                         >
-                                            {#each entityOptions as opt}
+                                            {#each entityOptions as opt (opt)}
                                                 <option value={opt}>{opt}</option>
                                             {/each}
                                         </select>
