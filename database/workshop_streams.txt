@@ -6,6 +6,7 @@ https://dblp.org/streams/conf/altars
 https://dblp.org/streams/conf/books
 https://dblp.org/streams/conf/birws
 https://dblp.org/streams/conf/carr
+https://dblp.org/streams/conf/dir
 https://dblp.org/streams/conf/ekgllm
 https://dblp.org/streams/conf/eyre
 https://dblp.org/streams/conf/geoext
