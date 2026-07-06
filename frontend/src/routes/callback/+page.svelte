@@ -5,6 +5,6 @@
 
     onMount(async () => {
         await userManager?.signinRedirectCallback();
-        goto('/');
+        goto('/admin');
     });
 </script>
