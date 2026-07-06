@@ -39,10 +39,13 @@ export async function load({params}) {
 }
 
 async function loadConference(name: string, year: string){
-    const data = await fetchBackend("conferences/"+name+"/"+year+"/proceedings");
-    const proceedings = parseSparqlResult(data);
-    const inproceedingsData = await fetchBackend("conferences/"+name+"/"+year+"/inproceedings");
-    const inproceedings = parseSparqlResult(inproceedingsData);
+    const [procData, inprocData, looseData] = await Promise.all([
+        fetchBackend("conferences/"+name+"/"+year+"/proceedings"),
+        fetchBackend("conferences/"+name+"/"+year+"/inproceedings"),
+        fetchBackend("conferences/"+name+"/"+year+"/loose"),
+    ]);
+    const proceedings = parseSparqlResult(procData);
+    const inproceedings = parseSparqlResult(inprocData);
     const return_inproceedings:Record<string, Record<string, string | null>[]> = {};
     for(const inproceeding of inproceedings){
         const book = inproceeding.book;
@@ -50,10 +53,13 @@ async function loadConference(name: string, year: string){
         if (!(book in return_inproceedings)){
             return_inproceedings[book] = [];
         }
-        inproceeding["id"] = getIDFromURI(inproceeding.pub)
+        inproceeding["id"] = getIDFromURI(inproceeding.pub ?? '')
         return_inproceedings[book].push(inproceeding)
     }
-    return {"proceedings": proceedings, "inproceedings": return_inproceedings};
+    const looseRaw = parseSparqlResult(looseData);
+    const loosePapers = looseRaw.map(p => ({ ...p, id: getIDFromURI(p.pub ?? '') }));
+    const streamTitle = proceedings[0]?.streamTitle ?? looseRaw[0]?.streamTitle ?? '';
+    return {"proceedings": proceedings, "inproceedings": return_inproceedings, "loosePapers": loosePapers, "streamTitle": streamTitle};
 }
 
 async function loadJournal(name:string, year:string){
@@ -75,10 +81,13 @@ async function loadJournal(name:string, year:string){
 }
 
 async function loadWorkshops(year: string){
-    const data = await fetchBackend("workshops/"+year+"/proceedings");
-    const proceedings = parseSparqlResult(data);
-    const inproceedingsData = await fetchBackend("workshops/"+year+"/inproceedings");
-    const inproceedings = parseSparqlResult(inproceedingsData);
+    const [procData, inprocData, looseData] = await Promise.all([
+        fetchBackend("workshops/"+year+"/proceedings"),
+        fetchBackend("workshops/"+year+"/inproceedings"),
+        fetchBackend("workshops/"+year+"/loose"),
+    ]);
+    const proceedings = parseSparqlResult(procData);
+    const inproceedings = parseSparqlResult(inprocData);
     const return_inproceedings:Record<string, Record<string, string | null>[]> = {};
     for(const inproceeding of inproceedings){
         const book = inproceeding.book;
@@ -86,8 +95,10 @@ async function loadWorkshops(year: string){
         if (!(book in return_inproceedings)){
             return_inproceedings[book] = [];
         }
-        inproceeding["id"] = getIDFromURI(inproceeding.pub)
+        inproceeding["id"] = getIDFromURI(inproceeding.pub ?? '')
         return_inproceedings[book].push(inproceeding)
     }
-    return {"proceedings": proceedings, "inproceedings": return_inproceedings};
+    const loosePapers = parseSparqlResult(looseData).map(p => ({ ...p, id: getIDFromURI(p.pub ?? '') }));
+    const streamTitle = proceedings[0]?.streamTitle ?? 'Workshops';
+    return {"proceedings": proceedings, "inproceedings": return_inproceedings, "loosePapers": loosePapers, "streamTitle": streamTitle};
 }

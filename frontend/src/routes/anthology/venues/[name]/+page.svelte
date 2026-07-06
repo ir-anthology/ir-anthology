@@ -54,7 +54,11 @@
                     <li class="flex gap-2">
                         <span class="text-gray-400 shrink-0 pt-0.5">•</span>
                         <div>
-                            <a href={resolve(`/anthology/venues/${data.venue_id}/${year}#${getIDFromURI(proc.pub ?? '')}`)} class="link">{proc.title}</a>
+                            {#if proc.title === ''}
+                                <a href={resolve(`/anthology/venues/${data.venue_id}/${year}`)} class="link">Papers without proceedings</a>
+                            {:else}
+                                <a href={resolve(`/anthology/venues/${data.venue_id}/${year}#${getIDFromURI(proc.pub ?? '')}`)} class="link">{proc.title}</a>
+                            {/if}
                             <span class="badge-count ml-1">{proc.count} papers</span>
                         </div>
                     </li>

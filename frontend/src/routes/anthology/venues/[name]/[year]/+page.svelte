@@ -80,7 +80,7 @@
     {/each}
 {:else}
     {@const proceedings = data.proceedings}
-    {@const streamTitle = proceedings?.[0]?.streamTitle ?? ''}
+    {@const streamTitle = data.streamTitle ?? ''}
     {@const venueAbbrev = streamTitle.split('_')[0].toUpperCase()}
 
     <nav class="text-sm mb-4">
@@ -140,4 +140,34 @@
             </div>
         {/each}
     {/each}
+
+    {#if data.loosePapers && data.loosePapers.length > 0}
+        <p class="mb-6"><a href={resolve(`/anthology/venues/${venueName}/${year}#`)} class="text-sm hover:underline">↑ up</a></p>
+        <p id="loose" class="mb-4 text-2xl leading-snug font-semibold">Papers without proceedings</p>
+        <hr class="border-gray-300 mb-4">
+        {#each data.loosePapers as paper (paper.pub)}
+            {@const authors = decodeOrdered(paper.authors, true)}
+            {@const authorIds = decodeOrdered(paper.authorIds)}
+            <div class="flex gap-3 mb-4 items-start">
+                <div class="flex gap-1 shrink-0 mt-0.5">
+                    {#if paper.doi}
+                        <a href="https://doi.org/{paper.doi}" class="badge-doi">doi</a>
+                    {/if}
+                    <a href={paper.pub} class="badge-dblp">dblp</a>
+                </div>
+                <div>
+                    <a href={resolve(`/anthology/publications/${paper.id}`)} class="link-title">
+                        {paper.title}
+                    </a>
+                    {#if authors.length > 0}
+                        <div class="text-sm mt-0.5">
+                            {#each authors as author, i (i)}
+                                {#if i > 0}<span class="text-gray-400 px-1.5"> | </span>{/if}{#if authorIds[i]}<a href={resolve(`/anthology/people/${slugifyName(author)}/${getIDFromURI(authorIds[i])}`)} class="link">{author}</a>{:else}{author}{/if}
+                            {/each}
+                        </div>
+                    {/if}
+                </div>
+            </div>
+        {/each}
+    {/if}
 {/if}
