@@ -46,5 +46,3 @@
 <h2 class="text-2xl font-bold mb-3">Special Thanks</h2>
 
 <p class="mb-3">Thanks to the <a href="https://dblp.org" class="link">dblp</a> computer science bibliography for providing their curated dataset as open data. It serves as the primary data source for the meta information of this project.</p>
-
-<p>Thanks to the <a href="https://aclanthology.org" class="link">ACL Anthology</a> for releasing their software stack to build the ACL Anthology website, which we adapted to build the IR Anthology.</p>
