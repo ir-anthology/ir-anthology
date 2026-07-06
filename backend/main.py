@@ -71,7 +71,9 @@ async def read_table_data(filter_query: Annotated[FilterParams, Query()], client
     query = query.replace('$ORDER', order_clause)
     query = query.replace('$LIMIT', str(filter_query.limit))
     query = query.replace('$OFFSET', str(offset))
+    print(query)
     data = await sparql_post(query, client)
+    print(data)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
 @app.get("/api/conferences")
@@ -98,6 +100,14 @@ async def read_conference_year_proceedings(id: str, year: int, client: httpx.Asy
     data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
+@app.get("/api/conferences/{id}/{year}/loose")
+async def read_conference_year_loose(id: str, year: int, client: httpx.AsyncClient = Depends(get_client)):
+    query = (sparqlTemplates.CONFERENCE_LOOSE_PAPERS_TEMPLATE
+             .replace('$VENUE_ID', get_uri_from_id(id))
+             .replace('$YEAR', str(year)))
+    data = await sparql_post(query, client)
+    return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
+
 @app.get("/api/workshops")
 async def read_workshops_overview(client: httpx.AsyncClient = Depends(get_client)):
     query = sparqlTemplates.ANTHOLOGY_WORKSHOPS_QUERY_TEMPLATE
@@ -119,6 +129,12 @@ async def read_conference(year: int, client: httpx.AsyncClient = Depends(get_cli
 @app.get("/api/workshops/{year}/proceedings")
 async def read_conference_year(year: int, client: httpx.AsyncClient = Depends(get_client)):
     query = sparqlTemplates.WORKSHOPS_YEAR_PROCEEDINGS_QUERY_TEMPLATE.replace('$YEAR', str(year))
+    data = await sparql_post(query, client)
+    return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
+
+@app.get("/api/workshops/{year}/loose")
+async def read_workshops_year_loose(year: int, client: httpx.AsyncClient = Depends(get_client)):
+    query = sparqlTemplates.WORKSHOPS_LOOSE_PAPERS_TEMPLATE.replace('$YEAR', str(year))
     data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
