@@ -1,42 +1,125 @@
-# sv
+# IR Anthology — Frontend
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+SvelteKit 5 static site for the IR Anthology. Built with the static adapter: all `/anthology/*` pages and the home page are prerendered to HTML at build time; the admin, login, and callback routes run client-side only via the `404.html` SPA fallback.
 
-## Creating a project
+## Tech stack
 
-If you're seeing this, you've probably already done this step. Congrats!
+| Concern | Tool |
+|---|---|
+| Framework | SvelteKit 2 + Svelte 5 (runes mode) |
+| Language | TypeScript 6, strict mode |
+| Styling | Tailwind CSS 4 |
+| Package manager | pnpm 11 |
+| Node version | 24.16.0 (pinned in `package.json`) |
+| Build output | `@sveltejs/adapter-static`, fallback `404.html` |
+| Auth | `oidc-client-ts` — GitLab OIDC |
 
-```sh
-# create a new project
-npx sv create my-app
+## Project structure
+
+```
+src/
+├── lib/
+│   ├── auth.ts               OIDC userManager + login/logout helpers
+│   ├── helperFunctions.ts    getIDFromURI, slugifyName, parseSparqlResult, …
+│   ├── sparql/
+│   │   └── fetch.ts          fetchBackend() + typed admin API wrappers
+│   └── components/
+│       ├── DataTable.svelte  home page entity table
+│       ├── SearchBar.svelte  entity/sort selector
+│       ├── FilterField.svelte
+│       └── ResetButton.svelte
+└── routes/
+    ├── +layout.svelte        nav bar, footer, OIDC user state
+    ├── +page.{svelte,ts}     home — prerendered
+    ├── anthology/
+    │   ├── +layout.ts        export const prerender = true  (cascades to all sub-routes)
+    │   ├── +page.{svelte,ts} venue table
+    │   ├── venues/[name]/
+    │   ├── venues/[name]/[year]/
+    │   ├── people/[name]/[id]/
+    │   ├── publications/[name]/
+    │   └── info/credits/
+    ├── admin/                ssr = false, requires GitLab admin group
+    ├── login/                ssr = false
+    └── callback/             ssr = false, completes OIDC flow → /admin
 ```
 
-To recreate this project with the same configuration:
+## Configuration
 
-```sh
-# recreate this project
-pnpm dlx sv@0.15.3 create --template minimal --types ts --add prettier eslint tailwindcss="plugins:typography" sveltekit-adapter="adapter:auto" vitest="usages:unit,component" --install pnpm my-app
+### Backend endpoint
+
+All data fetches go through `src/lib/sparql/fetch.ts`:
+
+```ts
+const BACKEND_ENDPOINT = 'https://backend-ir-anthology.web.webis.de/api/';
 ```
 
-## Developing
+This is hardcoded. The dev server uses the **production backend** — there is no dev proxy. To target a local backend, change this constant temporarily; do not commit the change.
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+### Base path
 
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
+GitHub Pages serves the site from a subpath. The build reads `BASE_PATH` from the environment and passes it to SvelteKit's `paths.base`:
 
 ```sh
-npm run build
+BASE_PATH=/my-subpath pnpm build
 ```
 
-You can preview the production build with `npm run preview`.
+The GitHub Actions workflow sets this automatically via `actions/configure-pages`. Leave it unset for a root-path deployment.
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+## Commands
+
+```sh
+pnpm install --frozen-lockfile   # install dependencies (exact versions from lockfile)
+pnpm run dev --host              # dev server on localhost:5173
+pnpm build                       # prerender + static build → build/
+pnpm preview                     # serve build/ locally
+pnpm check                       # svelte-check (TypeScript + Svelte diagnostics)
+pnpm lint                        # prettier + eslint
+pnpm format                      # auto-format with prettier
+pnpm test                        # vitest (unit + browser/component tests via Playwright)
+```
+
+## Prerendering
+
+`svelte.config.js` options:
+
+```js
+prerender: {
+    concurrency: 50,  // simultaneous page renders
+    crawl: false,     // only render URLs declared in entries()
+    handleHttpError: ({ path, message }) => console.warn(...)
+}
+```
+
+Because `crawl: false`, every dynamic route must export an `entries()` function in its `+page.ts` that returns all parameter combinations. The four dynamic route groups each call the backend to enumerate their pages:
+
+| Route | entries() fetches |
+|---|---|
+| `venues/[name]` | `conferences`, `journals`, `workshops` |
+| `venues/[name]/[year]` | all of the above |
+| `people/[name]/[id]` | `people` |
+| `publications/[name]` | `publications` |
+
+The **backend must be reachable** when `pnpm build` runs. If a page fails to render, `handleHttpError` logs a warning and the build continues — the page is simply omitted from the output.
+
+## Authentication
+
+The admin panel is protected by GitLab OIDC (`git.webis.de`). Auth state is stored in `localStorage` via `oidc-client-ts` and is never sent to the SvelteKit server.
+
+- **Login** — `src/lib/auth.ts` → `userManager.signinRedirect()` → GitLab → `/callback` → `/admin`
+- **Logout** — `removeUser()` clears localStorage and fires `userUnloaded` (updates nav immediately), then `signoutRedirect()` invalidates the GitLab session
+- **Admin check** — the `groups_direct` claim in the OIDC token must include `auth/auth-webis-admin`
+
+## ID encoding
+
+DBLP URIs (`https://dblp.org/rec/...`) are encoded as route parameters by replacing `/` with `+`. The helpers in `src/lib/helperFunctions.ts` handle the conversion:
+
+```ts
+getIDFromURI('https://dblp.org/rec/conf/sigir/Smith23')
+// → 'rec+conf+sigir+Smith23'
+
+getURIFromID('rec+conf+sigir+Smith23')
+// → 'https://dblp.org/rec/conf/sigir/Smith23'
+```
+
+Author URLs use a human-readable slug as the first segment (`/people/[name]/[id]`), generated by `slugifyName()` which lowercases, strips diacritics, and replaces spaces with hyphens.
