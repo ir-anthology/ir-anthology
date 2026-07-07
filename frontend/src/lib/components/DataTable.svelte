@@ -5,7 +5,7 @@
     import {navigating} from '$app/state'
     import { resolve } from '$app/paths';
     import { fetchBackend } from '$lib/sparql/fetch';
-    import { getIDFromURI, slugifyName } from '$lib/helperFunctions';
+    import { getIDFromURI, slugifyName, decodeYearCounts } from '$lib/helperFunctions';
     import { browser } from '$app/environment';
     import { DEFAULT_COLUMNS, ALL_COLUMNS, getVisibleColumns, loadPreferences, savePreferences } from '$lib/columnPreferences';
     import ColumnSettings from './ColumnSettings.svelte';
@@ -69,6 +69,19 @@
     });
     let columns = $derived(vars.filter((v) => visibleColumns.includes(v) && !HIDDEN_COLUMNS.includes(v)) ?? []);
     const entityOptions = $derived(ALL_COLUMNS);
+
+    const yearsList: number[] = $derived.by(() => {
+        if (!columns.includes('Years')) return [];
+        let min = Infinity, max = -Infinity;
+        for (const row of rows) {
+            for (const year of decodeYearCounts(row['Years']?.value).keys()) {
+                if (year < min) min = year;
+                if (year > max) max = year;
+            }
+        }
+        if (min === Infinity) return [];
+        return Array.from({ length: max - min + 1 }, (_, i) => max - i);
+    });
 
     // console.log('[DataTable] Initial state:', {
     //     current_entity,
@@ -171,6 +184,14 @@
         <thead class="bg-gray-50 sticky z-10" style="top: var(--table-top, 0px)">
             <tr>
                 {#each columns as col (col)}
+                    {#if col === 'Years'}
+                        {#each yearsList as year, j (year)}
+                            <th
+                                class="bg-gray-50 w-9 px-0.5 text-xs font-medium text-gray-500 whitespace-nowrap {(j === 0 || year % 10 === 9) ? 'border-l border-gray-300' : ''}"
+                                title={String(year)}
+                            >{String(year % 100).padStart(2, '0')}</th>
+                        {/each}
+                    {:else}
                         <th class="bg-gray-50 {COLUMN_WIDTHS[col] ?? 'w-24'} whitespace-nowrap">
                             <div class="flex items-center justify-center gap-1">
                                 {#if col === 'Entity'}
@@ -202,6 +223,7 @@
                                 >{current_sort_by === col ? (current_order === 'asc' ? '▲' : '▼') : '↕'}</button>
                             </div>
                         </th>
+                    {/if}
                 {/each}
             </tr>
         </thead>
@@ -223,7 +245,21 @@
                     <tr class={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                         {#each columns as col (col)}
                             {@const cellData = row[col]}
-                            {#if col === 'Entity'}
+                            {#if col === 'Years'}
+                                {@const yearCounts = decodeYearCounts(row['Years']?.value)}
+                                {#each yearsList as year, j (year)}
+                                    {@const count = yearCounts.get(year)}
+                                    <td class="px-0.5 text-xs text-center {(j === 0 || year % 10 === 9) ? 'border-l border-gray-300' : ''}">
+                                        {#if count !== undefined}
+                                            {#if current_entity === 'Venue' && row['URI']?.value}
+                                                <a href={resolve(`/anthology/venues/${getIDFromURI(row['URI'].value)}/${year}`)} class="link">{count}</a>
+                                            {:else}
+                                                {count}
+                                            {/if}
+                                        {/if}
+                                    </td>
+                                {/each}
+                            {:else if col === 'Entity'}
                                 <td
 									class="px-4 py-3 text-sm text-gray-900 wrap-break-word {COLUMN_WIDTHS[col] ??
 										'w-24'}"
@@ -261,7 +297,7 @@
                 {/each}
                 {#if loadingMore}
                     <tr>
-                        <td colspan={columns.length} class="px-4 py-3 text-center text-xs text-gray-400">
+                        <td colspan={columns.includes('Years') ? columns.length - 1 + yearsList.length : columns.length} class="px-4 py-3 text-center text-xs text-gray-400">
                             Loading...
                         </td>
                     </tr>

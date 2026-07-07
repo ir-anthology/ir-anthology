@@ -1,28 +1,11 @@
-TABLE_QUERY_TEMPLATE = '''
-PREFIX dblp: <https://dblp.org/rdf/schema#>
-PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
-PREFIX ex: <https://ir.webis.de/kg#>
-
-SELECT (?entity_label AS ?Entity)
-  (?entity_URI AS ?URI)
-  (COUNT(DISTINCT ?publication_label) AS ?Publication)
-  (COUNT(DISTINCT ?venue_label)       AS ?Venue)
-  (COUNT(DISTINCT ?author_label)      AS ?Author)
-  (COUNT(DISTINCT ?year)              AS ?Year)
-  (COUNT(DISTINCT ?2020s_label)       AS ?2020s)
-  (COUNT(DISTINCT ?2010s_label)       AS ?2010s)
-  (COUNT(DISTINCT ?2000s_label)       AS ?2000s)
-  (COUNT(DISTINCT ?Pre2000s_label)    AS ?Pre2000s)
-WHERE {
+_TABLE_BODY = '''
   VALUES ?entityType { "$ENTITY_TYPE" }
   ?publication_URI dblp:title ?publication_label ;
                    dblp:yearOfPublication ?pubYear ;
                    dblp:authoredBy ?author_URI ;
                    dblp:publishedInStream ?stream_URI .
 
-  OPTIONAL { ?publication_URI dblp:yearOfEvent ?eventYear }
+  OPTIONAL { ?publication_URI ex:yearOfConference ?eventYear }
   BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
 
   OPTIONAL { ?stream_URI a ex:Workshop . BIND(true AS ?isWorkshop) }
@@ -34,9 +17,9 @@ WHERE {
   OPTIONAL {
     ?author_URI dblp:primaryCreatorName ?author_label .
   }
-  
+
   BIND(xsd:integer(STR(?year)) AS ?y)
-  
+
   BIND(IF(?y >= 2020, STR(?year), ?unbound) AS ?2020s_label)
   BIND(?2020s_label AS ?2020s_URI)
   BIND(IF(?y >= 2010 && ?y < 2020, STR(?year), ?unbound) AS ?2010s_label)
@@ -45,7 +28,7 @@ WHERE {
   BIND(?2000s_label AS ?2000s_URI)
   BIND(IF(?y < 2000, STR(?year), ?unbound) AS ?Pre2000s_label)
   BIND(?Pre2000s_label AS ?Pre2000s_URI)
-  
+
   $FILTERS
 
   BIND(
@@ -68,13 +51,50 @@ WHERE {
     IF(?entityType = "Pre2000s",    ?Pre2000s_label,
                                     ?author_label)))))))
   AS ?entity_label)
+'''
 
-}
+TABLE_QUERY_TEMPLATE = f'''
+PREFIX dblp: <https://dblp.org/rdf/schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+PREFIX ex: <https://ir.webis.de/kg#>
+
+SELECT (?entity_label AS ?Entity)
+  (?entity_URI AS ?URI)
+  (COUNT(DISTINCT ?publication_label) AS ?Publication)
+  (COUNT(DISTINCT ?venue_label)       AS ?Venue)
+  (COUNT(DISTINCT ?author_label)      AS ?Author)
+  (COUNT(DISTINCT ?year)              AS ?Year)
+  (COUNT(DISTINCT ?2020s_label)       AS ?2020s)
+  (COUNT(DISTINCT ?2010s_label)       AS ?2010s)
+  (COUNT(DISTINCT ?2000s_label)       AS ?2000s)
+  (COUNT(DISTINCT ?Pre2000s_label)    AS ?Pre2000s)
+WHERE {{
+{_TABLE_BODY}
+}}
 GROUP BY ?entity_label ?entity_URI
 HAVING (BOUND(?entity_label) && BOUND(?entity_URI))
 $ORDER
 LIMIT $LIMIT
 OFFSET $OFFSET
+'''
+
+YEAR_COUNTS_TEMPLATE = f'''
+PREFIX dblp: <https://dblp.org/rdf/schema#>
+PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+PREFIX ex: <https://ir.webis.de/kg#>
+
+SELECT (?entity_URI AS ?URI) (GROUP_CONCAT(CONCAT(STR(?year), "@@", STR(?cnt)); separator=", ") AS ?Years)
+WHERE {{
+  SELECT ?entity_URI ?year (COUNT(DISTINCT ?publication_URI) AS ?cnt)
+  WHERE {{
+    $SEED
+{_TABLE_BODY}
+  }}
+  GROUP BY ?entity_URI ?year
+}}
+GROUP BY ?entity_URI
 '''
 
 ANTHOLOGY_CONFERENCES_QUERY_TEMPLATE = '''

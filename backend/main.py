@@ -57,8 +57,55 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+WORKSHOPS_VENUE_URI = "https://dblp.org/workshops"
+
+YEAR_SEED_VARS = {"Author": "?author_URI", "Publication": "?publication_URI", "Venue": "?stream_URI"}
+
+def build_year_seed(entity: str, bindings: list) -> str | None:
+    """Build the $SEED clause for YEAR_COUNTS_TEMPLATE from the URIs of one result page.
+
+    The seed restricts the per-year aggregation to the entities on the current page.
+    It must target a raw triple-pattern variable (see YEAR_SEED_VARS) — a VALUES on
+    the BIND-computed ?entity_URI is not pushed down by the SPARQL engine, which
+    would force aggregation over all ~100k entities (seconds instead of ~0.2s).
+
+    Venue is special: the "Workshops" row uses the synthetic WORKSHOPS_VENUE_URI,
+    which matches no triple. It is expressed as a UNION branch matching all
+    ex:Workshop streams instead; the query body then collapses those back onto the
+    synthetic URI. Returns None if the page contains no seedable URIs.
+    """
+    uris = [b["URI"]["value"] for b in bindings if b.get("URI", {}).get("type") == "uri"]
+    if len(uris) == 0:
+        return None
+    if entity == "Venue":
+        streams = [u for u in uris if u != WORKSHOPS_VENUE_URI]
+        clauses = []
+        if streams:
+            values = " ".join(f"<{u}>" for u in streams)
+            clauses.append(f"{{ VALUES ?stream_URI {{ {values} }} }}")
+        if WORKSHOPS_VENUE_URI in uris:
+            clauses.append("{ ?stream_URI a ex:Workshop . }")
+        return " UNION ".join(clauses)
+    values = " ".join(f"<{u}>" for u in uris)
+    return f"VALUES {YEAR_SEED_VARS[entity]} {{ {values} }}"
+
 @app.get("/api/table")
 async def read_table_data(filter_query: Annotated[FilterParams, Query()], client: httpx.AsyncClient = Depends(get_client), *, request: Request):
+    """Return one page of entity rows for the DataTable, including per-year counts.
+
+    Runs up to two SPARQL queries:
+    1. TABLE_QUERY_TEMPLATE — the page of entities with aggregate columns,
+       applying filter_* params, sorting and paging.
+    2. YEAR_COUNTS_TEMPLATE — a "year@@count, ..." string per entity, merged into
+       the bindings as ?Years. Computed separately because a single combined query
+       would aggregate year counts for ALL entities before LIMIT applies; seeding
+       query 2 with the page's URIs (build_year_seed) keeps it fast.
+
+    Year and decade entities skip query 2: they span exactly one year, so their
+    per-year count equals their Publication count and is synthesized directly.
+    Both queries receive the same $FILTERS, so year counts always reflect the
+    same restrictions as the rows they are merged into.
+    """
     extra = {
         k: v for k, v in request.query_params.items()
         if k not in filter_query.model_dump().keys()
@@ -71,10 +118,28 @@ async def read_table_data(filter_query: Annotated[FilterParams, Query()], client
     query = query.replace('$ORDER', order_clause)
     query = query.replace('$LIMIT', str(filter_query.limit))
     query = query.replace('$OFFSET', str(offset))
-    print(query)
     data = await sparql_post(query, client)
-    print(data)
-    return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
+    bindings = data["results"]["bindings"]
+    entity = getattr(filter_query.entity, 'value', filter_query.entity)
+    if entity in YEAR_SEED_VARS:
+        seed = build_year_seed(entity, bindings)
+        if seed is not None:
+            years_query = (sparqlTemplates.YEAR_COUNTS_TEMPLATE
+                           .replace('$SEED', seed)
+                           .replace('$ENTITY_TYPE', entity)
+                           .replace('$FILTERS', filters))
+            years_data = await sparql_post(years_query, client)
+            years_by_uri = {r["URI"]["value"]: r["Years"] for r in years_data["results"]["bindings"]}
+            for b in bindings:
+                uri = b.get("URI", {}).get("value")
+                if uri in years_by_uri:
+                    b["Years"] = years_by_uri[uri]
+    else:
+        # Year and decade entities are single years, so the per-year count is the Publication count
+        for b in bindings:
+            if "URI" in b and "Publication" in b:
+                b["Years"] = {"type": "literal", "value": f'{b["URI"]["value"]}@@{b["Publication"]["value"]}'}
+    return {"vars": data["head"]["vars"] + ["Years"], "bindings": bindings}
 
 @app.get("/api/conferences")
 async def read_conferences_overview(client: httpx.AsyncClient = Depends(get_client)):

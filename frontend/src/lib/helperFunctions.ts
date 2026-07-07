@@ -39,3 +39,15 @@ export function decodeOrdered(raw: string | null, stripDisambig = false): string
         .sort((a, b) => a.ord - b.ord)
         .map(e => stripDisambig ? e.value.replace(/\s+\d+$/, '') : e.value)
 }
+
+export function decodeYearCounts(raw: string | null | undefined): Map<number, number> {
+    const counts = new Map<number, number>()
+    if (!raw) return counts
+    for (const entry of raw.split(', ')) {
+        const sep = entry.indexOf('@@')
+        const year = parseInt(entry.slice(0, sep), 10)
+        const count = parseInt(entry.slice(sep + 2), 10)
+        if (!isNaN(year) && !isNaN(count)) counts.set(year, count)
+    }
+    return counts
+}
