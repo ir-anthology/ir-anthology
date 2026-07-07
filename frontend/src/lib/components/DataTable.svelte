@@ -151,6 +151,19 @@
         userPrefs = { ...userPrefs, [current_entity]: DEFAULT_COLUMNS[current_entity] };
         savePreferences(userPrefs);
     }
+
+    function venueDisplayLabel(value: string | null | undefined, uri: string | null | undefined): string {
+        if (value) {
+            const matches = [...value.matchAll(/\(([^)]+)\)/g)];
+            if (matches.length > 0) return matches[matches.length - 1][1];
+        }
+        if (uri) {
+            var last = uri.split('/').filter(Boolean).at(-1)?.toUpperCase();
+            if (last?.includes("WORKSHOPS")) {last = last.replaceAll("+", "/")} ;
+            if (last) return last;
+        }
+        return value ?? '-';
+    }
 </script>
 
 <section class="bg-white rounded-lg shadow">
@@ -222,10 +235,10 @@
 											rel="noopener noreferrer"
 											class="link"
 										>
-											{cellData.value ?? '-'}
+											{current_entity === 'Venue' ? venueDisplayLabel(cellData.value, row['URI']?.value) : (cellData.value ?? '-')}
 										</a>
 									{:else}
-										{cellData.value ?? '-'}
+										{current_entity === 'Venue' ? venueDisplayLabel(cellData.value, undefined) : (cellData.value ?? '-')}
 									{/if}
 								</td>
                             {:else if cellData?.value}

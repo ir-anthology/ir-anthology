@@ -3,6 +3,7 @@ PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+PREFIX ex: <https://ir.webis.de/kg#>
 
 SELECT (?entity_label AS ?Entity)
   (?entity_URI AS ?URI)
@@ -19,14 +20,17 @@ WHERE {
   ?publication_URI dblp:title ?publication_label ;
                    dblp:yearOfPublication ?pubYear ;
                    dblp:authoredBy ?author_URI ;
-                   dblp:publishedInStream ?venue_URI .
+                   dblp:publishedInStream ?stream_URI .
 
   OPTIONAL { ?publication_URI dblp:yearOfEvent ?eventYear }
   BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
 
+  OPTIONAL { ?stream_URI a ex:Workshop . BIND(true AS ?isWorkshop) }
   OPTIONAL {
-    ?venue_URI dblp:primaryStreamTitle ?venue_label .
+    ?stream_URI dblp:primaryStreamTitle ?stream_label .
   }
+  BIND(IF(BOUND(?isWorkshop), <https://dblp.org/workshops>, ?stream_URI) AS ?venue_URI)
+  BIND(IF(BOUND(?isWorkshop), "Workshops", ?stream_label) AS ?venue_label)
   OPTIONAL {
     ?author_URI dblp:primaryCreatorName ?author_label .
   }
