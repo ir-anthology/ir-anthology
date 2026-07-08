@@ -28,6 +28,7 @@ _TABLE_BODY = '''
   BIND(?2000s_label AS ?2000s_URI)
   BIND(IF(?y < 2000, STR(?year), ?unbound) AS ?Pre2000s_label)
   BIND(?Pre2000s_label AS ?Pre2000s_URI)
+  BIND(STR(?year) AS ?year_label)
 
   $FILTERS
 

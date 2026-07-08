@@ -29,7 +29,7 @@ class Entities(str, Enum):
     pre_two_thousands = "Pre2000s"
 
 class FilterParams(BaseModel):
-    entity: Entities | None = "Author"
+    entity: Entities | None = "Venue"
     sort_by: str | None = "Publication"
     order: str | None = "DESC"
     page: int | None = 1
@@ -252,7 +252,7 @@ def parse_order(sort_by: str | None, order: str) -> str:
     if sort_by is None:
         return 'ORDER BY DESC(?Publication)'
     
-    direction = "ASC" if order == 'ASC' else 'DESC'
+    direction = "ASC" if (order or '').upper() == 'ASC' else 'DESC'
     return f"ORDER BY {direction}(?{sort_by})"
 
 def get_label_var(entity_type: str) -> str:
