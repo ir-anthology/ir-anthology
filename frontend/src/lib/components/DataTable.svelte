@@ -7,11 +7,11 @@
     import { fetchBackend } from '$lib/sparql/fetch';
     import { getIDFromURI, slugifyName, decodeYearCounts } from '$lib/helperFunctions';
     import { browser } from '$app/environment';
-    import { DEFAULT_COLUMNS, ALL_COLUMNS, getVisibleColumns, loadPreferences, savePreferences } from '$lib/columnPreferences';
+    import { DEFAULT_COLUMNS, ALL_COLUMNS, loadPreferences, savePreferences } from '$lib/columnPreferences';
     import ColumnSettings from './ColumnSettings.svelte';
 
     const COLUMN_WIDTHS: Record<string, string> = {
-		Entity: 'w-auto min-w-[100px]',
+		Entity: 'w-auto min-w-[200px]',
 		Publication: 'w-24',
 		Venue: 'w-24',
 		Author: 'w-24',
@@ -55,7 +55,7 @@
 
     const _searchParams = $derived(browser ? page.url.searchParams : new URLSearchParams());
 
-    const current_entity:string = $derived(_searchParams.get("entity") ?? "Author");
+    const current_entity:string = $derived(_searchParams.get("entity") ?? "Venue");
 
     const current_sort_by:string = $derived(_searchParams.get("sort_by") ?? "Publication");
 
@@ -63,9 +63,20 @@
 
     const HIDDEN_COLUMNS = ['URI'];
     let userPrefs = $state(loadPreferences());
+
+    let previousEntity: string | null = null;
+    $effect(() => {
+        if (previousEntity !== null && previousEntity !== current_entity) {
+            userPrefs = { ...userPrefs, [current_entity]: DEFAULT_COLUMNS[current_entity] ?? [] };
+            savePreferences(userPrefs);
+        }
+        previousEntity = current_entity;
+    });
+
     let visibleColumns = $derived.by(() => {
         const prefs = userPrefs[current_entity] ?? DEFAULT_COLUMNS[current_entity];
-        return ['Entity', ...prefs];
+        const withoutFiltered = prefs.filter((col) => !_searchParams.has(`filter_${col === 'Years' ? 'Year' : col}`));
+        return ['Entity', ...withoutFiltered];
     });
     let columns = $derived(vars.filter((v) => visibleColumns.includes(v) && !HIDDEN_COLUMNS.includes(v)) ?? []);
     const entityOptions = $derived(ALL_COLUMNS);
@@ -83,33 +94,10 @@
         return Array.from({ length: max - min + 1 }, (_, i) => max - i);
     });
 
-    // console.log('[DataTable] Initial state:', {
-    //     current_entity,
-    //     current_sort_by,
-    //     current_order,
-    //     columns,
-    //     entityOptions,
-    // });
-
-    $effect(() => {
-        const state = {
-            current_entity,
-            current_sort_by,
-            current_order,
-            columns,
-            entityOptions,
-            rowCount: rows.length,
-            currentPage,
-            exhausted,
-            loadingMore,
-        };
-        // console.log('[DataTable] State changed:', state);
-    });
-
     function handleEntityChange(col: string){
         const new_params = new SvelteURLSearchParams(page.url.searchParams.toString())
         new_params.set("entity", col)
-        goto(resolve(`/?${new_params.toString()}`))
+        goto(resolve(`/anthology?${new_params.toString()}`))
     }
 
     function handleSortClick(col: string){
@@ -118,10 +106,10 @@
         const new_order = current_sort_by === col && current_order === "desc" ? "asc" : "desc"
         new_params.set("order", new_order)
         new_params.set("sort_by", col)
-        goto(resolve(`/?${new_params.toString()}`))
+        goto(resolve(`/anthology?${new_params.toString()}`))
     }
 
-    function handleCellClick(col:string, row){
+    function handleCellClick(col:string, row, year?: number){
         const entityTitle = row['Entity']?.value;
 		if (!entityTitle) return;
         const new_params = new SvelteURLSearchParams(page.url.searchParams.toString())
@@ -131,8 +119,9 @@
         } else {
             new_params.set(`filter_${current_entity}`, entityTitle+`,${old_value}`)
         }
+        if (year !== undefined) new_params.set('filter_Year', String(year))
         new_params.set('entity', col)
-        goto(resolve(`/?${new_params.toString()}`))
+        goto(resolve(`/anthology?${new_params.toString()}`))
     }
 
     function buildURL(uri: string, entityName: string = ''): string{
@@ -185,19 +174,19 @@
             <tr>
                 {#each columns as col (col)}
                     {#if col === 'Years'}
-                        {#each yearsList as year, j (year)}
+                        {#each yearsList as year (year)}
                             <th
-                                class="bg-gray-50 w-9 px-0.5 text-xs font-medium text-gray-500 whitespace-nowrap {(j === 0 || year % 10 === 9) ? 'border-l border-gray-300' : ''}"
+                                class="bg-gray-50 w-9 px-0.5 text-xs font-medium text-gray-500 whitespace-nowrap {year % 10 === 9 ? 'border-l border-gray-300' : ''}"
                                 title={String(year)}
                             >{String(year % 100).padStart(2, '0')}</th>
                         {/each}
                     {:else}
                         <th class="bg-gray-50 {COLUMN_WIDTHS[col] ?? 'w-24'} whitespace-nowrap">
-                            <div class="flex items-center justify-center gap-1">
+                            <div class="flex items-center gap-1 {col === 'Entity' ? 'justify-start pl-4' : 'justify-center'}">
                                 {#if col === 'Entity'}
-                                    <div class="relative inline-flex items-center">
+                                    <div class="relative inline-flex items-center shrink-0">
                                         <select
-                                            class="appearance-none text-xs font-medium tracking-wider cursor-pointer border border-gray-300 rounded px-2 pr-6 py-0.5 bg-white focus:outline-none focus:ring-2 focus:ring-link/30 focus:border-link transition-colors {current_entity === col ? 'text-link font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:border-gray-400'}"
+                                            class="appearance-none min-w-30 text-xs font-medium tracking-wider cursor-pointer border border-gray-300 rounded px-2 pr-6 py-0.5 bg-white focus:outline-none focus:ring-2 focus:ring-link/30 focus:border-link transition-colors {current_entity === col ? 'text-link font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:border-gray-400'}"
                                             value={current_entity}
                                             onchange={(e) => handleEntityChange(e.currentTarget.value)}
                                         >
@@ -247,17 +236,20 @@
                             {@const cellData = row[col]}
                             {#if col === 'Years'}
                                 {@const yearCounts = decodeYearCounts(row['Years']?.value)}
-                                {#each yearsList as year, j (year)}
+                                {#each yearsList as year (year)}
                                     {@const count = yearCounts.get(year)}
-                                    <td class="px-0.5 text-xs text-center {(j === 0 || year % 10 === 9) ? 'border-l border-gray-300' : ''}">
-                                        {#if count !== undefined}
-                                            {#if current_entity === 'Venue' && row['URI']?.value}
-                                                <a href={resolve(`/anthology/venues/${getIDFromURI(row['URI'].value)}/${year}`)} class="link">{count}</a>
-                                            {:else}
-                                                {count}
-                                            {/if}
-                                        {/if}
-                                    </td>
+                                    {@const border = year % 10 === 9 ? 'border-l border-gray-300' : ''}
+                                    {#if count !== undefined}
+                                        <td
+                                            class="link px-0.5 text-sm text-center cursor-pointer hover:bg-gray-100 transition-colors {border}"
+                                            onclick={() => handleCellClick('Publication', row, year)}
+                                            role="button"
+                                            tabindex="0"
+                                            onkeydown={(e) => e.key === 'Enter' && handleCellClick('Publication', row, year)}
+                                        >{count}</td>
+                                    {:else}
+                                        <td class="px-0.5 text-sm text-center {border}"></td>
+                                    {/if}
                                 {/each}
                             {:else if col === 'Entity'}
                                 <td

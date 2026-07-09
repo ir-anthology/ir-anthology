@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ALL_COLUMNS, DEFAULT_COLUMNS } from '$lib/columnPreferences';
+	import { ALL_COLUMNS } from '$lib/columnPreferences';
 	import { browser } from '$app/environment';
 
 	let { visibleColumns, onToggle, onReset }: {
@@ -75,7 +75,7 @@
 
 	{#if isOpen}
 		<div
-			class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
+			class="absolute right-0 mt-2 w-max min-w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
 			role="menu"
 			aria-orientation="vertical"
 			aria-labelledby="column-settings-menu"

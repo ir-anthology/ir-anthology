@@ -1,36 +1,9 @@
 import { fetchBackend } from '$lib/sparql/fetch.js'
-import { parseSparqlResult, getIDFromURI } from '$lib/helperFunctions';
+import { browser } from '$app/environment'
 
-export async function load() {
-    const [conferences, journals, workshops] = await Promise.all([
-        fetchBackend("conferences"),
-        fetchBackend("journals"),
-        fetchBackend("workshops")
-    ]);
-    const data = [...parseSparqlResult(conferences), ...parseSparqlResult(journals), ...parseSparqlResult(workshops)];
+export const prerender = true;
 
-    const venueMap = new Map<string, { years: Set<string>; label: string; id: string; type:string}>();
-
-    for (const binding of data) {
-        const venueName = binding.stream;
-        if (venueName === null) continue;
-
-        if (!venueMap.has(venueName)) {
-            const dblpId = getIDFromURI(binding.stream ?? '');
-            venueMap.set(venueName, {
-                years: new Set(),
-                label: dblpId.split('+').at(-1)?.toUpperCase() ?? '',
-                id: dblpId,
-                type: binding.type?.split("#")[1] ?? '',
-            });
-        }
-
-        if (binding.year !== null) {
-            venueMap.get(venueName)!.years.add(binding.year);
-        }
-    }
-
-    const venues = [...venueMap.values()].map(v => ({ ...v, years: [...v.years] }));
-
-    return { venues };
+export async function load({ url }) {
+    const params = browser ? url.searchParams.toString() : '';
+    return fetchBackend(`table?${params}`);
 }

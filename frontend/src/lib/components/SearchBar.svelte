@@ -5,7 +5,7 @@
     import { resolve } from '$app/paths';
     import { browser } from '$app/environment';
 
-    const current_entity = $derived(browser ? (page.url.searchParams.get("entity") ?? "Author") : "Author");
+    const current_entity = $derived(browser ? (page.url.searchParams.get("entity") ?? "Venue") : "Venue");
 
     let searchValue:string | null = $state(null);
 

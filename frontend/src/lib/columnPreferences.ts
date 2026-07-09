@@ -3,14 +3,14 @@ import { browser } from '$app/environment';
 const STORAGE_KEY = 'ir-anthology-column-preferences';
 
 export const DEFAULT_COLUMNS: Record<string, string[]> = {
-	Author: ['Publication', 'Author', 'Venue', 'Year', 'Years'],
-	Venue: ['Publication', 'Author', 'Year', 'Years'],
+	Author: ['Publication', 'Venue', 'Years'],
+	Venue: ['Publication', 'Author', 'Years'],
 	Publication: ['Author', 'Years'],
-	Year: ['Publication', 'Author', 'Venue', 'Years'],
-	'2020s': ['Publication', 'Author', 'Venue', 'Year', 'Years'],
-	'2010s': ['Publication', 'Author', 'Venue', 'Year', 'Years'],
-	'2000s': ['Publication', 'Author', 'Venue', 'Year', 'Years'],
-	Pre2000s: ['Publication', 'Author', 'Venue', 'Year', 'Years'],
+	Year: ['Publication', 'Author', 'Venue'],
+	'2020s': ['Publication', 'Author', 'Venue'],
+	'2010s': ['Publication', 'Author', 'Venue'],
+	'2000s': ['Publication', 'Author', 'Venue'],
+	Pre2000s: ['Publication', 'Author', 'Venue'],
 };
 
 export const ALL_COLUMNS = ['Publication', 'Venue', 'Author', 'Year', '2020s', '2010s', '2000s', 'Pre2000s', 'Years'];

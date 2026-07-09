@@ -1,9 +1,6 @@
-import { fetchBackend } from '$lib/sparql/fetch.js'
-import { browser } from '$app/environment'
+import { redirect } from '@sveltejs/kit';
+import { base } from '$app/paths';
 
-export const prerender = true;
-
-export async function load({ url }) {
-    const params = browser ? url.searchParams.toString() : '';
-    return fetchBackend(`table?${params}`);
+export function load() {
+    redirect(308, `${base}/anthology/`);
 }

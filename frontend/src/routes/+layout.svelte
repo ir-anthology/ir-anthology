@@ -41,7 +41,7 @@
 	class="w-full shadow-sm mb-3 md:mb-4 xl:mb-5"
 	style="background: linear-gradient(to bottom, #f8f9fa, #e9ecef)"
 >
-	<div class="w-full px-4 h-[70px] flex items-center justify-between">
+	<div class="w-full px-4 h-17.5 flex items-center justify-between">
 		<div class="flex items-center gap-4">
 			<a
 				class="flex items-center h-10 text-xl font-normal text-black/90 no-underline"
@@ -49,7 +49,7 @@
 			>
 				<span><span style="color:#951515"><b>IR</b></span> Anthology</span>
 			</a>
-			<a href={resolve('/anthology')} class="text-sm text-gray-600 no-underline border border-gray-300 rounded px-3 py-1 hover:bg-gray-200 transition-colors">Browse by Venue</a>
+			<a href={resolve('/extra')} class="text-sm text-gray-600 no-underline border border-gray-300 rounded px-3 py-1 hover:bg-gray-200 transition-colors">Additional Links</a>
 		</div>
 		{#if userName}
 			<div class="relative group">
