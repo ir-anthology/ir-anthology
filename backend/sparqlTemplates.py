@@ -226,7 +226,7 @@ PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
 PREFIX ex: <https://ir.webis.de/kg#>
 
-SELECT ?title ?doi ?pub ?streamTitle WHERE{
+SELECT ?title (MIN(STR(?doi_raw)) AS ?doi) ?pub ?streamTitle WHERE{
   ?stream a ex:Workshop .
   VALUES ?streamTitle {'Workshops'}
   ?pub dblp:title ?title ;
@@ -239,9 +239,9 @@ SELECT ?title ?doi ?pub ?streamTitle WHERE{
 
   FILTER(STR(?year) = "$YEAR")
 
-  OPTIONAL{?pub dblp:doi ?doi}
+  OPTIONAL{?pub dblp:doi ?doi_raw}
 }
-GROUP BY ?title ?doi ?pub ?streamTitle
+GROUP BY ?title ?pub ?streamTitle
 '''
 
 PROCEEDINGS_QUERY_TEMPLATE = '''
@@ -249,7 +249,7 @@ PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
 PREFIX ex: <https://ir.webis.de/kg#>
 
-SELECT ?title ?doi ?pub ?streamTitle WHERE{
+SELECT ?title (MIN(STR(?doi_raw)) AS ?doi) ?pub ?streamTitle WHERE{
   VALUES ?stream {
     <$VENUE_ID>
   }
@@ -264,9 +264,9 @@ SELECT ?title ?doi ?pub ?streamTitle WHERE{
   ?stream dblp:primaryStreamTitle ?streamTitle .
   FILTER(STR(?year) = "$YEAR")
 
-  OPTIONAL{?pub dblp:doi ?doi}
+  OPTIONAL{?pub dblp:doi ?doi_raw}
 }
-GROUP BY ?title ?doi ?pub ?streamTitle
+GROUP BY ?title ?pub ?streamTitle
 '''
 
 INPROCEEDINGS_FROM_PROCEEDINGS_TEMPLATE = '''
@@ -274,7 +274,7 @@ PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
 PREFIX ex: <https://ir.webis.de/kg#>
 
-SELECT ?title ?doi ?book ?pub
+SELECT ?title (MIN(STR(?doi_raw)) AS ?doi) ?book ?pub
   (GROUP_CONCAT(DISTINCT CONCAT(STR(?ord), "@@", ?authorName); separator=", ") AS ?authors)
   (GROUP_CONCAT(DISTINCT CONCAT(STR(?ord), "@@", STR(?authorUri)); separator=", ") AS ?authorIds)
 WHERE{
@@ -294,7 +294,7 @@ WHERE{
        dblp:title ?title ;
 	   dblp:bibtexType bibtex:Inproceedings .
 
-  OPTIONAL{?pub dblp:doi ?doi}
+  OPTIONAL{?pub dblp:doi ?doi_raw}
   OPTIONAL {
     ?pub dblp:hasSignature ?sig .
     ?sig a dblp:AuthorSignature ;
@@ -303,7 +303,7 @@ WHERE{
          dblp:signatureDblpName ?authorName .
   }
 }
-GROUP BY ?title ?doi ?book ?pub
+GROUP BY ?title ?book ?pub
 '''
 
 WORKSHOPS_INPROCEEDINGS_FROM_PROCEEDINGS_TEMPLATE = '''
@@ -311,7 +311,7 @@ PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
 PREFIX ex: <https://ir.webis.de/kg#>
 
-SELECT ?title ?doi ?book ?pub
+SELECT ?title (MIN(STR(?doi_raw)) AS ?doi) ?book ?pub
   (GROUP_CONCAT(DISTINCT CONCAT(STR(?ord), "@@", ?authorName); separator=", ") AS ?authors)
   (GROUP_CONCAT(DISTINCT CONCAT(STR(?ord), "@@", STR(?authorUri)); separator=", ") AS ?authorIds)
 WHERE{
@@ -329,7 +329,7 @@ WHERE{
        dblp:title ?title ;
 	   dblp:bibtexType bibtex:Inproceedings .
 
-  OPTIONAL{?pub dblp:doi ?doi}
+  OPTIONAL{?pub dblp:doi ?doi_raw}
   OPTIONAL {
     ?pub dblp:hasSignature ?sig .
     ?sig a dblp:AuthorSignature ;
@@ -338,7 +338,7 @@ WHERE{
          dblp:signatureDblpName ?authorName .
   }
 }
-GROUP BY ?title ?doi ?book ?pub
+GROUP BY ?title ?book ?pub
 '''
 
 CONFERENCE_LOOSE_PAPERS_TEMPLATE = '''
@@ -346,7 +346,7 @@ PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
 PREFIX ex: <https://ir.webis.de/kg#>
 
-SELECT ?title ?doi ?pub ?streamTitle
+SELECT ?title (MIN(STR(?doi_raw)) AS ?doi) ?pub ?streamTitle
   (GROUP_CONCAT(DISTINCT CONCAT(STR(?ord), "@@", ?authorName); separator=", ") AS ?authors)
   (GROUP_CONCAT(DISTINCT CONCAT(STR(?ord), "@@", STR(?authorUri)); separator=", ") AS ?authorIds)
 WHERE {
@@ -363,7 +363,7 @@ WHERE {
     ?proc dblp:publishedInStream ?stream .
   }
 
-  OPTIONAL { ?pub dblp:doi ?doi }
+  OPTIONAL { ?pub dblp:doi ?doi_raw }
   OPTIONAL {
     ?pub dblp:hasSignature ?sig .
     ?sig a dblp:AuthorSignature ;
@@ -372,7 +372,7 @@ WHERE {
          dblp:signatureDblpName ?authorName .
   }
 }
-GROUP BY ?title ?doi ?pub ?streamTitle
+GROUP BY ?title ?pub ?streamTitle
 ORDER BY ?title
 '''
 
@@ -381,7 +381,7 @@ PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
 PREFIX ex: <https://ir.webis.de/kg#>
 
-SELECT ?title ?doi ?pub
+SELECT ?title (MIN(STR(?doi_raw)) AS ?doi) ?pub
   (GROUP_CONCAT(DISTINCT CONCAT(STR(?ord), "@@", ?authorName); separator=", ") AS ?authors)
   (GROUP_CONCAT(DISTINCT CONCAT(STR(?ord), "@@", STR(?authorUri)); separator=", ") AS ?authorIds)
 WHERE {
@@ -397,7 +397,7 @@ WHERE {
     ?proc dblp:publishedInStream ?stream .
   }
 
-  OPTIONAL { ?pub dblp:doi ?doi }
+  OPTIONAL { ?pub dblp:doi ?doi_raw }
   OPTIONAL {
     ?pub dblp:hasSignature ?sig .
     ?sig a dblp:AuthorSignature ;
@@ -406,7 +406,7 @@ WHERE {
          dblp:signatureDblpName ?authorName .
   }
 }
-GROUP BY ?title ?doi ?pub
+GROUP BY ?title ?pub
 ORDER BY ?title
 '''
 
@@ -422,7 +422,7 @@ BIB_PUBLICATION_TEMPLATE = '''
 PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
 
-SELECT ?title ?booktitle ?series ?pages ?publisher ?doi ?url ?year ?book ?pub ?stream ?streamTitle ?month ?volume ?number ?isbn ?bibtexType
+SELECT ?title ?booktitle ?series ?pages ?publisher (MIN(STR(?doi_raw)) AS ?doi) ?url ?year ?book ?pub ?stream ?streamTitle ?month ?volume ?number ?isbn ?bibtexType
   (GROUP_CONCAT(DISTINCT CONCAT(STR(?ord), "@@", ?authorName); separator=", ") AS ?authors)
   (GROUP_CONCAT(DISTINCT CONCAT(STR(?ord), "@@", STR(?authorUri)); separator=", ") AS ?authorIds)
   (GROUP_CONCAT(DISTINCT CONCAT(STR(?edOrd), "@@", ?editorName); separator=", ") AS ?editors)
@@ -442,7 +442,7 @@ WHERE{
   ?stream dblp:primaryStreamTitle ?streamTitle .
 
   OPTIONAL{?pub dblp:pagination ?pages}
-  OPTIONAL{?pub dblp:doi ?doi}
+  OPTIONAL{?pub dblp:doi ?doi_raw}
   OPTIONAL{?pub dblp:publishedBy ?pubPublisher}
   OPTIONAL{?pub dblp:primaryDocumentPage ?url}
   OPTIONAL{?pub dblp:monthOfPublication ?month}
@@ -489,14 +489,14 @@ WHERE{
   BIND(COALESCE(?pubVolume, ?bookSeriesVolume) AS ?volume)
 
 }
-GROUP BY ?title ?booktitle ?series ?pages ?publisher ?doi ?url ?year ?book ?pub ?stream ?streamTitle ?month ?volume ?number ?isbn ?bibtexType
+GROUP BY ?title ?booktitle ?series ?pages ?publisher ?url ?year ?book ?pub ?stream ?streamTitle ?month ?volume ?number ?isbn ?bibtexType
 '''
 
 ARTICLES_FROM_JOURNAL_TEMPLATE = '''
 PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
 
-SELECT ?title ?journalTitle ?volume ?number ?doi ?pub
+SELECT ?title ?journalTitle ?volume ?number (MIN(STR(?doi_raw)) AS ?doi) ?pub
   (GROUP_CONCAT(DISTINCT CONCAT(STR(?ord), "@@", ?authorName); separator=", ") AS ?authors)
   (GROUP_CONCAT(DISTINCT CONCAT(STR(?ord), "@@", STR(?authorUri)); separator=", ") AS ?authorIds)
 WHERE{
@@ -515,7 +515,7 @@ WHERE{
   FILTER(STR(?year) = "$YEAR")
   OPTIONAL{?pub dblp:publishedInJournalVolume ?volume}
   OPTIONAL{?pub dblp:publishedInJournalVolumeIssue ?number}
-  OPTIONAL{?pub dblp:doi ?doi}
+  OPTIONAL{?pub dblp:doi ?doi_raw}
   OPTIONAL {
     ?pub dblp:hasSignature ?sig .
     ?sig a dblp:AuthorSignature ;
@@ -524,7 +524,7 @@ WHERE{
          dblp:signatureDblpName ?authorName .
   }
 }
-GROUP BY ?title ?journalTitle ?volume ?number ?doi ?pub
+GROUP BY ?title ?journalTitle ?volume ?number ?pub
 '''
 
 JOURNAL_OVERVIEW_TEMPLATE = '''
@@ -559,7 +559,7 @@ PERSON_TEMPLATE = '''
 PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX ex: <https://ir.webis.de/kg#>
 
-SELECT ?title ?year ?doi ?pub ?name ?book ?booktitle ?streamTitle ?journalVolume ?journalNumber ?stream
+SELECT ?title ?year (MIN(STR(?doi_raw)) AS ?doi) ?pub ?name ?book ?booktitle ?streamTitle ?journalVolume ?journalNumber ?stream
   (GROUP_CONCAT(DISTINCT CONCAT(STR(?ord), "@@", ?authorName); separator=", ") AS ?authors)
   (GROUP_CONCAT(DISTINCT CONCAT(STR(?ord), "@@", STR(?authorUri)); separator=", ") AS ?authorIds)
 WHERE {
@@ -585,7 +585,7 @@ WHERE {
   OPTIONAL { ?pub dblp:yearOfEvent ?eventYear }
   BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
 
-  OPTIONAL { ?pub dblp:doi ?doi }
+  OPTIONAL { ?pub dblp:doi ?doi_raw }
   OPTIONAL { ?author dblp:primaryCreatorName ?name }
   OPTIONAL { ?pub dblp:publishedAsPartOf ?book .
              ?book dblp:title ?booktitle }
@@ -599,5 +599,5 @@ WHERE {
          dblp:signatureDblpName ?authorName .
   }
 }
-GROUP BY ?title ?year ?doi ?pub ?name ?booktitle ?streamTitle ?journalVolume ?journalNumber ?stream ?book
+GROUP BY ?title ?year ?pub ?name ?booktitle ?streamTitle ?journalVolume ?journalNumber ?stream ?book
 '''
