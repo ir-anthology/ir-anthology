@@ -19,7 +19,7 @@
         } else {
             new_params.set(`filter_${key}`, remaining.join(","))
         }
-        goto(resolve(`/?${new_params.toString()}`))
+        goto(resolve(`/anthology?${new_params.toString()}`))
         pendingRemoval = null
     }
 </script>
