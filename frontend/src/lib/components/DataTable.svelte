@@ -176,7 +176,7 @@
                     {#if col === 'Years'}
                         {#each yearsList as year (year)}
                             <th
-                                class="bg-gray-50 w-9 px-0.5 text-xm font-medium text-gray-500 whitespace-nowrap {year % 10 === 9 ? 'border-l border-gray-300' : ''}"
+                                class="bg-gray-50 w-9 px-0.5 text-sm font-medium text-gray-500 whitespace-nowrap {year % 10 === 9 ? 'border-l border-gray-300' : ''}"
                                 title={String(year)}
                             >{String(year % 100).padStart(2, '0')}</th>
                         {/each}
@@ -204,10 +204,10 @@
                                         onReset={handleResetDefaults}
                                     />
                                 {:else}
-                                    <span class="text-xm font-medium tracking-wider text-gray-500">{col}</span>
+                                    <span class="text-sm font-medium tracking-wider text-gray-500">{col}</span>
                                 {/if}
                                 <button
-                                    class="text-xm cursor-pointer shrink-0 {current_sort_by === col ? 'text-gray-600' : 'text-gray-400'}"
+                                    class="text-sm cursor-pointer shrink-0 {current_sort_by === col ? 'text-gray-600' : 'text-gray-400'}"
                                     onclick={() => handleSortClick(col)}
                                 >{current_sort_by === col ? (current_order === 'asc' ? '↑' : '↓') : '↕'}</button>
                             </div>
