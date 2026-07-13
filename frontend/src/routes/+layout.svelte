@@ -49,7 +49,7 @@
 			>
 				<span><span style="color:#951515"><b>IR</b></span> Anthology</span>
 			</a>
-			<a href={resolve('/extra')} class="text-sm text-gray-600 no-underline border border-gray-300 rounded px-3 py-1 hover:bg-gray-200 transition-colors">Additional Links</a>
+			<a href={resolve('/community')} class="text-sm text-gray-600 no-underline hover:text-black transition-colors">Community</a>
 		</div>
 		{#if userName}
 			<div class="relative group">
