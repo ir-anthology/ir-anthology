@@ -25,7 +25,7 @@
     })
 </script>
 
-<div class="w-max min-w-[min(64rem,100%)] mx-auto" style="--table-top: {stickyBarHeight}px">
+<div class="w-max min-w-[min(64rem,100%)]" style="--table-top: {stickyBarHeight}px">
     <div class="sticky top-0 z-20 bg-white pb-2" bind:clientHeight={stickyBarHeight}>
         <section class="mb-2 pt-4">
             <div class="relative flex items-center gap-4">

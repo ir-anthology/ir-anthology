@@ -11,7 +11,7 @@
     import ColumnSettings from './ColumnSettings.svelte';
 
     const COLUMN_WIDTHS: Record<string, string> = {
-		Entity: 'w-auto min-w-[200px]',
+		Entity: 'w-auto min-w-[200px] max-w-md',
 		Publication: 'w-24',
 		Venue: 'w-24',
 		Author: 'w-24',
@@ -176,7 +176,7 @@
                     {#if col === 'Years'}
                         {#each yearsList as year (year)}
                             <th
-                                class="bg-gray-50 w-9 px-0.5 text-xs font-medium text-gray-500 whitespace-nowrap {year % 10 === 9 ? 'border-l border-gray-300' : ''}"
+                                class="bg-gray-50 w-9 px-0.5 text-xm font-medium text-gray-500 whitespace-nowrap {year % 10 === 9 ? 'border-l border-gray-300' : ''}"
                                 title={String(year)}
                             >{String(year % 100).padStart(2, '0')}</th>
                         {/each}
@@ -186,7 +186,7 @@
                                 {#if col === 'Entity'}
                                     <div class="relative inline-flex items-center shrink-0">
                                         <select
-                                            class="appearance-none min-w-30 text-xs font-medium tracking-wider cursor-pointer border border-gray-300 rounded px-2 pr-6 py-0.5 bg-white focus:outline-none focus:ring-2 focus:ring-link/30 focus:border-link transition-colors {current_entity === col ? 'text-link font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:border-gray-400'}"
+                                            class="appearance-none min-w-30 text-sm font-medium tracking-wider cursor-pointer border border-gray-300 rounded px-2 pr-6 py-0.5 bg-white focus:outline-none focus:ring-2 focus:ring-link/30 focus:border-link transition-colors {current_entity === col ? 'text-link font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:border-gray-400'}"
                                             value={current_entity}
                                             onchange={(e) => handleEntityChange(e.currentTarget.value)}
                                         >
@@ -204,12 +204,12 @@
                                         onReset={handleResetDefaults}
                                     />
                                 {:else}
-                                    <span class="text-xs font-medium tracking-wider text-gray-500">{col}</span>
+                                    <span class="text-xm font-medium tracking-wider text-gray-500">{col}</span>
                                 {/if}
                                 <button
-                                    class="text-2xl cursor-pointer shrink-0 {current_sort_by === col ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}"
+                                    class="text-xm cursor-pointer shrink-0 {current_sort_by === col ? 'text-gray-600' : 'text-gray-400'}"
                                     onclick={() => handleSortClick(col)}
-                                >{current_sort_by === col ? (current_order === 'asc' ? '▲' : '▼') : '↕'}</button>
+                                >{current_sort_by === col ? (current_order === 'asc' ? '↑' : '↓') : '↕'}</button>
                             </div>
                         </th>
                     {/if}
@@ -219,13 +219,13 @@
         <tbody>
             {#if navigating.to}
                 <tr>
-                    <td class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <td class="px-4 py-1.5 text-left text-xs font-medium text-gray-500 uppercase">
                         Loading...
                     </td>
                 </tr>
             {:else if rows.length === 0}
                 <tr>
-                    <td class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <td class="px-4 py-1.5 text-left text-xs font-medium text-gray-500 uppercase">
                         No data
                     </td>
                 </tr>
@@ -253,7 +253,7 @@
                                 {/each}
                             {:else if col === 'Entity'}
                                 <td
-									class="px-4 py-3 text-sm text-gray-900 wrap-break-word {COLUMN_WIDTHS[col] ??
+									class="px-4 py-1.5 text-sm text-gray-900 wrap-break-word {COLUMN_WIDTHS[col] ??
 										'w-24'}"
 								>
 									{#if row['URI']?.value}
@@ -271,7 +271,7 @@
 								</td>
                             {:else if cellData?.value}
                                 <td
-                                    class="link px-4 py-3 text-sm text-center cursor-pointer hover:bg-gray-100 transition-colors {COLUMN_WIDTHS[
+                                    class="link px-4 py-1.5 text-sm text-center cursor-pointer hover:bg-gray-100 transition-colors {COLUMN_WIDTHS[
                                             col
                                         ] ?? 'w-24'}"
                                         onclick={() => handleCellClick(col, row)}
@@ -280,7 +280,7 @@
                                         onkeydown={(e) => e.key === 'Enter' && handleCellClick(col, row)}
                                     >{cellData.value}</td>
                             {:else}
-                                <td class="px-4 py-3 text-sm text-gray-400 text-center {COLUMN_WIDTHS[col] ?? 'w-24'}">
+                                <td class="px-4 py-1.5 text-sm text-gray-400 text-center {COLUMN_WIDTHS[col] ?? 'w-24'}">
 									-
 								</td>
                             {/if}
@@ -289,7 +289,7 @@
                 {/each}
                 {#if loadingMore}
                     <tr>
-                        <td colspan={columns.includes('Years') ? columns.length - 1 + yearsList.length : columns.length} class="px-4 py-3 text-center text-xs text-gray-400">
+                        <td colspan={columns.includes('Years') ? columns.length - 1 + yearsList.length : columns.length} class="px-4 py-1.5 text-center text-xs text-gray-400">
                             Loading...
                         </td>
                     </tr>

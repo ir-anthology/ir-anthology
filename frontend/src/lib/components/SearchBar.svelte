@@ -20,7 +20,7 @@
     }
 </script>
 
-<div class="relative flex-1">
+<div class="relative w-140 max-w-full">
     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
         <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path

@@ -134,7 +134,7 @@
     }
 </script>
 
-<div class="max-w-2xl mx-auto">
+<div class="max-w-2xl">
     <div class="flex items-center gap-4 mb-8">
         {#if profile.picture}
             <img src={profile.picture} alt="avatar" class="w-14 h-14 rounded-full border border-gray-200">
