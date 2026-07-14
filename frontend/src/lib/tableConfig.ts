@@ -11,6 +11,21 @@ export const ENTITY_ENDPOINTS: Record<string, string> = {
 
 export const DEFAULT_ENTITY = 'Venue';
 
+// Column headers are plural (counts) or value columns; entity names, URL params,
+// and filter keys stay singular. This maps a column to the entity it represents.
+const COLUMN_ENTITY: Record<string, string> = {
+	Publications: 'Publication',
+	Venues: 'Venue',
+	Authors: 'Author',
+	Years: 'Year',
+	Venue: 'Venue',
+	Year: 'Year',
+};
+
+export function columnEntity(col: string): string {
+	return COLUMN_ENTITY[col] ?? col;
+}
+
 // filter_<X> params the backend templates bind a label variable for
 const FILTERABLE_ENTITIES = ['Author', 'Venue', 'Publication', 'Year'];
 

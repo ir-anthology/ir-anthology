@@ -70,12 +70,12 @@ def build_year_seed(entity: str, bindings: list) -> str | None:
     return f"VALUES {YEAR_SEED_VARS[entity]} {{ {values} }}"
 
 class TableParams(BaseModel):
-    sort_by: str | None = "Publication"
+    sort_by: str | None = None  # None -> each endpoint's default_sort applies
     order: str | None = "DESC"
     page: int | None = 1
     limit: int | None = 50
 
-async def _run_table_page(template: str, params: TableParams, request: Request, client: httpx.AsyncClient, allowed_sorts: set[str], default_sort: str = "Publication") -> tuple[list, list, str]:
+async def _run_table_page(template: str, params: TableParams, request: Request, client: httpx.AsyncClient, allowed_sorts: set[str], default_sort: str = "Publications") -> tuple[list, list, str]:
     """Run one page query of a per-entity table template; returns (vars, bindings, filters).
 
     allowed_sorts must list the variables the template projects; unknown sort_by values
@@ -109,24 +109,24 @@ async def _merge_year_counts(entity: str, years_template: str, filters: str, bin
 
 @app.get("/api/table/authors")
 async def read_table_authors(params: Annotated[TableParams, Query()], client: httpx.AsyncClient = Depends(get_client), *, request: Request):
-    vars, bindings, filters = await _run_table_page(sparqlTemplates.AUTHOR_TABLE_TEMPLATE, params, request, client, {"Entity", "Publication", "Venue"})
+    vars, bindings, filters = await _run_table_page(sparqlTemplates.AUTHOR_TABLE_TEMPLATE, params, request, client, {"Entity", "Publications", "Venues"})
     await _merge_year_counts("Author", sparqlTemplates.AUTHOR_YEAR_COUNTS_TEMPLATE, filters, bindings, client)
     return {"vars": vars + ["Years"], "bindings": bindings}
 
 @app.get("/api/table/venues")
 async def read_table_venues(params: Annotated[TableParams, Query()], client: httpx.AsyncClient = Depends(get_client), *, request: Request):
-    vars, bindings, filters = await _run_table_page(sparqlTemplates.VENUE_TABLE_TEMPLATE, params, request, client, {"Entity", "Publication", "Author"})
+    vars, bindings, filters = await _run_table_page(sparqlTemplates.VENUE_TABLE_TEMPLATE, params, request, client, {"Entity", "Publications", "Authors"})
     await _merge_year_counts("Venue", sparqlTemplates.VENUE_YEAR_COUNTS_TEMPLATE, filters, bindings, client)
     return {"vars": vars + ["Years"], "bindings": bindings}
 
 @app.get("/api/table/years")
 async def read_table_years(params: Annotated[TableParams, Query()], client: httpx.AsyncClient = Depends(get_client), *, request: Request):
-    vars, bindings, _ = await _run_table_page(sparqlTemplates.YEARS_TABLE_TEMPLATE, params, request, client, {"Entity", "Publication", "Venue", "Author"})
+    vars, bindings, _ = await _run_table_page(sparqlTemplates.YEARS_TABLE_TEMPLATE, params, request, client, {"Entity", "Publications", "Venues", "Authors"})
     return {"vars": vars, "bindings": bindings}
 
 @app.get("/api/table/publications")
 async def read_table_publications(params: Annotated[TableParams, Query()], client: httpx.AsyncClient = Depends(get_client), *, request: Request):
-    vars, bindings, _ = await _run_table_page(sparqlTemplates.PUBLICATION_TABLE_TEMPLATE, params, request, client, {"Entity", "Year", "Author"}, default_sort="Year")
+    vars, bindings, _ = await _run_table_page(sparqlTemplates.PUBLICATION_TABLE_TEMPLATE, params, request, client, {"Entity", "Year", "Authors"}, default_sort="Year")
     return {"vars": vars, "bindings": bindings}
 
 @app.get("/api/conferences")
@@ -236,7 +236,7 @@ async def read_publication(id: str, client: httpx.AsyncClient = Depends(get_clie
     flat = bibtex_helper.bindings_to_dict(vars_, bindings)
     return {"vars": vars_, "bindings": bindings, "bibtex": bibtex_helper.create_bibtex(flat)}
 
-def parse_order(sort_by: str | None, order: str, allowed: set[str] | None = None, default: str = "Publication") -> str:
+def parse_order(sort_by: str | None, order: str, allowed: set[str] | None = None, default: str = "Publications") -> str:
     if sort_by is None or (allowed is not None and sort_by not in allowed):
         return f'ORDER BY DESC(?{default})'
 

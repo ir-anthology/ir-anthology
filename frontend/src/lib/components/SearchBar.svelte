@@ -16,7 +16,7 @@
         const new_params = new SvelteURLSearchParams(page.url.searchParams.toString())
         new_params.set(`filter_${current_entity}`, values.join(","))
 		searchValue = '';
-        await goto(resolve(`/?${new_params.toString()}`))
+        await goto(resolve(`/anthology?${new_params.toString()}`))
     }
 </script>
 

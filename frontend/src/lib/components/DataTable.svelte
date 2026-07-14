@@ -8,7 +8,7 @@
     import { getIDFromURI, slugifyName, decodeYearCounts } from '$lib/helperFunctions';
     import { browser } from '$app/environment';
     import { loadPreferences, savePreferences } from '$lib/columnPreferences';
-    import { ENTITY_ENDPOINTS, resolveEntity, sanitizeTableParams } from '$lib/tableConfig';
+    import { ENTITY_ENDPOINTS, resolveEntity, sanitizeTableParams, columnEntity } from '$lib/tableConfig';
     import ColumnSettings from './ColumnSettings.svelte';
 
     // Presentation hints only — any column without an entry gets the w-24 fallback,
@@ -52,7 +52,7 @@
 
     const current_entity:string = $derived(resolveEntity(_searchParams.get("entity")));
 
-    const current_sort_by:string = $derived(_searchParams.get("sort_by") ?? "Publication");
+    const current_sort_by:string = $derived(_searchParams.get("sort_by") ?? "Publications");
 
     const current_order:string = $derived(_searchParams.get("order") ?? "desc");
 
@@ -79,14 +79,16 @@
     let visibleColumns = $derived.by(() => {
         const prefs = userPrefs[current_entity] ?? availableColumns;
         const shown = prefs.filter((col) =>
-            availableColumns.includes(col) && !_searchParams.has(`filter_${col === 'Years' ? 'Year' : col}`));
+            availableColumns.includes(col) && !_searchParams.has(`filter_${columnEntity(col)}`));
         return ['Entity', ...shown];
     });
     let columns = $derived(vars.filter((v: string) => visibleColumns.includes(v)) ?? []);
     const entityOptions = Object.keys(ENTITY_ENDPOINTS);
 
+    const hasYearsMatrix = $derived(columns.includes('Years'));
+
     const yearsList: number[] = $derived.by(() => {
-        if (!columns.includes('Years')) return [];
+        if (!hasYearsMatrix) return [];
         let min = Infinity, max = -Infinity;
         for (const row of rows) {
             for (const year of decodeYearCounts(row['Years']?.value).keys()) {
@@ -129,7 +131,7 @@
         if (year !== undefined) new_params.set('filter_Year', String(year))
         new_params.delete('sort_by')
         new_params.delete('order')
-        new_params.set('entity', col)
+        new_params.set('entity', columnEntity(col))
         goto(resolve(`/anthology?${new_params.toString()}`))
     }
 
@@ -183,14 +185,12 @@
             <tr>
                 {#each columns as col (col)}
                     {#if col === 'Years'}
-                        {#each yearsList as year (year)}
-                            <th
-                                class="bg-gray-50 w-9 px-0.5 text-sm font-medium text-gray-500 whitespace-nowrap {year % 10 === 9 ? 'border-l border-gray-300' : ''}"
-                                title={String(year)}
-                            >{String(year % 100).padStart(2, '0')}</th>
-                        {/each}
+                        <th
+                            colspan={yearsList.length}
+                            class="bg-gray-50 px-2 pt-1 text-sm font-medium tracking-wider text-gray-500 whitespace-nowrap text-left border-l border-gray-300"
+                        >Publications per year</th>
                     {:else}
-                        <th class="bg-gray-50 {COLUMN_WIDTHS[col] ?? 'w-24'} whitespace-nowrap">
+                        <th rowspan={hasYearsMatrix ? 2 : undefined} class="bg-gray-50 {COLUMN_WIDTHS[col] ?? 'w-24'} whitespace-nowrap">
                             <div class="flex items-center gap-1 {col === 'Entity' ? 'justify-start pl-4' : 'justify-center'}">
                                 {#if col === 'Entity'}
                                     <div class="relative inline-flex items-center shrink-0">
@@ -227,6 +227,16 @@
                     {/if}
                 {/each}
             </tr>
+            {#if hasYearsMatrix}
+                <tr>
+                    {#each yearsList as year (year)}
+                        <th
+                            class="bg-gray-50 w-9 px-0.5 pb-1 text-sm font-medium text-gray-500 whitespace-nowrap {year % 10 === 9 ? 'border-l border-gray-300' : ''}"
+                            title={String(year)}
+                        >{String(year % 100).padStart(2, '0')}</th>
+                    {/each}
+                </tr>
+            {/if}
         </thead>
         <tbody>
             {#if navigating.to}
@@ -257,6 +267,7 @@
                                     {#if count !== undefined}
                                         <td
                                             class="link px-0.5 text-sm text-center cursor-pointer hover:bg-gray-100 transition-colors {border}"
+                                            title="{count} publication{count === 1 ? '' : 's'} in {year}"
                                             onclick={() => handleCellClick('Publication', row, year)}
                                             role="button"
                                             tabindex="0"
@@ -284,7 +295,7 @@
 										{current_entity === 'Venue' ? venueDisplayLabel(cellData.value, undefined) : (cellData.value ?? '-')}
 									{/if}
 								</td>
-                            {:else if cellDisplay && ENTITY_ENDPOINTS[col]}
+                            {:else if cellDisplay && ENTITY_ENDPOINTS[columnEntity(col)]}
                                 <td
                                     class="link px-4 py-1.5 text-sm text-center cursor-pointer hover:bg-gray-100 transition-colors {COLUMN_WIDTHS[
                                             col

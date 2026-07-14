@@ -30,8 +30,8 @@ AUTHOR_TABLE_TEMPLATE = f'''
 {_ENTITY_TABLE_PREFIXES}
 SELECT (?author_label AS ?Entity)
   (?author_URI AS ?URI)
-  (COUNT(DISTINCT ?publication_label) AS ?Publication)
-  (COUNT(DISTINCT ?venue_label)       AS ?Venue)
+  (COUNT(DISTINCT ?publication_label) AS ?Publications)
+  (COUNT(DISTINCT ?venue_label)       AS ?Venues)
 WHERE {{
 {_ENTITY_TABLE_BODY}
 }}
@@ -46,8 +46,8 @@ VENUE_TABLE_TEMPLATE = f'''
 {_ENTITY_TABLE_PREFIXES}
 SELECT (?venue_label AS ?Entity)
   (?venue_URI AS ?URI)
-  (COUNT(DISTINCT ?publication_label) AS ?Publication)
-  (COUNT(DISTINCT ?author_label)      AS ?Author)
+  (COUNT(DISTINCT ?publication_label) AS ?Publications)
+  (COUNT(DISTINCT ?author_label)      AS ?Authors)
 WHERE {{
 {_ENTITY_TABLE_BODY}
 }}
@@ -62,9 +62,9 @@ YEARS_TABLE_TEMPLATE = f'''
 {_ENTITY_TABLE_PREFIXES}
 SELECT (?year AS ?Entity)
   (?year AS ?URI)
-  (COUNT(DISTINCT ?publication_label) AS ?Publication)
-  (COUNT(DISTINCT ?venue_label)       AS ?Venue)
-  (COUNT(DISTINCT ?author_label)      AS ?Author)
+  (COUNT(DISTINCT ?publication_label) AS ?Publications)
+  (COUNT(DISTINCT ?venue_label)       AS ?Venues)
+  (COUNT(DISTINCT ?author_label)      AS ?Authors)
 WHERE {{
 {_ENTITY_TABLE_BODY}
 }}
@@ -90,11 +90,11 @@ GROUP BY ?author_URI
 
 PUBLICATION_TABLE_TEMPLATE = f'''
 {_ENTITY_TABLE_PREFIXES}
-SELECT ?Entity ?URI ?Author ?Year (STRBEFORE(?venuePair, "@@") AS ?Venue) (STRAFTER(?venuePair, "@@") AS ?VenueURI)
+SELECT ?Entity ?URI ?Authors ?Year (STRBEFORE(?venuePair, "@@") AS ?Venue) (STRAFTER(?venuePair, "@@") AS ?VenueURI)
 WHERE {{
   SELECT (?publication_label AS ?Entity)
     (?publication_URI AS ?URI)
-    (COUNT(DISTINCT ?author_label) AS ?Author)
+    (COUNT(DISTINCT ?author_label) AS ?Authors)
     (MIN(STR(?year)) AS ?Year)
     (MIN(CONCAT(?venue_label, "@@", STR(?venue_URI))) AS ?venuePair)
   WHERE {{
