@@ -75,7 +75,7 @@ class TableParams(BaseModel):
     page: int | None = 1
     limit: int | None = 50
 
-async def _run_table_page(template: str, params: TableParams, request: Request, client: httpx.AsyncClient, allowed_sorts: set[str], default_sort: str = "Publications") -> tuple[list, list, str]:
+async def _run_table_page(template: str, params: TableParams, request: Request, client: httpx.AsyncClient, allowed_sorts: set[str], default_sort: str = "Publications", default_order: str = "DESC", sort_aliases: dict[str, str] | None = None) -> tuple[list, list, str]:
     """Run one page query of a per-entity table template; returns (vars, bindings, filters).
 
     allowed_sorts must list the variables the template projects; unknown sort_by values
@@ -88,7 +88,7 @@ async def _run_table_page(template: str, params: TableParams, request: Request, 
     filters = build_filters(extra)
     query = (template
              .replace('$FILTERS', filters)
-             .replace('$ORDER', parse_order(params.sort_by, params.order, allowed_sorts, default_sort))
+             .replace('$ORDER', parse_order(params.sort_by, params.order, allowed_sorts, default_sort, default_order, sort_aliases))
              .replace('$LIMIT', str(params.limit))
              .replace('$OFFSET', str((params.page - 1) * params.limit)))
     data = await sparql_post(query, client)
@@ -115,13 +115,13 @@ async def read_table_authors(params: Annotated[TableParams, Query()], client: ht
 
 @app.get("/api/table/venues")
 async def read_table_venues(params: Annotated[TableParams, Query()], client: httpx.AsyncClient = Depends(get_client), *, request: Request):
-    vars, bindings, filters = await _run_table_page(sparqlTemplates.VENUE_TABLE_TEMPLATE, params, request, client, {"Entity", "Publications", "Authors"})
+    vars, bindings, filters = await _run_table_page(sparqlTemplates.VENUE_TABLE_TEMPLATE, params, request, client, {"Entity", "Publications", "Authors"}, default_sort="Entity", default_order="ASC", sort_aliases={"Entity": "venue_sort"})
     await _merge_year_counts("Venue", sparqlTemplates.VENUE_YEAR_COUNTS_TEMPLATE, filters, bindings, client)
     return {"vars": vars + ["Years"], "bindings": bindings}
 
 @app.get("/api/table/years")
 async def read_table_years(params: Annotated[TableParams, Query()], client: httpx.AsyncClient = Depends(get_client), *, request: Request):
-    vars, bindings, _ = await _run_table_page(sparqlTemplates.YEARS_TABLE_TEMPLATE, params, request, client, {"Entity", "Publications", "Venues", "Authors"})
+    vars, bindings, _ = await _run_table_page(sparqlTemplates.YEARS_TABLE_TEMPLATE, params, request, client, {"Entity", "Publications", "Venues", "Authors"}, default_sort="Entity", default_order="DESC")
     return {"vars": vars, "bindings": bindings}
 
 @app.get("/api/table/publications")
@@ -236,12 +236,15 @@ async def read_publication(id: str, client: httpx.AsyncClient = Depends(get_clie
     flat = bibtex_helper.bindings_to_dict(vars_, bindings)
     return {"vars": vars_, "bindings": bindings, "bibtex": bibtex_helper.create_bibtex(flat)}
 
-def parse_order(sort_by: str | None, order: str, allowed: set[str] | None = None, default: str = "Publications") -> str:
+def parse_order(sort_by: str | None, order: str, allowed: set[str] | None = None, default: str = "Publications", default_order: str = "DESC", aliases: dict[str, str] | None = None) -> str:
     if sort_by is None or (allowed is not None and sort_by not in allowed):
-        return f'ORDER BY DESC(?{default})'
+        sort_by, order = default, default_order
 
+    # some columns sort by a different variable than they display (e.g. the venues
+    # Entity column shows abbreviations and sorts by ?venue_sort)
+    sort_var = (aliases or {}).get(sort_by, sort_by)
     direction = "ASC" if (order or '').upper() == 'ASC' else 'DESC'
-    return f"ORDER BY {direction}(?{sort_by})"
+    return f"ORDER BY {direction}(?{sort_var})"
 
 def get_label_var(entity_type: str) -> str:
     return f"?{entity_type.lower()}_label"

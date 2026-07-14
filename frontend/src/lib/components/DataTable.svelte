@@ -8,7 +8,7 @@
     import { getIDFromURI, slugifyName, decodeYearCounts } from '$lib/helperFunctions';
     import { browser } from '$app/environment';
     import { loadPreferences, savePreferences } from '$lib/columnPreferences';
-    import { ENTITY_ENDPOINTS, resolveEntity, sanitizeTableParams, columnEntity } from '$lib/tableConfig';
+    import { ENTITY_ENDPOINTS, ENTITY_DEFAULT_SORT, resolveEntity, sanitizeTableParams, columnEntity } from '$lib/tableConfig';
     import ColumnSettings from './ColumnSettings.svelte';
 
     // Presentation hints only — any column without an entry gets the w-24 fallback,
@@ -52,9 +52,9 @@
 
     const current_entity:string = $derived(resolveEntity(_searchParams.get("entity")));
 
-    const current_sort_by:string = $derived(_searchParams.get("sort_by") ?? "Publications");
+    const current_sort_by:string = $derived(_searchParams.get("sort_by") ?? ENTITY_DEFAULT_SORT[current_entity].sort_by);
 
-    const current_order:string = $derived(_searchParams.get("order") ?? "desc");
+    const current_order:string = $derived(_searchParams.get("order") ?? ENTITY_DEFAULT_SORT[current_entity].order);
 
     const HIDDEN_COLUMNS = ['URI', 'VenueURI'];
     let userPrefs = $state(loadPreferences());

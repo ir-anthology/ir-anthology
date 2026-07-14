@@ -11,6 +11,15 @@ export const ENTITY_ENDPOINTS: Record<string, string> = {
 
 export const DEFAULT_ENTITY = 'Venue';
 
+// Must match the default_sort/default_order each backend endpoint applies when
+// no sort params are present — only used for the header sort indicators.
+export const ENTITY_DEFAULT_SORT: Record<string, { sort_by: string; order: string }> = {
+	Author: { sort_by: 'Publications', order: 'desc' },
+	Venue: { sort_by: 'Entity', order: 'asc' },
+	Year: { sort_by: 'Entity', order: 'desc' },
+	Publication: { sort_by: 'Year', order: 'desc' },
+};
+
 // Column headers are plural (counts) or value columns; entity names, URL params,
 // and filter keys stay singular. This maps a column to the entity it represents.
 const COLUMN_ENTITY: Record<string, string> = {

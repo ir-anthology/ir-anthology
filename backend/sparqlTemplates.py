@@ -50,8 +50,14 @@ SELECT (?venue_label AS ?Entity)
   (COUNT(DISTINCT ?author_label)      AS ?Authors)
 WHERE {{
 {_ENTITY_TABLE_BODY}
+  # sort key mirroring the frontend's venueDisplayLabel: the venue's abbreviation
+  # (last parenthesized group of the title, else the uppercased URI tail) — the
+  # Entity column displays abbreviations, so Entity sorting must order by them
+  BIND(UCASE(IF(REGEX(?venue_label, "\\\\(([^)]+)\\\\)"),
+                REPLACE(?venue_label, "^.*\\\\(([^)]+)\\\\).*$", "$1"),
+                REPLACE(STR(?venue_URI), "^.*/", ""))) AS ?venue_sort)
 }}
-GROUP BY ?venue_label ?venue_URI
+GROUP BY ?venue_label ?venue_URI ?venue_sort
 HAVING (BOUND(?venue_label))
 $ORDER
 LIMIT $LIMIT
