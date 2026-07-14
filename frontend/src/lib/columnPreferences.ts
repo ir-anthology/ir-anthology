@@ -2,24 +2,10 @@ import { browser } from '$app/environment';
 
 const STORAGE_KEY = 'ir-anthology-column-preferences';
 
-export const DEFAULT_COLUMNS: Record<string, string[]> = {
-	Author: ['Publication', 'Venue', 'Years'],
-	Venue: ['Publication', 'Author', 'Years'],
-	Publication: ['Author', 'Years'],
-	Year: ['Publication', 'Author', 'Venue'],
-	'2020s': ['Publication', 'Author', 'Venue'],
-	'2010s': ['Publication', 'Author', 'Venue'],
-	'2000s': ['Publication', 'Author', 'Venue'],
-	Pre2000s: ['Publication', 'Author', 'Venue'],
-};
-
-export const ALL_COLUMNS = ['Publication', 'Venue', 'Author', 'Year', '2020s', '2010s', '2000s', 'Pre2000s', 'Years'];
-
-export function getVisibleColumns(entity: string, userPrefs?: Record<string, string[]>): string[] {
-	const prefs = userPrefs?.[entity] ?? DEFAULT_COLUMNS[entity] ?? ALL_COLUMNS;
-	return prefs.filter((col) => ALL_COLUMNS.includes(col));
-}
-
+// prefs[entity] stores an explicit column selection; a missing key means
+// "all columns the entity's endpoint returns". Stale entries (removed columns,
+// old entities) are neutralized by intersecting with the available columns
+// at render time
 export function loadPreferences(): Record<string, string[]> {
 	if (!browser) return {};
 	try {

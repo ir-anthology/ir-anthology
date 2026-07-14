@@ -3,7 +3,7 @@ import httpx
 from fastapi import HTTPException
 
 DBLP_ENDPOINT = "https://sparql.dblp.org/sparql"
-CUSTOM_STREAM_BASE = "https://ir.webis.de/anthology/venues/workshops+"
+CUSTOM_WORKSHOP_STREAM_BASE = "https://ir.webis.de/anthology/venues/workshops+"
 _PAGE = 100_000
 
 _YEAR_RE = re.compile(r'[12][0-9]{3}')
@@ -97,6 +97,7 @@ WHERE {{
 }}
 ORDER BY ?stream ?p ?o
 LIMIT {limit} OFFSET {offset}"""
+    
     return f"""PREFIX dblp: <https://dblp.org/rdf/schema#>
 CONSTRUCT {{ ?stream ?p ?o }}
 WHERE {{
@@ -585,7 +586,7 @@ async def fetch_custom_workshop(
     proc_iris: list[str],
 ) -> str:
     """Construct a custom ir.webis.de Workshop stream for the given proceedings IRIs."""
-    stream_iri = CUSTOM_STREAM_BASE + abbreviation.lower()
+    stream_iri = CUSTOM_WORKSHOP_STREAM_BASE + abbreviation.lower()
     DBLP_NS = "https://dblp.org/rdf/schema#"
     RDF_NS  = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
     EX_NS   = "https://ir.webis.de/kg#"

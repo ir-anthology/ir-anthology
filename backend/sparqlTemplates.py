@@ -1,5 +1,7 @@
-_TABLE_BODY = '''
-  VALUES ?entityType { "$ENTITY_TYPE" }
+# Shared body for the per-entity table templates below. It binds every label
+# variable that build_filters may reference (?publication_label, ?venue_label,
+# ?author_label, ?year_label) and performs the workshop -> synthetic venue collapse.
+_ENTITY_TABLE_BODY = '''
   ?publication_URI dblp:title ?publication_label ;
                    dblp:yearOfPublication ?pubYear ;
                    dblp:authoredBy ?author_URI ;
@@ -7,95 +9,127 @@ _TABLE_BODY = '''
 
   OPTIONAL { ?publication_URI ex:yearOfConference ?eventYear }
   BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
-
-  OPTIONAL { ?stream_URI a ex:Workshop . BIND(true AS ?isWorkshop) }
-  OPTIONAL {
-    ?stream_URI dblp:primaryStreamTitle ?stream_label .
-  }
-  BIND(IF(BOUND(?isWorkshop), <https://dblp.org/workshops>, ?stream_URI) AS ?venue_URI)
-  BIND(IF(BOUND(?isWorkshop), "Workshops", ?stream_label) AS ?venue_label)
-  OPTIONAL {
-    ?author_URI dblp:primaryCreatorName ?author_label .
-  }
-
-  BIND(xsd:integer(STR(?year)) AS ?y)
-
-  BIND(IF(?y >= 2020, STR(?year), ?unbound) AS ?2020s_label)
-  BIND(?2020s_label AS ?2020s_URI)
-  BIND(IF(?y >= 2010 && ?y < 2020, STR(?year), ?unbound) AS ?2010s_label)
-  BIND(?2010s_label AS ?2010s_URI)
-  BIND(IF(?y >= 2000 && ?y < 2010, STR(?year), ?unbound) AS ?2000s_label)
-  BIND(?2000s_label AS ?2000s_URI)
-  BIND(IF(?y < 2000, STR(?year), ?unbound) AS ?Pre2000s_label)
-  BIND(?Pre2000s_label AS ?Pre2000s_URI)
   BIND(STR(?year) AS ?year_label)
 
-  $FILTERS
+  OPTIONAL { ?stream_URI a ex:Workshop . BIND(true AS ?isWorkshop) }
+  ?stream_URI dblp:primaryStreamTitle ?stream_label .
+  BIND(IF(BOUND(?isWorkshop), <https://dblp.org/workshops>, ?stream_URI) AS ?venue_URI)
+  BIND(IF(BOUND(?isWorkshop), "Workshops", ?stream_label) AS ?venue_label)
+  OPTIONAL { ?author_URI dblp:primaryCreatorName ?author_label . }
 
-  BIND(
-    IF(?entityType = "Publication", ?publication_URI,
-    IF(?entityType = "Venue",       ?venue_URI,
-    IF(?entityType = "Year",        ?year,
-    IF(?entityType = "2020s",       ?2020s_URI,
-    IF(?entityType = "2010s",       ?2010s_URI,
-    IF(?entityType = "2000s",       ?2000s_URI,
-    IF(?entityType = "Pre2000s",    ?Pre2000s_URI,
-                                    ?author_URI)))))))
-  AS ?entity_URI)
-  BIND(
-    IF(?entityType = "Publication", ?publication_label,
-    IF(?entityType = "Venue",       ?venue_label,
-    IF(?entityType = "Year",        ?year,
-    IF(?entityType = "2020s",       ?2020s_label,
-    IF(?entityType = "2010s",       ?2010s_label,
-    IF(?entityType = "2000s",       ?2000s_label,
-    IF(?entityType = "Pre2000s",    ?Pre2000s_label,
-                                    ?author_label)))))))
-  AS ?entity_label)
+  $FILTERS
 '''
 
-TABLE_QUERY_TEMPLATE = f'''
+_ENTITY_TABLE_PREFIXES = '''
 PREFIX dblp: <https://dblp.org/rdf/schema#>
-PREFIX dcterms: <http://purl.org/dc/terms/>
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
 PREFIX ex: <https://ir.webis.de/kg#>
+'''
 
-SELECT (?entity_label AS ?Entity)
-  (?entity_URI AS ?URI)
+AUTHOR_TABLE_TEMPLATE = f'''
+{_ENTITY_TABLE_PREFIXES}
+SELECT (?author_label AS ?Entity)
+  (?author_URI AS ?URI)
   (COUNT(DISTINCT ?publication_label) AS ?Publication)
   (COUNT(DISTINCT ?venue_label)       AS ?Venue)
-  (COUNT(DISTINCT ?author_label)      AS ?Author)
-  (COUNT(DISTINCT ?year)              AS ?Year)
-  (COUNT(DISTINCT ?2020s_label)       AS ?2020s)
-  (COUNT(DISTINCT ?2010s_label)       AS ?2010s)
-  (COUNT(DISTINCT ?2000s_label)       AS ?2000s)
-  (COUNT(DISTINCT ?Pre2000s_label)    AS ?Pre2000s)
 WHERE {{
-{_TABLE_BODY}
+{_ENTITY_TABLE_BODY}
 }}
-GROUP BY ?entity_label ?entity_URI
-HAVING (BOUND(?entity_label) && BOUND(?entity_URI))
+GROUP BY ?author_label ?author_URI
+HAVING (BOUND(?author_label))
 $ORDER
 LIMIT $LIMIT
 OFFSET $OFFSET
 '''
 
-YEAR_COUNTS_TEMPLATE = f'''
-PREFIX dblp: <https://dblp.org/rdf/schema#>
-PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
-PREFIX ex: <https://ir.webis.de/kg#>
-
-SELECT (?entity_URI AS ?URI) (GROUP_CONCAT(CONCAT(STR(?year), "@@", STR(?cnt)); separator=", ") AS ?Years)
+VENUE_TABLE_TEMPLATE = f'''
+{_ENTITY_TABLE_PREFIXES}
+SELECT (?venue_label AS ?Entity)
+  (?venue_URI AS ?URI)
+  (COUNT(DISTINCT ?publication_label) AS ?Publication)
+  (COUNT(DISTINCT ?author_label)      AS ?Author)
 WHERE {{
-  SELECT ?entity_URI ?year (COUNT(DISTINCT ?publication_URI) AS ?cnt)
+{_ENTITY_TABLE_BODY}
+}}
+GROUP BY ?venue_label ?venue_URI
+HAVING (BOUND(?venue_label))
+$ORDER
+LIMIT $LIMIT
+OFFSET $OFFSET
+'''
+
+YEARS_TABLE_TEMPLATE = f'''
+{_ENTITY_TABLE_PREFIXES}
+SELECT (?year AS ?Entity)
+  (?year AS ?URI)
+  (COUNT(DISTINCT ?publication_label) AS ?Publication)
+  (COUNT(DISTINCT ?venue_label)       AS ?Venue)
+  (COUNT(DISTINCT ?author_label)      AS ?Author)
+WHERE {{
+{_ENTITY_TABLE_BODY}
+}}
+GROUP BY ?year
+$ORDER
+LIMIT $LIMIT
+OFFSET $OFFSET
+'''
+
+AUTHOR_YEAR_COUNTS_TEMPLATE = f'''
+{_ENTITY_TABLE_PREFIXES}
+SELECT (?author_URI AS ?URI) (GROUP_CONCAT(CONCAT(STR(?year), "@@", STR(?cnt)); separator=", ") AS ?Years)
+WHERE {{
+  SELECT ?author_URI ?year (COUNT(DISTINCT ?publication_URI) AS ?cnt)
   WHERE {{
     $SEED
-{_TABLE_BODY}
+{_ENTITY_TABLE_BODY}
   }}
-  GROUP BY ?entity_URI ?year
+  GROUP BY ?author_URI ?year
 }}
-GROUP BY ?entity_URI
+GROUP BY ?author_URI
+'''
+
+PUBLICATION_TABLE_TEMPLATE = f'''
+{_ENTITY_TABLE_PREFIXES}
+SELECT ?Entity ?URI ?Author ?Year (STRBEFORE(?venuePair, "@@") AS ?Venue) (STRAFTER(?venuePair, "@@") AS ?VenueURI)
+WHERE {{
+  SELECT (?publication_label AS ?Entity)
+    (?publication_URI AS ?URI)
+    (COUNT(DISTINCT ?author_label) AS ?Author)
+    (MIN(STR(?year)) AS ?Year)
+    (MIN(CONCAT(?venue_label, "@@", STR(?venue_URI))) AS ?venuePair)
+  WHERE {{
+{_ENTITY_TABLE_BODY}
+    # venue attribution (as in PERSON_TEMPLATE): keep non-workshop stream rows;
+    # workshop rows only survive when the publication has no non-workshop stream
+    FILTER(
+      NOT EXISTS {{ ?stream_URI a ex:Workshop }}
+      ||
+      NOT EXISTS {{
+        ?publication_URI dblp:publishedInStream ?s2 .
+        FILTER NOT EXISTS {{ ?s2 a ex:Workshop }}
+      }}
+    )
+  }}
+  GROUP BY ?publication_label ?publication_URI
+  $ORDER
+  LIMIT $LIMIT
+  OFFSET $OFFSET
+}}
+$ORDER
+'''
+
+VENUE_YEAR_COUNTS_TEMPLATE = f'''
+{_ENTITY_TABLE_PREFIXES}
+SELECT (?venue_URI AS ?URI) (GROUP_CONCAT(CONCAT(STR(?year), "@@", STR(?cnt)); separator=", ") AS ?Years)
+WHERE {{
+  SELECT ?venue_URI ?year (COUNT(DISTINCT ?publication_URI) AS ?cnt)
+  WHERE {{
+    $SEED
+{_ENTITY_TABLE_BODY}
+  }}
+  GROUP BY ?venue_URI ?year
+}}
+GROUP BY ?venue_URI
 '''
 
 ANTHOLOGY_CONFERENCES_QUERY_TEMPLATE = '''
@@ -244,7 +278,7 @@ SELECT ?title (MIN(STR(?doi_raw)) AS ?doi) ?pub ?streamTitle WHERE{
 GROUP BY ?title ?pub ?streamTitle
 '''
 
-PROCEEDINGS_QUERY_TEMPLATE = '''
+VENUE_YEAR_PROCEEDINGS_QUERY_TEMPLATE = '''
 PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
 PREFIX ex: <https://ir.webis.de/kg#>
@@ -492,7 +526,7 @@ WHERE{
 GROUP BY ?title ?booktitle ?series ?pages ?publisher ?url ?year ?book ?pub ?stream ?streamTitle ?month ?volume ?number ?isbn ?bibtexType
 '''
 
-ARTICLES_FROM_JOURNAL_TEMPLATE = '''
+JOURNAL_YEAR_TEMPLATE = '''
 PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
 
@@ -547,7 +581,7 @@ GROUP BY ?year ?volume ?number ?journalTitle
 ORDER BY DESC(?year) ?volume ?number
 '''
 
-PERSONS_TEMPLATE = '''
+PEOPLE_TEMPLATE = '''
 PREFIX dblp: <https://dblp.org/rdf/schema#>
 SELECT ?person ?name WHERE {
   ?person a dblp:Creator .

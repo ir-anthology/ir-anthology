@@ -2,7 +2,6 @@ from fastapi import FastAPI, HTTPException, Query, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Annotated
 from pydantic import BaseModel
-from enum import Enum
 import sparqlTemplates
 import bibtex as bibtex_helper
 import auth_utils
@@ -15,25 +14,6 @@ from datetime import datetime, timezone
 
 SPARQL_ENDPOINT = "https://database-ir-anthology.srv.webis.de/"
 SPARQL_ACCESS_TOKEN = os.environ.get("SPARQL_ACCESS_TOKEN", "")
-
-VALID_ENTITIES = ['Author', 'Venue', 'Publication', 'Year', '2020s', '2010s', '2000s', 'Pre2000s']
-
-class Entities(str, Enum):
-    author = "Author"
-    venue = "Venue"
-    publication = "Publication"
-    year = "Year"
-    twenty_twenties = "2020s"
-    twenty_tens = "2010s"
-    two_thousands = "2000s"
-    pre_two_thousands = "Pre2000s"
-
-class FilterParams(BaseModel):
-    entity: Entities | None = "Venue"
-    sort_by: str | None = "Publication"
-    order: str | None = "DESC"
-    page: int | None = 1
-    limit: int | None = 50
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -59,10 +39,10 @@ app.add_middleware(
 
 WORKSHOPS_VENUE_URI = "https://dblp.org/workshops"
 
-YEAR_SEED_VARS = {"Author": "?author_URI", "Publication": "?publication_URI", "Venue": "?stream_URI"}
+YEAR_SEED_VARS = {"Author": "?author_URI", "Venue": "?stream_URI"}
 
 def build_year_seed(entity: str, bindings: list) -> str | None:
-    """Build the $SEED clause for YEAR_COUNTS_TEMPLATE from the URIs of one result page.
+    """Build the $SEED clause for the *_YEAR_COUNTS templates from the URIs of one result page.
 
     The seed restricts the per-year aggregation to the entities on the current page.
     It must target a raw triple-pattern variable (see YEAR_SEED_VARS) — a VALUES on
@@ -89,57 +69,65 @@ def build_year_seed(entity: str, bindings: list) -> str | None:
     values = " ".join(f"<{u}>" for u in uris)
     return f"VALUES {YEAR_SEED_VARS[entity]} {{ {values} }}"
 
-@app.get("/api/table")
-async def read_table_data(filter_query: Annotated[FilterParams, Query()], client: httpx.AsyncClient = Depends(get_client), *, request: Request):
-    """Return one page of entity rows for the DataTable, including per-year counts.
+class TableParams(BaseModel):
+    sort_by: str | None = "Publication"
+    order: str | None = "DESC"
+    page: int | None = 1
+    limit: int | None = 50
 
-    Runs up to two SPARQL queries:
-    1. TABLE_QUERY_TEMPLATE — the page of entities with aggregate columns,
-       applying filter_* params, sorting and paging.
-    2. YEAR_COUNTS_TEMPLATE — a "year@@count, ..." string per entity, merged into
-       the bindings as ?Years. Computed separately because a single combined query
-       would aggregate year counts for ALL entities before LIMIT applies; seeding
-       query 2 with the page's URIs (build_year_seed) keeps it fast.
+async def _run_table_page(template: str, params: TableParams, request: Request, client: httpx.AsyncClient, allowed_sorts: set[str], default_sort: str = "Publication") -> tuple[list, list, str]:
+    """Run one page query of a per-entity table template; returns (vars, bindings, filters).
 
-    Year and decade entities skip query 2: they span exactly one year, so their
-    per-year count equals their Publication count and is synthesized directly.
-    Both queries receive the same $FILTERS, so year counts always reflect the
-    same restrictions as the rows they are merged into.
+    allowed_sorts must list the variables the template projects; unknown sort_by values
+    fall back to the default sort instead of producing an invalid SPARQL query.
     """
     extra = {
         k: v for k, v in request.query_params.items()
-        if k not in filter_query.model_dump().keys()
+        if k not in params.model_dump().keys()
     }
-    order_clause = parse_order(filter_query.sort_by, filter_query.order)
-    offset = (filter_query.page - 1) * filter_query.limit
     filters = build_filters(extra)
-    query = sparqlTemplates.TABLE_QUERY_TEMPLATE.replace("$ENTITY_TYPE", filter_query.entity)
-    query = query.replace('$FILTERS', filters)
-    query = query.replace('$ORDER', order_clause)
-    query = query.replace('$LIMIT', str(filter_query.limit))
-    query = query.replace('$OFFSET', str(offset))
+    query = (template
+             .replace('$FILTERS', filters)
+             .replace('$ORDER', parse_order(params.sort_by, params.order, allowed_sorts, default_sort))
+             .replace('$LIMIT', str(params.limit))
+             .replace('$OFFSET', str((params.page - 1) * params.limit)))
     data = await sparql_post(query, client)
-    bindings = data["results"]["bindings"]
-    entity = getattr(filter_query.entity, 'value', filter_query.entity)
-    if entity in YEAR_SEED_VARS:
-        seed = build_year_seed(entity, bindings)
-        if seed is not None:
-            years_query = (sparqlTemplates.YEAR_COUNTS_TEMPLATE
-                           .replace('$SEED', seed)
-                           .replace('$ENTITY_TYPE', entity)
-                           .replace('$FILTERS', filters))
-            years_data = await sparql_post(years_query, client)
-            years_by_uri = {r["URI"]["value"]: r["Years"] for r in years_data["results"]["bindings"]}
-            for b in bindings:
-                uri = b.get("URI", {}).get("value")
-                if uri in years_by_uri:
-                    b["Years"] = years_by_uri[uri]
-    else:
-        # Year and decade entities are single years, so the per-year count is the Publication count
-        for b in bindings:
-            if "URI" in b and "Publication" in b:
-                b["Years"] = {"type": "literal", "value": f'{b["URI"]["value"]}@@{b["Publication"]["value"]}'}
-    return {"vars": data["head"]["vars"] + ["Years"], "bindings": bindings}
+    return data["head"]["vars"], data["results"]["bindings"], filters
+
+async def _merge_year_counts(entity: str, years_template: str, filters: str, bindings: list, client: httpx.AsyncClient):
+    """Merge a ?Years binding into each page row via a seeded per-year count query (see build_year_seed)."""
+    seed = build_year_seed(entity, bindings)
+    if seed is None:
+        return
+    years_query = years_template.replace('$SEED', seed).replace('$FILTERS', filters)
+    years_data = await sparql_post(years_query, client)
+    years_by_uri = {r["URI"]["value"]: r["Years"] for r in years_data["results"]["bindings"]}
+    for b in bindings:
+        uri = b.get("URI", {}).get("value")
+        if uri in years_by_uri:
+            b["Years"] = years_by_uri[uri]
+
+@app.get("/api/table/authors")
+async def read_table_authors(params: Annotated[TableParams, Query()], client: httpx.AsyncClient = Depends(get_client), *, request: Request):
+    vars, bindings, filters = await _run_table_page(sparqlTemplates.AUTHOR_TABLE_TEMPLATE, params, request, client, {"Entity", "Publication", "Venue"})
+    await _merge_year_counts("Author", sparqlTemplates.AUTHOR_YEAR_COUNTS_TEMPLATE, filters, bindings, client)
+    return {"vars": vars + ["Years"], "bindings": bindings}
+
+@app.get("/api/table/venues")
+async def read_table_venues(params: Annotated[TableParams, Query()], client: httpx.AsyncClient = Depends(get_client), *, request: Request):
+    vars, bindings, filters = await _run_table_page(sparqlTemplates.VENUE_TABLE_TEMPLATE, params, request, client, {"Entity", "Publication", "Author"})
+    await _merge_year_counts("Venue", sparqlTemplates.VENUE_YEAR_COUNTS_TEMPLATE, filters, bindings, client)
+    return {"vars": vars + ["Years"], "bindings": bindings}
+
+@app.get("/api/table/years")
+async def read_table_years(params: Annotated[TableParams, Query()], client: httpx.AsyncClient = Depends(get_client), *, request: Request):
+    vars, bindings, _ = await _run_table_page(sparqlTemplates.YEARS_TABLE_TEMPLATE, params, request, client, {"Entity", "Publication", "Venue", "Author"})
+    return {"vars": vars, "bindings": bindings}
+
+@app.get("/api/table/publications")
+async def read_table_publications(params: Annotated[TableParams, Query()], client: httpx.AsyncClient = Depends(get_client), *, request: Request):
+    vars, bindings, _ = await _run_table_page(sparqlTemplates.PUBLICATION_TABLE_TEMPLATE, params, request, client, {"Entity", "Year", "Author"}, default_sort="Year")
+    return {"vars": vars, "bindings": bindings}
 
 @app.get("/api/conferences")
 async def read_conferences_overview(client: httpx.AsyncClient = Depends(get_client)):
@@ -161,7 +149,7 @@ async def read_conference_year_inproceedings(id: str, year: int, client: httpx.A
 
 @app.get("/api/conferences/{id}/{year}/proceedings")
 async def read_conference_year_proceedings(id: str, year: int, client: httpx.AsyncClient = Depends(get_client)):
-    query = sparqlTemplates.PROCEEDINGS_QUERY_TEMPLATE.replace('$VENUE_ID', get_uri_from_id(id)).replace('$YEAR', str(year))
+    query = sparqlTemplates.VENUE_YEAR_PROCEEDINGS_QUERY_TEMPLATE.replace('$VENUE_ID', get_uri_from_id(id)).replace('$YEAR', str(year))
     data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
@@ -217,13 +205,13 @@ async def read_journal(id: str, client: httpx.AsyncClient = Depends(get_client))
 
 @app.get("/api/journals/{id}/{year}")
 async def read_journal_year(id: str, year: int, client: httpx.AsyncClient = Depends(get_client)):
-    query = sparqlTemplates.ARTICLES_FROM_JOURNAL_TEMPLATE.replace('$JOURNAL', get_uri_from_id(id)).replace('$YEAR', str(year))
+    query = sparqlTemplates.JOURNAL_YEAR_TEMPLATE.replace('$JOURNAL', get_uri_from_id(id)).replace('$YEAR', str(year))
     data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
 @app.get("/api/people")
 async def read_people(client: httpx.AsyncClient = Depends(get_client)):
-    query = sparqlTemplates.PERSONS_TEMPLATE
+    query = sparqlTemplates.PEOPLE_TEMPLATE
     data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
@@ -248,20 +236,17 @@ async def read_publication(id: str, client: httpx.AsyncClient = Depends(get_clie
     flat = bibtex_helper.bindings_to_dict(vars_, bindings)
     return {"vars": vars_, "bindings": bindings, "bibtex": bibtex_helper.create_bibtex(flat)}
 
-def parse_order(sort_by: str | None, order: str) -> str:
-    if sort_by is None:
-        return 'ORDER BY DESC(?Publication)'
-    
+def parse_order(sort_by: str | None, order: str, allowed: set[str] | None = None, default: str = "Publication") -> str:
+    if sort_by is None or (allowed is not None and sort_by not in allowed):
+        return f'ORDER BY DESC(?{default})'
+
     direction = "ASC" if (order or '').upper() == 'ASC' else 'DESC'
     return f"ORDER BY {direction}(?{sort_by})"
 
 def get_label_var(entity_type: str) -> str:
     return f"?{entity_type.lower()}_label"
 
-def get_uri_var(entity_type: str) -> str:
-    return f"?{entity_type.lower()}_URI"
-
-def build_filters(search_params: dict[str, str], filter_mode = 'label') -> str :
+def build_filters(search_params: dict[str, str]) -> str :
     filters: dict[str, list[str]] = {}
     for key in search_params:
         if not key.startswith('filter_'):
@@ -279,26 +264,14 @@ def build_filters(search_params: dict[str, str], filter_mode = 'label') -> str :
         values = filters[key]
         if  len(values) == 0:
             continue;
-        if filter_mode == 'uri':
-            uri_var = get_uri_var(key)
-            uri_values = []
-            for v in values:
-                if v.startswith("http://") or v.startswith("https://"):
-                    uri_values.append(v)
-            if len(uri_values) > 0:
-                in_string = f"<{uri_values[0]}>"
-                for i in range(1, len(uri_values)):
-                    in_string+= f",<{uri_values[i]}>"
-                filter_clauses.append(f"FILTER({uri_var} IN ({in_string}))")
-        else :
-            label_var = get_label_var(key)
-            contains_clauses = []
-            for v in values:
-                contains_clauses.append(f'CONTAINS(LCASE({label_var}), LCASE("{v.lower().replace("'", "\\'")}"))')
-            contains_string = f"{contains_clauses[0]}"
-            for i in range(1, len(contains_clauses)):
-                contains_string +=  f" || {contains_clauses[i]}"
-            filter_clauses.append(f"FILTER({contains_string})")
+        label_var = get_label_var(key)
+        contains_clauses = []
+        for v in values:
+            contains_clauses.append(f'CONTAINS(LCASE({label_var}), LCASE("{v.lower().replace("'", "\\'")}"))')
+        contains_string = f"{contains_clauses[0]}"
+        for i in range(1, len(contains_clauses)):
+            contains_string +=  f" || {contains_clauses[i]}"
+        filter_clauses.append(f"FILTER({contains_string})")
 
     filter_string = f"{filter_clauses[0]}"
     for i in range(1, len(filter_clauses)):

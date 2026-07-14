@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { ALL_COLUMNS } from '$lib/columnPreferences';
 	import { browser } from '$app/environment';
 
-	let { visibleColumns, onToggle, onReset }: {
+	let { availableColumns, visibleColumns, onToggle, onReset }: {
+		availableColumns: string[];
 		visibleColumns: string[];
 		onToggle: (column: string) => void;
 		onReset: () => void;
@@ -24,7 +24,7 @@
 	}
 
 	function selectAll() {
-		for (const col of ALL_COLUMNS) {
+		for (const col of availableColumns) {
 			if (!visibleColumns.includes(col)) {
 				onToggle(col);
 			}
@@ -32,7 +32,7 @@
 	}
 
 	function deselectAll() {
-		for (const col of ALL_COLUMNS) {
+		for (const col of availableColumns) {
 			if (visibleColumns.includes(col)) {
 				onToggle(col);
 			}
@@ -99,7 +99,7 @@
 				</div>
 
 				<div class="flex flex-col gap-1">
-					{#each ALL_COLUMNS as col (col)}
+					{#each availableColumns as col (col)}
 						<label
 							class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-50 cursor-pointer transition-colors"
 						>

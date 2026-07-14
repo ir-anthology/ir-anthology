@@ -7,19 +7,14 @@
     import { fetchBackend } from '$lib/sparql/fetch';
     import { getIDFromURI, slugifyName, decodeYearCounts } from '$lib/helperFunctions';
     import { browser } from '$app/environment';
-    import { DEFAULT_COLUMNS, ALL_COLUMNS, loadPreferences, savePreferences } from '$lib/columnPreferences';
+    import { loadPreferences, savePreferences } from '$lib/columnPreferences';
+    import { ENTITY_ENDPOINTS, resolveEntity, sanitizeTableParams } from '$lib/tableConfig';
     import ColumnSettings from './ColumnSettings.svelte';
 
+    // Presentation hints only — any column without an entry gets the w-24 fallback,
+    // so new backend columns render without frontend changes.
     const COLUMN_WIDTHS: Record<string, string> = {
 		Entity: 'w-auto min-w-[200px] max-w-md',
-		Publication: 'w-24',
-		Venue: 'w-24',
-		Author: 'w-24',
-		Year: 'w-20',
-		'2020s': 'w-20',
-		'2010s': 'w-20',
-		'2000s': 'w-20',
-		Pre2000s: 'w-24'
 	};
 
     let {vars, bindings } = $props();
@@ -40,10 +35,10 @@
         const observer = new IntersectionObserver(async ([entry]) => {
             if (!entry.isIntersecting || exhausted || loadingMore) return;
             const nextPage = currentPage + 1;
-            const params = new SvelteURLSearchParams(page.url.searchParams.toString());
+            const params = sanitizeTableParams(page.url.searchParams.toString());
             params.set('page', String(nextPage));
             loadingMore = true;
-            const data = await fetchBackend(`table?${params}`);
+            const data = await fetchBackend(`${ENTITY_ENDPOINTS[current_entity]}?${params}`);
             loadingMore = false;
             if (data.bindings.length === 0) { exhausted = true; return; }
             rows.push(...data.bindings);
@@ -55,31 +50,40 @@
 
     const _searchParams = $derived(browser ? page.url.searchParams : new URLSearchParams());
 
-    const current_entity:string = $derived(_searchParams.get("entity") ?? "Venue");
+    const current_entity:string = $derived(resolveEntity(_searchParams.get("entity")));
 
     const current_sort_by:string = $derived(_searchParams.get("sort_by") ?? "Publication");
 
     const current_order:string = $derived(_searchParams.get("order") ?? "desc");
 
-    const HIDDEN_COLUMNS = ['URI'];
+    const HIDDEN_COLUMNS = ['URI', 'VenueURI'];
     let userPrefs = $state(loadPreferences());
 
     let previousEntity: string | null = null;
     $effect(() => {
         if (previousEntity !== null && previousEntity !== current_entity) {
-            userPrefs = { ...userPrefs, [current_entity]: DEFAULT_COLUMNS[current_entity] ?? [] };
-            savePreferences(userPrefs);
+            resetPreferences();
         }
         previousEntity = current_entity;
     });
 
+    function resetPreferences() {
+        const rest = { ...userPrefs };
+        delete rest[current_entity];
+        userPrefs = rest;
+        savePreferences(userPrefs);
+    }
+
+    // Columns are fully driven by the vars the entity's endpoint returns.
+    const availableColumns: string[] = $derived(vars.filter((v: string) => v !== 'Entity' && !HIDDEN_COLUMNS.includes(v)));
     let visibleColumns = $derived.by(() => {
-        const prefs = userPrefs[current_entity] ?? DEFAULT_COLUMNS[current_entity];
-        const withoutFiltered = prefs.filter((col) => !_searchParams.has(`filter_${col === 'Years' ? 'Year' : col}`));
-        return ['Entity', ...withoutFiltered];
+        const prefs = userPrefs[current_entity] ?? availableColumns;
+        const shown = prefs.filter((col) =>
+            availableColumns.includes(col) && !_searchParams.has(`filter_${col === 'Years' ? 'Year' : col}`));
+        return ['Entity', ...shown];
     });
-    let columns = $derived(vars.filter((v) => visibleColumns.includes(v) && !HIDDEN_COLUMNS.includes(v)) ?? []);
-    const entityOptions = $derived(ALL_COLUMNS);
+    let columns = $derived(vars.filter((v: string) => visibleColumns.includes(v)) ?? []);
+    const entityOptions = Object.keys(ENTITY_ENDPOINTS);
 
     const yearsList: number[] = $derived.by(() => {
         if (!columns.includes('Years')) return [];
@@ -96,6 +100,9 @@
 
     function handleEntityChange(col: string){
         const new_params = new SvelteURLSearchParams(page.url.searchParams.toString())
+        // a sort column of the old entity may not exist in the new entity's query
+        new_params.delete("sort_by")
+        new_params.delete("order")
         new_params.set("entity", col)
         goto(resolve(`/anthology?${new_params.toString()}`))
     }
@@ -120,6 +127,8 @@
             new_params.set(`filter_${current_entity}`, entityTitle+`,${old_value}`)
         }
         if (year !== undefined) new_params.set('filter_Year', String(year))
+        new_params.delete('sort_by')
+        new_params.delete('order')
         new_params.set('entity', col)
         goto(resolve(`/anthology?${new_params.toString()}`))
     }
@@ -138,7 +147,7 @@
     }
 
     function handleColumnToggle(column: string) {
-        const currentPrefs = userPrefs[current_entity] ?? DEFAULT_COLUMNS[current_entity];
+        const currentPrefs = userPrefs[current_entity] ?? availableColumns;
         let newPrefs: string[];
         if (currentPrefs.includes(column)) {
             newPrefs = currentPrefs.filter((c) => c !== column);
@@ -150,10 +159,10 @@
     }
 
     function handleResetDefaults() {
-        userPrefs = { ...userPrefs, [current_entity]: DEFAULT_COLUMNS[current_entity] };
-        savePreferences(userPrefs);
+        resetPreferences();
     }
 
+    // Extract abbreviation for the Venue (either last term in parentheses or uppercased last part from uri)
     function venueDisplayLabel(value: string | null | undefined, uri: string | null | undefined): string {
         if (value) {
             const matches = [...value.matchAll(/\(([^)]+)\)/g)];
@@ -198,11 +207,6 @@
                                             <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
                                         </svg>
                                     </div>
-                                    <ColumnSettings
-                                        {visibleColumns}
-                                        onToggle={handleColumnToggle}
-                                        onReset={handleResetDefaults}
-                                    />
                                 {:else}
                                     <span class="text-sm font-medium tracking-wider text-gray-500">{col}</span>
                                 {/if}
@@ -210,6 +214,14 @@
                                     class="text-sm cursor-pointer shrink-0 {current_sort_by === col ? 'text-gray-600' : 'text-gray-400'}"
                                     onclick={() => handleSortClick(col)}
                                 >{current_sort_by === col ? (current_order === 'asc' ? '↑' : '↓') : '↕'}</button>
+                                {#if col === 'Entity'}
+                                    <ColumnSettings
+                                        {availableColumns}
+                                        {visibleColumns}
+                                        onToggle={handleColumnToggle}
+                                        onReset={handleResetDefaults}
+                                    />
+                                {/if}
                             </div>
                         </th>
                     {/if}
@@ -234,6 +246,9 @@
                     <tr class={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                         {#each columns as col (col)}
                             {@const cellData = row[col]}
+                            {@const cellDisplay = col === 'Venue' && row['VenueURI']?.value
+                                ? venueDisplayLabel(cellData?.value, row['VenueURI'].value)
+                                : cellData?.value}
                             {#if col === 'Years'}
                                 {@const yearCounts = decodeYearCounts(row['Years']?.value)}
                                 {#each yearsList as year (year)}
@@ -269,7 +284,7 @@
 										{current_entity === 'Venue' ? venueDisplayLabel(cellData.value, undefined) : (cellData.value ?? '-')}
 									{/if}
 								</td>
-                            {:else if cellData?.value}
+                            {:else if cellDisplay && ENTITY_ENDPOINTS[col]}
                                 <td
                                     class="link px-4 py-1.5 text-sm text-center cursor-pointer hover:bg-gray-100 transition-colors {COLUMN_WIDTHS[
                                             col
@@ -278,7 +293,9 @@
                                         role="button"
                                         tabindex="0"
                                         onkeydown={(e) => e.key === 'Enter' && handleCellClick(col, row)}
-                                    >{cellData.value}</td>
+                                    >{cellDisplay}</td>
+                            {:else if cellDisplay}
+                                <td class="px-4 py-1.5 text-sm text-center {COLUMN_WIDTHS[col] ?? 'w-24'}">{cellDisplay}</td>
                             {:else}
                                 <td class="px-4 py-1.5 text-sm text-gray-400 text-center {COLUMN_WIDTHS[col] ?? 'w-24'}">
 									-
