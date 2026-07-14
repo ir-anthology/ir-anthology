@@ -96,11 +96,13 @@ GROUP BY ?author_URI
 
 PUBLICATION_TABLE_TEMPLATE = f'''
 {_ENTITY_TABLE_PREFIXES}
-SELECT ?Entity ?URI ?Authors ?Year (STRBEFORE(?venuePair, "@@") AS ?Venue) (STRAFTER(?venuePair, "@@") AS ?VenueURI)
+SELECT ?Entity ?URI ?Authors ?authors ?authorIds ?Year (STRBEFORE(?venuePair, "@@") AS ?Venue) (STRAFTER(?venuePair, "@@") AS ?VenueURI)
 WHERE {{
   SELECT (?publication_label AS ?Entity)
     (?publication_URI AS ?URI)
     (COUNT(DISTINCT ?author_label) AS ?Authors)
+    (GROUP_CONCAT(DISTINCT CONCAT(STR(?ord), "@@", ?authorName); separator=", ") AS ?authors)
+    (GROUP_CONCAT(DISTINCT CONCAT(STR(?ord), "@@", STR(?authorUri)); separator=", ") AS ?authorIds)
     (MIN(STR(?year)) AS ?Year)
     (MIN(CONCAT(?venue_label, "@@", STR(?venue_URI))) AS ?venuePair)
   WHERE {{
@@ -115,6 +117,13 @@ WHERE {{
         FILTER NOT EXISTS {{ ?s2 a ex:Workshop }}
       }}
     )
+    OPTIONAL {{
+      ?publication_URI dblp:hasSignature ?sig .
+      ?sig a dblp:AuthorSignature ;
+           dblp:signatureOrdinal ?ord ;
+           dblp:signatureCreator ?authorUri ;
+           dblp:signatureDblpName ?authorName .
+    }}
   }}
   GROUP BY ?publication_label ?publication_URI
   $ORDER

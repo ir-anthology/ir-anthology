@@ -5,7 +5,7 @@
     import {navigating} from '$app/state'
     import { resolve } from '$app/paths';
     import { fetchBackend } from '$lib/sparql/fetch';
-    import { getIDFromURI, slugifyName, decodeYearCounts } from '$lib/helperFunctions';
+    import { getIDFromURI, slugifyName, decodeYearCounts, decodeOrdered } from '$lib/helperFunctions';
     import { browser } from '$app/environment';
     import { loadPreferences, savePreferences } from '$lib/columnPreferences';
     import { ENTITY_ENDPOINTS, ENTITY_DEFAULT_SORT, resolveEntity, sanitizeTableParams, columnEntity } from '$lib/tableConfig';
@@ -56,7 +56,7 @@
 
     const current_order:string = $derived(_searchParams.get("order") ?? ENTITY_DEFAULT_SORT[current_entity].order);
 
-    const HIDDEN_COLUMNS = ['URI', 'VenueURI'];
+    const HIDDEN_COLUMNS = ['URI', 'VenueURI', 'authors', 'authorIds'];
     let userPrefs = $state(loadPreferences());
 
     let previousEntity: string | null = null;
@@ -278,6 +278,8 @@
                                     {/if}
                                 {/each}
                             {:else if col === 'Entity'}
+                                {@const authors = decodeOrdered(row['authors']?.value ?? null, true)}
+                                {@const authorIds = decodeOrdered(row['authorIds']?.value ?? null)}
                                 <td
 									class="px-4 py-1.5 text-sm text-gray-900 wrap-break-word {COLUMN_WIDTHS[col] ??
 										'w-24'}"
@@ -293,6 +295,13 @@
 										</a>
 									{:else}
 										{current_entity === 'Venue' ? venueDisplayLabel(cellData.value, undefined) : (cellData.value ?? '-')}
+									{/if}
+									{#if authors.length > 0}
+										<div class="text-sm mt-0.5">
+											{#each authors as author, i (i)}
+												{#if i > 0}<span class="text-gray-400 px-1.5"> | </span>{/if}{#if authorIds[i]}<a href={resolve(`/anthology/people/${slugifyName(author)}/${getIDFromURI(authorIds[i])}`)} class="link italic text-xs">{author}</a>{:else}{author}{/if}
+											{/each}
+										</div>
 									{/if}
 								</td>
                             {:else if cellDisplay && ENTITY_ENDPOINTS[columnEntity(col)]}
