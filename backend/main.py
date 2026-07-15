@@ -75,11 +75,12 @@ class TableParams(BaseModel):
     page: int | None = 1
     limit: int | None = 50
 
-async def _run_table_page(template: str, params: TableParams, request: Request, client: httpx.AsyncClient, allowed_sorts: set[str], default_sort: str = "Publications", default_order: str = "DESC", sort_aliases: dict[str, str] | None = None) -> tuple[list, list, str]:
+async def _run_table_page(template: str, params: TableParams, request: Request, client: httpx.AsyncClient, allowed_sorts: set[str], sort_aliases: dict[str, str] | None = None) -> tuple[list, list, str]:
     """Run one page query of a per-entity table template; returns (vars, bindings, filters).
 
-    allowed_sorts must list the variables the template projects; unknown sort_by values
-    fall back to the default sort instead of producing an invalid SPARQL query.
+    Sorting policy lives in the frontend — it always sends explicit sort params.
+    allowed_sorts must list the variables the template projects; it guards against
+    sort values that would produce an invalid SPARQL query.
     """
     extra = {
         k: v for k, v in request.query_params.items()
@@ -88,7 +89,7 @@ async def _run_table_page(template: str, params: TableParams, request: Request, 
     filters = build_filters(extra)
     query = (template
              .replace('$FILTERS', filters)
-             .replace('$ORDER', parse_order(params.sort_by, params.order, allowed_sorts, default_sort, default_order, sort_aliases))
+             .replace('$ORDER', parse_order(params.sort_by, params.order, allowed_sorts, sort_aliases))
              .replace('$LIMIT', str(params.limit))
              .replace('$OFFSET', str((params.page - 1) * params.limit)))
     data = await sparql_post(query, client)
@@ -115,18 +116,18 @@ async def read_table_authors(params: Annotated[TableParams, Query()], client: ht
 
 @app.get("/api/table/venues")
 async def read_table_venues(params: Annotated[TableParams, Query()], client: httpx.AsyncClient = Depends(get_client), *, request: Request):
-    vars, bindings, filters = await _run_table_page(sparqlTemplates.VENUE_TABLE_TEMPLATE, params, request, client, {"Entity", "Publications", "Authors"}, default_sort="Entity", default_order="ASC", sort_aliases={"Entity": "venue_sort"})
+    vars, bindings, filters = await _run_table_page(sparqlTemplates.VENUE_TABLE_TEMPLATE, params, request, client, {"Entity", "Publications", "Authors"}, sort_aliases={"Entity": "venue_sort"})
     await _merge_year_counts("Venue", sparqlTemplates.VENUE_YEAR_COUNTS_TEMPLATE, filters, bindings, client)
     return {"vars": vars + ["Years"], "bindings": bindings}
 
 @app.get("/api/table/years")
 async def read_table_years(params: Annotated[TableParams, Query()], client: httpx.AsyncClient = Depends(get_client), *, request: Request):
-    vars, bindings, _ = await _run_table_page(sparqlTemplates.YEARS_TABLE_TEMPLATE, params, request, client, {"Entity", "Publications", "Venues", "Authors"}, default_sort="Entity", default_order="DESC")
+    vars, bindings, _ = await _run_table_page(sparqlTemplates.YEARS_TABLE_TEMPLATE, params, request, client, {"Entity", "Publications", "Venues", "Authors"})
     return {"vars": vars, "bindings": bindings}
 
 @app.get("/api/table/publications")
 async def read_table_publications(params: Annotated[TableParams, Query()], client: httpx.AsyncClient = Depends(get_client), *, request: Request):
-    vars, bindings, _ = await _run_table_page(sparqlTemplates.PUBLICATION_TABLE_TEMPLATE, params, request, client, {"Entity", "Year", "Authors"}, default_sort="Year")
+    vars, bindings, _ = await _run_table_page(sparqlTemplates.PUBLICATION_TABLE_TEMPLATE, params, request, client, {"Entity", "Year", "Authors", "Venue"}, sort_aliases={"Venue": "venuePair"})
     return {"vars": vars, "bindings": bindings}
 
 @app.get("/api/conferences")
@@ -236,9 +237,12 @@ async def read_publication(id: str, client: httpx.AsyncClient = Depends(get_clie
     flat = bibtex_helper.bindings_to_dict(vars_, bindings)
     return {"vars": vars_, "bindings": bindings, "bibtex": bibtex_helper.create_bibtex(flat)}
 
-def parse_order(sort_by: str | None, order: str, allowed: set[str] | None = None, default: str = "Publications", default_order: str = "DESC", aliases: dict[str, str] | None = None) -> str:
+def parse_order(sort_by: str | None, order: str, allowed: set[str] | None = None, aliases: dict[str, str] | None = None) -> str:
+    # The frontend always sends explicit sort params. This static fallback is only a
+    # safety net for malformed or legacy requests: LIMIT/OFFSET paging without an
+    # ORDER BY would be nondeterministic, and ?Entity exists in every table template.
     if sort_by is None or (allowed is not None and sort_by not in allowed):
-        sort_by, order = default, default_order
+        sort_by, order = "Entity", "ASC"
 
     # some columns sort by a different variable than they display (e.g. the venues
     # Entity column shows abbreviations and sorts by ?venue_sort)
