@@ -8,7 +8,7 @@
     import { getIDFromURI, slugifyName, decodeYearCounts, decodeOrdered } from '$lib/helperFunctions';
     import { browser } from '$app/environment';
     import { loadPreferences, savePreferences } from '$lib/columnPreferences';
-    import { ENTITY_ENDPOINTS, ENTITY_DEFAULT_SORT, resolveEntity, sanitizeTableParams, columnEntity } from '$lib/tableConfig';
+    import { ENTITY_ENDPOINTS, FILTERABLE_ENTITIES, entityDefaultSort, resolveEntity, tableRequestParams, columnEntity } from '$lib/tableConfig';
     import ColumnSettings from './ColumnSettings.svelte';
 
     // Presentation hints only — any column without an entry gets the w-24 fallback,
@@ -35,7 +35,7 @@
         const observer = new IntersectionObserver(async ([entry]) => {
             if (!entry.isIntersecting || exhausted || loadingMore) return;
             const nextPage = currentPage + 1;
-            const params = sanitizeTableParams(page.url.searchParams.toString());
+            const params = tableRequestParams(page.url.searchParams.toString());
             params.set('page', String(nextPage));
             loadingMore = true;
             const data = await fetchBackend(`${ENTITY_ENDPOINTS[current_entity]}?${params}`);
@@ -52,9 +52,11 @@
 
     const current_entity:string = $derived(resolveEntity(_searchParams.get("entity")));
 
-    const current_sort_by:string = $derived(_searchParams.get("sort_by") ?? ENTITY_DEFAULT_SORT[current_entity].sort_by);
+    const hasActiveFilters = $derived(FILTERABLE_ENTITIES.some((f) => _searchParams.has(`filter_${f}`)));
 
-    const current_order:string = $derived(_searchParams.get("order") ?? ENTITY_DEFAULT_SORT[current_entity].order);
+    const current_sort_by:string = $derived(_searchParams.get("sort_by") ?? entityDefaultSort(current_entity, hasActiveFilters).sort_by);
+
+    const current_order:string = $derived(_searchParams.get("order") ?? entityDefaultSort(current_entity, hasActiveFilters).order);
 
     const HIDDEN_COLUMNS = ['URI', 'VenueURI', 'authors', 'authorIds'];
     let userPrefs = $state(loadPreferences());
@@ -77,10 +79,13 @@
     // Columns are fully driven by the vars the entity's endpoint returns.
     const availableColumns: string[] = $derived(vars.filter((v: string) => v !== 'Entity' && !HIDDEN_COLUMNS.includes(v)));
     let visibleColumns = $derived.by(() => {
-        const prefs = userPrefs[current_entity] ?? availableColumns;
-        const shown = prefs.filter((col) =>
-            availableColumns.includes(col) && !_searchParams.has(`filter_${columnEntity(col)}`));
-        return ['Entity', ...shown];
+        const prefs = userPrefs[current_entity];
+        if (prefs) {
+            // an explicit selection from the column settings wins over filter-hiding
+            return ['Entity', ...prefs.filter((col) => availableColumns.includes(col))];
+        }
+        // default: all available columns, minus those whose entity has an active filter
+        return ['Entity', ...availableColumns.filter((col) => !_searchParams.has(`filter_${columnEntity(col)}`))];
     });
     let columns = $derived(vars.filter((v: string) => visibleColumns.includes(v)) ?? []);
     const entityOptions = Object.keys(ENTITY_ENDPOINTS);
@@ -112,7 +117,12 @@
     function handleSortClick(col: string){
         const new_params = new SvelteURLSearchParams(page.url.searchParams.toString())
 
-        const new_order = current_sort_by === col && current_order === "desc" ? "asc" : "desc"
+        // first click sorts desc for year-valued columns and asc for everything else;
+        // clicking the active column again flips the direction
+        const target = col === 'Entity' ? current_entity : columnEntity(col);
+        const initial = target === 'Year' ? 'desc' : 'asc';
+        const flipped = initial === 'desc' ? 'asc' : 'desc';
+        const new_order = current_sort_by === col && current_order === initial ? flipped : initial;
         new_params.set("order", new_order)
         new_params.set("sort_by", col)
         goto(resolve(`/anthology?${new_params.toString()}`))
@@ -149,7 +159,9 @@
     }
 
     function handleColumnToggle(column: string) {
-        const currentPrefs = userPrefs[current_entity] ?? availableColumns;
+        // base the first explicit selection on what is currently shown, so checking
+        // a filter-hidden column adds it instead of removing it
+        const currentPrefs = userPrefs[current_entity] ?? visibleColumns.filter((c) => c !== 'Entity');
         let newPrefs: string[];
         if (currentPrefs.includes(column)) {
             newPrefs = currentPrefs.filter((c) => c !== column);

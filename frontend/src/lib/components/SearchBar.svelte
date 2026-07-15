@@ -4,17 +4,42 @@
 	import { goto } from '$app/navigation';
     import { resolve } from '$app/paths';
     import { browser } from '$app/environment';
+    import { FILTERABLE_ENTITIES } from '$lib/tableConfig';
 
     const current_entity = $derived(browser ? (page.url.searchParams.get("entity") ?? "Venue") : "Venue");
 
     let searchValue:string | null = $state(null);
 
+    // Parts written as "author=xy" (also venue/publication/year, case-insensitive)
+    // filter that entity; plain parts filter the current entity as before.
+    function parseSearchParts(input: string): Record<string, string[]> {
+        const grouped: Record<string, string[]> = {};
+        for (const part of input.split(',').map((p) => p.trim()).filter(Boolean)) {
+            let entity = current_entity;
+            let value = part;
+            const eq = part.indexOf('=');
+            if (eq > 0) {
+                const key = part.slice(0, eq).trim().toLowerCase();
+                const match = FILTERABLE_ENTITIES.find((f) => f.toLowerCase() === key);
+                if (match) {
+                    entity = match;
+                    value = part.slice(eq + 1).trim();
+                }
+            }
+            if (!value) continue;
+            (grouped[entity] ??= []).push(value);
+        }
+        return grouped;
+    }
+
     async function handleKeydown(e: KeyboardEvent){
         if (e.key !== 'Enter' || searchValue === null) return
-        const values = searchValue.split(',').map((p) => p.trim()).filter(Boolean);
-		if (values.length === 0) return;
+        const grouped = parseSearchParts(searchValue);
+		if (Object.keys(grouped).length === 0) return;
         const new_params = new SvelteURLSearchParams(page.url.searchParams.toString())
-        new_params.set(`filter_${current_entity}`, values.join(","))
+        for (const [entity, values] of Object.entries(grouped)) {
+            new_params.set(`filter_${entity}`, values.join(","))
+        }
 		searchValue = '';
         await goto(resolve(`/anthology?${new_params.toString()}`))
     }
