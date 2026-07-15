@@ -96,7 +96,9 @@ GROUP BY ?author_URI
 
 PUBLICATION_TABLE_TEMPLATE = f'''
 {_ENTITY_TABLE_PREFIXES}
-SELECT ?Entity ?URI ?Authors ?authors ?authorIds ?Year (STRBEFORE(?venuePair, "@@") AS ?Venue) (STRAFTER(?venuePair, "@@") AS ?VenueURI)
+SELECT ?Entity ?URI ?Authors ?authors ?authorIds ?Year
+  (STRBEFORE(STRAFTER(?venuePair, "@@"), "@@") AS ?Venue)
+  (STRAFTER(STRAFTER(?venuePair, "@@"), "@@") AS ?VenueURI)
 WHERE {{
   SELECT (?publication_label AS ?Entity)
     (?publication_URI AS ?URI)
@@ -104,9 +106,14 @@ WHERE {{
     (GROUP_CONCAT(DISTINCT CONCAT(STR(?ord), "@@", ?authorName); separator=", ") AS ?authors)
     (GROUP_CONCAT(DISTINCT CONCAT(STR(?ord), "@@", STR(?authorUri)); separator=", ") AS ?authorIds)
     (MIN(STR(?year)) AS ?Year)
-    (MIN(CONCAT(?venue_label, "@@", STR(?venue_URI))) AS ?venuePair)
+    (MIN(CONCAT(?venue_sort, "@@", ?venue_label, "@@", STR(?venue_URI))) AS ?venuePair)
   WHERE {{
 {_ENTITY_TABLE_BODY}
+    # abbreviation-first pair: MIN picks (and sort_by=Venue orders by) the venue
+    # abbreviation, matching what the Venue column displays
+    BIND(UCASE(IF(REGEX(?venue_label, "\\\\(([^)]+)\\\\)"),
+                  REPLACE(?venue_label, "^.*\\\\(([^)]+)\\\\).*$", "$1"),
+                  REPLACE(STR(?venue_URI), "^.*/", ""))) AS ?venue_sort)
     # venue attribution (as in PERSON_TEMPLATE): keep non-workshop stream rows;
     # workshop rows only survive when the publication has no non-workshop stream
     FILTER(
