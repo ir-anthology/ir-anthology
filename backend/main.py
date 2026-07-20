@@ -33,7 +33,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[],
     allow_origin_regex=r"https://.*\.webis\.de|http://localhost(:\d+)?",
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "DELETE"],
     allow_headers=["*"],
 )
 
@@ -322,6 +322,29 @@ async def get_patches(_user: dict = Depends(auth_utils.require_admin)):
     return {"patches": patch_store.list_patches()}
 
 
+@app.delete("/api/admin/patches/{filename}")
+async def delete_patch(
+    filename: str,
+    _user: dict = Depends(auth_utils.require_admin),
+    client: httpx.AsyncClient = Depends(get_client),
+):
+    meta = patch_store.read_patch_meta(filename)
+    if meta is None:
+        raise HTTPException(404, f"Patch '{filename}' not found")
+
+    live_reverted = None
+    if meta.get("live_applied"):
+        delete_query = patch_store.nt_to_sparql_delete(patch_store.read_patch(filename))
+        live_reverted = True
+        try:
+            await sparql_update(delete_query, client)
+        except HTTPException:
+            live_reverted = False
+
+    patch_store.delete_patch_files(filename)
+    return {"filename": filename, "live_reverted": live_reverted}
+
+
 @app.post("/api/admin/import")
 async def import_from_dblp(
     body: ImportRequest,
@@ -333,12 +356,7 @@ async def import_from_dblp(
     elif body.type == "workshop":
         nt = await dblp_fetch.fetch_stream(client, body.iri, body.year, is_workshop=True)
     elif body.type == "person":
-        streams_resp = await sparql_post(
-            "PREFIX dblp: <https://dblp.org/rdf/schema#>\nSELECT ?stream WHERE { ?stream a dblp:Stream }",
-            client,
-        )
-        known_streams = [b["stream"]["value"] for b in streams_resp["results"]["bindings"]]
-        nt = await dblp_fetch.fetch_person(client, body.iri, known_streams)
+        nt = await dblp_fetch.fetch_person(client, body.iri)
     elif body.type == "publication":
         nt = await dblp_fetch.fetch_publication(client, body.iri)
     else:

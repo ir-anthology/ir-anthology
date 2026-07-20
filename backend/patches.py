@@ -52,3 +52,23 @@ def nt_to_sparql_insert(nt_content: str) -> str:
         if line.strip() and not line.strip().startswith("#")
     )
     return f"INSERT DATA {{\n{triples}\n}}"
+
+
+def nt_to_sparql_delete(nt_content: str) -> str:
+    """Wrap N-Triples lines in a SPARQL DELETE DATA block — reverses nt_to_sparql_insert
+    exactly, since the patch file preserves the verbatim triples that were inserted."""
+    triples = "\n".join(
+        line for line in nt_content.splitlines()
+        if line.strip() and not line.strip().startswith("#")
+    )
+    return f"DELETE DATA {{\n{triples}\n}}"
+
+
+def delete_patch_files(filename: str) -> None:
+    """Remove a patch's .nt file and its .meta.json sidecar."""
+    path = PATCHES_DIR / filename
+    if not path.exists() or path.parent != PATCHES_DIR:
+        raise FileNotFoundError(filename)
+    path.unlink()
+    meta_path = PATCHES_DIR / f"{filename.removesuffix('.nt')}.meta.json"
+    meta_path.unlink(missing_ok=True)

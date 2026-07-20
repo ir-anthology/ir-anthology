@@ -48,6 +48,7 @@ SELECT (?venue_label AS ?Entity)
   (?venue_URI AS ?URI)
   (COUNT(DISTINCT ?publication_label) AS ?Publications)
   (COUNT(DISTINCT ?author_label)      AS ?Authors)
+  (STRAFTER(STR(?venue_rdf_type), "#") AS ?VenueType)
 WHERE {{
 {_ENTITY_TABLE_BODY}
   # sort key mirroring the frontend's venueDisplayLabel: the venue's abbreviation
@@ -56,8 +57,12 @@ WHERE {{
   BIND(UCASE(IF(REGEX(?venue_label, "\\\\(([^)]+)\\\\)"),
                 REPLACE(?venue_label, "^.*\\\\(([^)]+)\\\\).*$", "$1"),
                 REPLACE(STR(?venue_URI), "^.*/", ""))) AS ?venue_sort)
+  OPTIONAL {{
+    ?venue_URI a ?venue_rdf_type .
+    VALUES ?venue_rdf_type {{ dblp:Conference dblp:Journal }}
+  }}
 }}
-GROUP BY ?venue_label ?venue_URI ?venue_sort
+GROUP BY ?venue_label ?venue_URI ?venue_sort ?venue_rdf_type
 HAVING (BOUND(?venue_label))
 $ORDER
 LIMIT $LIMIT
