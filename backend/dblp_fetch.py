@@ -327,13 +327,11 @@ LIMIT {limit} OFFSET {offset}"""
 # Person query builders
 # ---------------------------------------------------------------------------
 
-def _q_person_publications(person: str, stream_vals: str, limit: int, offset: int) -> str:
+def _q_person_publications(person: str, limit: int, offset: int) -> str:
     return f"""PREFIX dblp: <https://dblp.org/rdf/schema#>
 CONSTRUCT {{ ?pub ?p ?o }}
 WHERE {{
   {{ SELECT DISTINCT ?pub WHERE {{
-      VALUES ?stream {{ {stream_vals} }}
-      ?pub dblp:publishedInStream ?stream .
       {{ ?pub dblp:authoredBy <{person}> }} UNION {{ ?pub dblp:editedBy <{person}> }}
   }} }}
   ?pub ?p ?o .
@@ -342,14 +340,12 @@ ORDER BY ?pub ?p ?o
 LIMIT {limit} OFFSET {offset}"""
 
 
-def _q_person_authors(person: str, stream_vals: str, limit: int, offset: int) -> str:
+def _q_person_authors(person: str, limit: int, offset: int) -> str:
     return f"""PREFIX dblp: <https://dblp.org/rdf/schema#>
 CONSTRUCT {{ ?author ?p ?o }}
 WHERE {{
   {{ SELECT DISTINCT ?author WHERE {{
-      VALUES ?stream {{ {stream_vals} }}
-      ?pub dblp:publishedInStream ?stream ;
-           dblp:authoredBy ?author .
+      ?pub dblp:authoredBy ?author .
       {{ ?pub dblp:authoredBy <{person}> }} UNION {{ ?pub dblp:editedBy <{person}> }}
   }} }}
   ?author ?p ?o .
@@ -358,14 +354,12 @@ ORDER BY ?author ?p ?o
 LIMIT {limit} OFFSET {offset}"""
 
 
-def _q_person_editors(person: str, stream_vals: str, limit: int, offset: int) -> str:
+def _q_person_editors(person: str, limit: int, offset: int) -> str:
     return f"""PREFIX dblp: <https://dblp.org/rdf/schema#>
 CONSTRUCT {{ ?editor ?p ?o }}
 WHERE {{
   {{ SELECT DISTINCT ?editor WHERE {{
-      VALUES ?stream {{ {stream_vals} }}
-      ?pub dblp:publishedInStream ?stream ;
-           dblp:editedBy ?editor .
+      ?pub dblp:editedBy ?editor .
       {{ ?pub dblp:authoredBy <{person}> }} UNION {{ ?pub dblp:editedBy <{person}> }}
   }} }}
   ?editor ?p ?o .
@@ -374,14 +368,12 @@ ORDER BY ?editor ?p ?o
 LIMIT {limit} OFFSET {offset}"""
 
 
-def _q_person_signatures(person: str, stream_vals: str, limit: int, offset: int) -> str:
+def _q_person_signatures(person: str, limit: int, offset: int) -> str:
     return f"""PREFIX dblp: <https://dblp.org/rdf/schema#>
 CONSTRUCT {{ ?sig ?p ?o }}
 WHERE {{
   {{ SELECT DISTINCT ?sig WHERE {{
-      VALUES ?stream {{ {stream_vals} }}
-      ?pub dblp:publishedInStream ?stream ;
-           dblp:hasSignature ?sig .
+      ?pub dblp:hasSignature ?sig .
       {{ ?pub dblp:authoredBy <{person}> }} UNION {{ ?pub dblp:editedBy <{person}> }}
   }} }}
   ?sig ?p ?o .
@@ -517,18 +509,15 @@ async def fetch_stream(
 async def fetch_person(
     client: httpx.AsyncClient,
     person_iri: str,
-    known_streams: list[str] | None = None,
 ) -> str:
     person_nt = await _paginate(client, lambda l, o: _q_entity(person_iri, l, o))
     parts = [person_nt]
 
-    if known_streams:
-        sv = _vals(known_streams)
-        pub_nt    = await _paginate(client, lambda l, o: _q_person_publications(person_iri, sv, l, o))
-        author_nt = await _paginate(client, lambda l, o: _q_person_authors(person_iri, sv, l, o))
-        editor_nt = await _paginate(client, lambda l, o: _q_person_editors(person_iri, sv, l, o))
-        sig_nt    = await _paginate(client, lambda l, o: _q_person_signatures(person_iri, sv, l, o))
-        parts += [pub_nt, author_nt, editor_nt, sig_nt]
+    pub_nt    = await _paginate(client, lambda l, o: _q_person_publications(person_iri, l, o))
+    author_nt = await _paginate(client, lambda l, o: _q_person_authors(person_iri, l, o))
+    editor_nt = await _paginate(client, lambda l, o: _q_person_editors(person_iri, l, o))
+    sig_nt    = await _paginate(client, lambda l, o: _q_person_signatures(person_iri, l, o))
+    parts += [pub_nt, author_nt, editor_nt, sig_nt]
     return _dedup("\n".join(p for p in parts if p))
 
 
