@@ -1,6 +1,7 @@
 <script lang="ts">
     import { getToken } from '$lib/auth';
-    import { importFromDblp, importCustomWorkshop, previewCustomWorkshop, fetchPatches, type ImportResult, type WorkshopProceeding, type PatchRecord } from '$lib/sparql/fetch';
+    import { importFromDblp, importCustomWorkshop, previewCustomWorkshop, fetchPatches, deletePatch, type ImportResult, type WorkshopProceeding, type PatchRecord } from '$lib/sparql/fetch';
+    import { SvelteSet } from 'svelte/reactivity';
 
     const { data } = $props();
     const profile = $derived(data.user.profile);
@@ -14,6 +15,7 @@
         loading: boolean;
         result: ImportResult | null;
         error: string | null;
+        undoing: boolean;
     };
 
     type CustomWorkshopState = {
@@ -23,13 +25,14 @@
         loading: boolean;
         result: ImportResult | null;
         error: string | null;
+        undoing: boolean;
         step: 'form' | 'select' | 'done';
         proceedings: WorkshopProceeding[];
         selectedProcs: Set<string>;
     };
 
     function makeForm(): FormState {
-        return { iri: '', year: '', loading: false, result: null, error: null };
+        return { iri: '', year: '', loading: false, result: null, error: null, undoing: false };
     }
 
     const journal     = $state(makeForm());
@@ -38,9 +41,28 @@
     const person      = $state(makeForm());
     const publication = $state(makeForm());
     const customWorkshop = $state<CustomWorkshopState>({
-        abbreviation: '', title: '', year: '', loading: false, result: null, error: null,
+        abbreviation: '', title: '', year: '', loading: false, result: null, error: null, undoing: false,
         step: 'form', proceedings: [], selectedProcs: new Set(),
     });
+
+    // Shared by the import forms and the custom-workshop form: undoes the patch
+    // that was just created (removes the patch file, and if it was applied live,
+    // reverts the live triples too) — same action as the Delete button in the
+    // Patches panel below, just surfaced right where the result appears.
+    async function undo(state: { result: ImportResult | null; error: string | null; undoing: boolean }) {
+        if (!state.result) return;
+        state.undoing = true;
+        state.error = null;
+        try {
+            const token = await getToken();
+            await deletePatch(state.result.filename, token);
+            state.result = null;
+        } catch (e) {
+            state.error = e instanceof Error ? e.message : 'Unknown error';
+        } finally {
+            state.undoing = false;
+        }
+    }
 
     async function submit(form: FormState, type: string) {
         form.result = null;
@@ -60,6 +82,8 @@
     let patches = $state<PatchRecord[] | null>(null);
     let patchesLoading = $state(false);
     let patchesError = $state<string | null>(null);
+    let deleteError = $state<string | null>(null);
+    let deletingFilenames = new SvelteSet<string>();
 
     async function loadPatches() {
         patchesLoading = true;
@@ -71,6 +95,21 @@
             patchesError = e instanceof Error ? e.message : 'Unknown error';
         } finally {
             patchesLoading = false;
+        }
+    }
+
+    async function handleDeletePatch(filename: string) {
+        if (!confirm(`Delete patch "${filename}"?\n\nIf it was applied live, its triples will also be removed from the live database.`)) return;
+        deletingFilenames.add(filename);
+        deleteError = null;
+        try {
+            const token = await getToken();
+            await deletePatch(filename, token);
+            patches = patches?.filter((p) => p.filename !== filename) ?? null;
+        } catch (e) {
+            deleteError = e instanceof Error ? e.message : 'Unknown error';
+        } finally {
+            deletingFilenames.delete(filename);
         }
     }
 
@@ -183,10 +222,20 @@
                             </button>
                         </div>
                         {#if form.result}
-                            <p class="text-sm text-green-700">
-                                Added {form.result.triples} triple{form.result.triples === 1 ? '' : 's'}
-                                — saved as <code class="font-mono">{form.result.filename}</code>
-                                {form.result.live_applied ? '· applied live' : '· live update failed, patch saved'}
+                            <p class="text-sm text-green-700 flex items-center gap-2">
+                                <span>
+                                    Added {form.result.triples} triple{form.result.triples === 1 ? '' : 's'}
+                                    — saved as <code class="font-mono">{form.result.filename}</code>
+                                    {form.result.live_applied ? '· applied live' : '· live update failed, patch saved'}
+                                </span>
+                                <button
+                                    type="button"
+                                    onclick={() => undo(form)}
+                                    disabled={form.undoing}
+                                    class="text-xs px-2 py-0.5 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 cursor-pointer"
+                                >
+                                    {form.undoing ? 'Undoing…' : 'Undo'}
+                                </button>
                             </p>
                         {/if}
                         {#if form.error}
@@ -284,10 +333,20 @@
                     {/if}
 
                     {#if customWorkshop.result}
-                        <p class="text-sm text-green-700">
-                            Added {customWorkshop.result.triples} triple{customWorkshop.result.triples === 1 ? '' : 's'}
-                            — saved as <code class="font-mono">{customWorkshop.result.filename}</code>
-                            {customWorkshop.result.live_applied ? '· applied live' : '· live update failed, patch saved'}
+                        <p class="text-sm text-green-700 flex items-center gap-2">
+                            <span>
+                                Added {customWorkshop.result.triples} triple{customWorkshop.result.triples === 1 ? '' : 's'}
+                                — saved as <code class="font-mono">{customWorkshop.result.filename}</code>
+                                {customWorkshop.result.live_applied ? '· applied live' : '· live update failed, patch saved'}
+                            </span>
+                            <button
+                                type="button"
+                                onclick={() => undo(customWorkshop)}
+                                disabled={customWorkshop.undoing}
+                                class="text-xs px-2 py-0.5 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 cursor-pointer"
+                            >
+                                {customWorkshop.undoing ? 'Undoing…' : 'Undo'}
+                            </button>
                         </p>
                     {/if}
                     {#if customWorkshop.error}
@@ -322,7 +381,8 @@
                                         <th class="py-1.5 pr-3 font-medium">Action</th>
                                         <th class="py-1.5 pr-3 font-medium">Details</th>
                                         <th class="py-1.5 pr-3 font-medium text-right">Triples</th>
-                                        <th class="py-1.5 font-medium">Live</th>
+                                        <th class="py-1.5 pr-3 font-medium">Live</th>
+                                        <th class="py-1.5 font-medium">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -352,7 +412,7 @@
                                                 {/if}
                                             </td>
                                             <td class="py-1.5 pr-3 text-right">{p.triples ?? '—'}</td>
-                                            <td class="py-1.5">
+                                            <td class="py-1.5 pr-3">
                                                 {#if p.live_applied === true}
                                                     <span class="text-green-600">✓</span>
                                                 {:else if p.live_applied === false}
@@ -361,12 +421,25 @@
                                                     <span class="text-gray-400">—</span>
                                                 {/if}
                                             </td>
+                                            <td class="py-1.5">
+                                                <button
+                                                    type="button"
+                                                    onclick={() => handleDeletePatch(p.filename)}
+                                                    disabled={deletingFilenames.has(p.filename)}
+                                                    class="text-xs px-2 py-0.5 border border-red-300 text-red-600 rounded hover:bg-red-50 disabled:opacity-50 cursor-pointer"
+                                                >
+                                                    {deletingFilenames.has(p.filename) ? 'Deleting…' : 'Delete'}
+                                                </button>
+                                            </td>
                                         </tr>
                                     {/each}
                                 </tbody>
                             </table>
                         </div>
                     {/if}
+                {/if}
+                {#if deleteError}
+                    <p class="text-sm text-red-600 mt-2">{deleteError}</p>
                 {/if}
             </div>
 
