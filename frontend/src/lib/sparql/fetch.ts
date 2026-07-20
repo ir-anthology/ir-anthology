@@ -77,6 +77,23 @@ export async function fetchPatches(token?: string | null): Promise<PatchRecord[]
     return data.patches;
 }
 
+export async function deletePatch(
+    filename: string,
+    token?: string | null,
+): Promise<{ filename: string; live_reverted: boolean | null }> {
+    const res = await fetch(BACKEND_ENDPOINT + 'admin/patches/' + encodeURIComponent(filename), {
+        method: 'DELETE',
+        headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+    });
+    if (!res.ok) {
+        const detail = await res.json().catch(() => ({}));
+        throw new Error(detail?.detail ?? `Request failed (${res.status})`);
+    }
+    return res.json();
+}
+
 export async function previewCustomWorkshop(
     abbreviation: string,
     title: string,
