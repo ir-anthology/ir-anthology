@@ -58,7 +58,7 @@
 
     const current_order:string = $derived(_searchParams.get("order") ?? entityDefaultSort(current_entity, hasActiveFilters).order);
 
-    const HIDDEN_COLUMNS = ['URI', 'VenueURI', 'authors', 'authorIds'];
+    const HIDDEN_COLUMNS = ['URI', 'VenueURI', 'VenueType', 'authors', 'authorIds'];
     let userPrefs = $state(loadPreferences());
 
     let previousEntity: string | null = null;
@@ -193,7 +193,7 @@
 
 <section class="bg-white rounded-lg shadow">
     <table class="min-w-full divide-y divide-gray-200 table-fixed">
-        <thead class="bg-gray-50 sticky z-10" style="top: var(--table-top, 0px)">
+        <thead class="bg-gray-50 sticky z-10 border-b-2 border-gray-300 shadow-[0_2px_3px_-1px_rgba(0,0,0,0.12)]" style="top: var(--table-top, 0px)">
             <tr>
                 {#each columns as col (col)}
                     {#if col === 'Years'}
@@ -307,6 +307,12 @@
 										</a>
 									{:else}
 										{current_entity === 'Venue' ? venueDisplayLabel(cellData.value, undefined) : (cellData.value ?? '-')}
+									{/if}
+									{#if current_entity === 'Venue' && row['VenueType']?.value}
+										<span
+											class="ml-1 align-middle inline-flex rounded px-1 py-0.5 text-[10px] font-bold {row['VenueType'].value === 'Conference' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}"
+											title={row['VenueType'].value}
+										>{row['VenueType'].value[0]}</span>
 									{/if}
 									{#if authors.length > 0}
 										<div class="text-sm mt-0.5">
