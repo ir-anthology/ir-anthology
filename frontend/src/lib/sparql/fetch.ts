@@ -1,8 +1,11 @@
 import { error } from '@sveltejs/kit';
 
+export const DEBUG = true;
+
 const BACKEND_ENDPOINT = 'https://backend-ir-anthology.web.webis.de/api/';
 export async function fetchBackend(resource: string, retries = 3) {
     let lastStatus = 500;
+    if (DEBUG) console.log('[DEBUG] → GET', resource);
     for (let attempt = 0; attempt < retries; attempt++) {
         if (attempt > 0) await new Promise(r => setTimeout(r, 500 * attempt));
         try {
@@ -11,12 +14,17 @@ export async function fetchBackend(resource: string, retries = 3) {
                 headers: { 'Accept': 'application/json' },
                 signal: AbortSignal.timeout(30000),
             });
-            if (response.ok) return response.json();
+            if (response.ok) {
+                const data = await response.json();
+                if (DEBUG) console.log('[DEBUG] ←', resource, data);
+                return data;
+            }
             lastStatus = response.status;
         } catch {
             // network error, retry
         }
     }
+    if (DEBUG) console.log('[DEBUG] ✗', resource, 'failed');
     error(lastStatus, { message: `Could not get resource ${resource} from backend after ${retries} attempts` });
 }
 export type SparqlResult = {

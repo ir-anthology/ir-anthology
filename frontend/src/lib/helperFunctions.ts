@@ -1,13 +1,17 @@
 import type { SparqlResult } from './sparql/fetch.js';
+import { DEBUG } from './sparql/fetch.js';
 
 export function parseSparqlResult(result: SparqlResult): Record<string, string | null>[] {
-    return result.bindings.map(binding => {
+    if (DEBUG) console.log('[DEBUG] parseSparqlResult:', result);
+    const rows = result.bindings.map(binding => {
         const entry: Record<string, string | null> = {};
         for (const key of result.vars) {
             entry[key] = binding[key]?.value ?? null;
         }
         return entry;
     });
+    if (DEBUG) console.log('[DEBUG] parseSparqlResult →', rows);
+    return rows;
 }
 
 export function getIDFromURI(dblp_uri: string){

@@ -1,4 +1,5 @@
 import { fetchBackend } from '$lib/sparql/fetch.js'
+import { DEBUG } from '$lib/sparql/fetch.js'
 import { parseSparqlResult, getIDFromURI } from '$lib/helperFunctions.js';
 
 export async function entries() {
@@ -9,6 +10,9 @@ export async function entries() {
 }
 
 export async function load({params}) {
+    if (DEBUG) console.log('[DEBUG] publication/load:', params.name);
     const response = await fetchBackend("publications/"+params.name);
-    return { publication: parseSparqlResult(response)[0], bibtex: response.bibtex as string };
+    const result = { publication: parseSparqlResult(response)[0], bibtex: response.bibtex as string };
+    if (DEBUG) console.log('[DEBUG] publication/load →', result);
+    return result;
 }

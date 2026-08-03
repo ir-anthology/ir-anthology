@@ -1,4 +1,5 @@
 import { fetchBackend } from '$lib/sparql/fetch.js'
+import { DEBUG } from '$lib/sparql/fetch.js'
 import { parseSparqlResult, getIDFromURI } from '$lib/helperFunctions.js';
 
 export async function entries() {
@@ -39,6 +40,7 @@ export async function load({params}) {
 }
 
 async function loadConference(name: string, year: string){
+    if (DEBUG) console.log('[DEBUG] venue-year/loadConference:', name, year);
     const [procData, inprocData, looseData] = await Promise.all([
         fetchBackend("conferences/"+name+"/"+year+"/proceedings"),
         fetchBackend("conferences/"+name+"/"+year+"/inproceedings"),
@@ -59,10 +61,13 @@ async function loadConference(name: string, year: string){
     const looseRaw = parseSparqlResult(looseData);
     const loosePapers = looseRaw.map(p => ({ ...p, id: getIDFromURI(p.pub ?? '') }));
     const streamTitle = proceedings[0]?.streamTitle ?? looseRaw[0]?.streamTitle ?? '';
-    return {"proceedings": proceedings, "inproceedings": return_inproceedings, "loosePapers": loosePapers, "streamTitle": streamTitle};
+    const result = {"proceedings": proceedings, "inproceedings": return_inproceedings, "loosePapers": loosePapers, "streamTitle": streamTitle};
+    if (DEBUG) console.log('[DEBUG] venue-year/loadConference →', result);
+    return result;
 }
 
 async function loadJournal(name:string, year:string){
+    if (DEBUG) console.log('[DEBUG] venue-year/loadJournal:', name, year);
     const data = parseSparqlResult(await fetchBackend("journals/"+name+"/"+year))
     const journalTitle = data[0]?.journalTitle ?? ''
     const groupedData = new Map<string, Map<string, Record<string, string | null>[]>>();
@@ -77,10 +82,13 @@ async function loadJournal(name:string, year:string){
         }
         groupedData.get(volume)?.get(issue)?.push(entry)
     }
-    return { articles: groupedData, journalTitle }
+    const result = { articles: groupedData, journalTitle };
+    if (DEBUG) console.log('[DEBUG] venue-year/loadJournal →', result);
+    return result;
 }
 
 async function loadWorkshops(year: string){
+    if (DEBUG) console.log('[DEBUG] venue-year/loadWorkshops:', year);
     const [procData, inprocData, looseData] = await Promise.all([
         fetchBackend("workshops/"+year+"/proceedings"),
         fetchBackend("workshops/"+year+"/inproceedings"),
@@ -100,5 +108,7 @@ async function loadWorkshops(year: string){
     }
     const loosePapers = parseSparqlResult(looseData).map(p => ({ ...p, id: getIDFromURI(p.pub ?? '') }));
     const streamTitle = proceedings[0]?.streamTitle ?? 'Workshops';
-    return {"proceedings": proceedings, "inproceedings": return_inproceedings, "loosePapers": loosePapers, "streamTitle": streamTitle};
+    const result = {"proceedings": proceedings, "inproceedings": return_inproceedings, "loosePapers": loosePapers, "streamTitle": streamTitle};
+    if (DEBUG) console.log('[DEBUG] venue-year/loadWorkshops →', result);
+    return result;
 }

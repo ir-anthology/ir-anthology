@@ -1,4 +1,5 @@
 import { fetchBackend } from '$lib/sparql/fetch.js'
+import { DEBUG } from '$lib/sparql/fetch.js'
 import { parseSparqlResult, decodeOrdered, getIDFromURI, slugifyName } from '$lib/helperFunctions.js';
 
 export async function entries() {
@@ -9,7 +10,9 @@ export async function entries() {
 }
 
 export async function load({ params }) {
+    if (DEBUG) console.log('[DEBUG] person/load:', params.id);
     const data = parseSparqlResult(await fetchBackend("people/"+params.id));
+    if (DEBUG) console.log('[DEBUG] person/load: raw data', data);
     const name = data[0]?.name ?? ''
     const groupedByYear = new Map<string, Record<string, string | null>[]>()
     for (const pub of data) {
@@ -28,5 +31,7 @@ export async function load({ params }) {
         groupedByYear.get(y)!.push(pub)
     }
     const sorted = new Map([...groupedByYear.entries()].sort((a, b) => parseInt(b[0]) - parseInt(a[0])))
-    return { name, pubsByYear: sorted }
+    const result = { name, pubsByYear: sorted };
+    if (DEBUG) console.log('[DEBUG] person/load →', result);
+    return result;
 }

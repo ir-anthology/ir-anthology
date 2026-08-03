@@ -1,4 +1,5 @@
 import { fetchBackend } from '$lib/sparql/fetch.js'
+import { DEBUG } from '$lib/sparql/fetch.js'
 import { parseSparqlResult, getIDFromURI } from '$lib/helperFunctions.js';
 
 export async function entries() {
@@ -30,6 +31,7 @@ export async function load({ params }) {
 }
 
 async function loadConference(venueId: string) {
+    if (DEBUG) console.log('[DEBUG] venue/loadConference:', venueId);
     const raw = parseSparqlResult(await fetchBackend("conferences/"+venueId))
     const streamTitle = raw[0]?.streamTitle ?? ''
 
@@ -73,10 +75,13 @@ async function loadConference(venueId: string) {
     }
 
     const sorted = new Map([...groupedByYear.entries()].sort((a, b) => parseInt(b[0]) - parseInt(a[0])))
-    return { type: 'conference', name: streamTitle, yearGroups: sorted, venue_id: venueId }
+    const result = { type: 'conference', name: streamTitle, yearGroups: sorted, venue_id: venueId };
+    if (DEBUG) console.log('[DEBUG] venue/loadConference →', result);
+    return result;
 }
 
 async function loadJournal(id: string) {
+    if (DEBUG) console.log('[DEBUG] venue/loadJournal:', id);
     const raw = parseSparqlResult(await fetchBackend("journals/"+id))
     const journalTitle = raw[0]?.journalTitle ?? ''
     const groupedByYear = new Map<string, { volume: string | null, number: string | null, count: number }[]>()
@@ -90,10 +95,13 @@ async function loadJournal(id: string) {
         })
     }
     const sorted = new Map([...groupedByYear.entries()].sort((a, b) => parseInt(b[0]) - parseInt(a[0])))
-    return { type: 'journal', articles: sorted, journalTitle }
+    const result = { type: 'journal', articles: sorted, journalTitle };
+    if (DEBUG) console.log('[DEBUG] venue/loadJournal →', result);
+    return result;
 }
 
 async function loadWorkshops() {
+    if (DEBUG) console.log('[DEBUG] venue/loadWorkshops');
     const raw = parseSparqlResult(await fetchBackend("workshops/proceedings"))
     const streamTitle = raw[0]?.streamTitle ?? ''
 
@@ -133,5 +141,7 @@ async function loadWorkshops() {
     }
 
     const sorted = new Map([...groupedByYear.entries()].sort((a, b) => parseInt(b[0]) - parseInt(a[0])))
-    return { type: 'conference', name: streamTitle, yearGroups: sorted, venue_id: "workshops" }
+    const result = { type: 'conference', name: streamTitle, yearGroups: sorted, venue_id: "workshops" };
+    if (DEBUG) console.log('[DEBUG] venue/loadWorkshops →', result);
+    return result;
 }

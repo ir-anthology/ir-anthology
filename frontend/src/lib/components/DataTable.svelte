@@ -5,6 +5,7 @@
     import {navigating} from '$app/state'
     import { resolve } from '$app/paths';
     import { fetchBackend } from '$lib/sparql/fetch';
+    import { DEBUG } from '$lib/sparql/fetch';
     import { getIDFromURI, slugifyName, decodeYearCounts, decodeOrdered } from '$lib/helperFunctions';
     import { browser } from '$app/environment';
     import { loadPreferences, savePreferences } from '$lib/columnPreferences';
@@ -26,6 +27,7 @@
     let sentinel: HTMLElement | null = $state(null);
 
     $effect(() => {
+        if (DEBUG) console.log('[DEBUG] DataTable: new bindings', bindings);
         rows = [...bindings];
         currentPage = 1;
         exhausted = false;
@@ -35,14 +37,16 @@
         const observer = new IntersectionObserver(async ([entry]) => {
             if (!entry.isIntersecting || exhausted || loadingMore) return;
             const nextPage = currentPage + 1;
+            if (DEBUG) console.log('[DEBUG] DataTable: loading page', nextPage);
             const params = tableRequestParams(page.url.searchParams.toString());
             params.set('page', String(nextPage));
             loadingMore = true;
             const data = await fetchBackend(`${ENTITY_ENDPOINTS[current_entity]}?${params}`);
             loadingMore = false;
-            if (data.bindings.length === 0) { exhausted = true; return; }
+            if (data.bindings.length === 0) { exhausted = true; if (DEBUG) console.log('[DEBUG] DataTable: page', nextPage, 'empty → exhausted'); return; }
             rows.push(...data.bindings);
             currentPage = nextPage;
+            if (DEBUG) console.log('[DEBUG] DataTable: page', nextPage, 'response', data);
         });
         if (sentinel) observer.observe(sentinel);
         return () => observer.disconnect();
