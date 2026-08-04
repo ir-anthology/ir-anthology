@@ -5,9 +5,16 @@
     import { page } from '$app/state';
 	import FilterField from '$lib/components/FilterField.svelte';
     import { browser } from '$app/environment';
+	import AiSidebar from '$lib/components/AiSidebar.svelte';
 
-    let {data} = $props();
+    let {data} = $props<{ data: { vars: string[]; bindings: Record<string, { type: string; value: string }>[] } }>();
     let stickyBarHeight = $state(0);
+    let aiEnabled = $state(browser ? localStorage.getItem('ai-insights-enabled') === 'true' : false);
+
+    function toggleAi() {
+        aiEnabled = !aiEnabled;
+        if (browser) localStorage.setItem('ai-insights-enabled', String(aiEnabled));
+    }
 
     const filters:Record<string, string[]> = $derived.by(() => {
         if (!browser) return {};
@@ -29,7 +36,14 @@
     <div class="sticky top-0 z-20 bg-white pb-2" bind:clientHeight={stickyBarHeight}>
         <section class="mb-2 pt-4">
             <div class="relative flex items-center gap-4">
-                <SearchBar /> <ResetButton />
+                <SearchBar />
+                <button
+                    onclick={toggleAi}
+                    class="text-sm font-medium rounded-full px-4 py-1.5 transition-colors {aiEnabled ? 'bg-link text-white hover:bg-link-hover' : 'border border-gray-300 text-gray-600 hover:bg-gray-100'}"
+                >
+                    AI Insights
+                </button>
+                <ResetButton />
             </div>
         </section>
 
@@ -46,3 +60,7 @@
 
     <DataTable vars={data.vars} bindings={data.bindings} />
 </div>
+
+{#if aiEnabled}
+    <AiSidebar sparqlData={data} onclose={() => { aiEnabled = false; if (browser) localStorage.setItem('ai-insights-enabled', 'false'); }} />
+{/if}
