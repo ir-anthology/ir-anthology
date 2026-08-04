@@ -17,7 +17,7 @@ export async function fetchObservations(sparqlData: SparqlEnvelope): Promise<Obs
 	if (DEBUG) console.log('[DEBUG] → POST', 'observations');
 	const response = await fetch(`${EXTERNAL_API_BASE}/api/observations`, {
 		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
+		headers: { 'Content-Type': 'text/plain' },
 		body: JSON.stringify(sparqlData),
 		signal: AbortSignal.timeout(120000),
 	});
@@ -33,7 +33,7 @@ export async function fetchFollowup(sparqlData: SparqlEnvelope): Promise<Followu
 	if (DEBUG) console.log('[DEBUG] → POST', 'followup');
 	const response = await fetch(`${EXTERNAL_API_BASE}/api/followup`, {
 		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
+		headers: { 'Content-Type': 'text/plain' },
 		body: JSON.stringify(sparqlData),
 		signal: AbortSignal.timeout(120000),
 	});
