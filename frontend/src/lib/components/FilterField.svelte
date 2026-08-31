@@ -28,7 +28,7 @@
     <span class="text-sm text-gray-600 font-medium">{key}:</span>
     {#each localValues as value, index (index)}
         <div class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-sm">
-            <span>{decodeURIComponent(value)}</span>
+            <span>{value}</span>
             <button
                 type="button"
                 onclick={() => removeFilter(index)}
