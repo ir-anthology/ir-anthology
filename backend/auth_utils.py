@@ -1,5 +1,4 @@
-import httpx
-from fastapi import HTTPException, Security
+from fastapi import HTTPException, Request, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 GITLAB_URL = "https://git.webis.de"
@@ -9,14 +8,17 @@ _bearer = HTTPBearer()
 
 
 async def require_admin(
+    request: Request,
     creds: HTTPAuthorizationCredentials = Security(_bearer),
 ) -> dict:
     """FastAPI dependency — verifies the token via GitLab userinfo and checks admin group."""
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(
-            f"{GITLAB_URL}/oauth/userinfo",
-            headers={"Authorization": f"Bearer {creds.credentials}"},
-        )
+    # Reuses the app's shared AsyncClient (set up in main.py's lifespan) instead of
+    # opening a new client/TLS connection on every admin request.
+    client = request.app.state.client
+    resp = await client.get(
+        f"{GITLAB_URL}/oauth/userinfo",
+        headers={"Authorization": f"Bearer {creds.credentials}"},
+    )
     if resp.status_code != 200:
         raise HTTPException(401, "Invalid or expired token")
 
