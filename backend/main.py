@@ -9,6 +9,7 @@ import patches as patch_store
 import dblp_fetch
 import httpx
 import os
+import re
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
@@ -24,8 +25,16 @@ async def lifespan(app: FastAPI):
 def get_client(request: Request) -> httpx.AsyncClient:
     return request.app.state.client
 
-def get_uri_from_id(ir_id: str):
-    return "https://dblp.org/" + ir_id.replace("+", "/")
+# Characters SPARQL's IRIREF grammar forbids inside <...> (RFC 3987 + the SPARQL spec):
+# <>"{}|^`\ and all control characters/space (#x00-#x20). There's no escape sequence for
+# these inside an IRIREF, so a ir_id containing one is rejected rather than substituted.
+_IRI_FORBIDDEN_CHARS = frozenset('<>"{}|^`\\') | {chr(c) for c in range(0x21)}
+
+def get_uri_from_id(ir_id: str) -> str:
+    uri = "https://dblp.org/" + ir_id.replace("+", "/")
+    if any(c in _IRI_FORBIDDEN_CHARS for c in uri):
+        raise HTTPException(400, "Invalid identifier")
+    return uri
 
 app = FastAPI(lifespan=lifespan)
 
@@ -175,13 +184,13 @@ async def read_workshops_proceedings(client: httpx.AsyncClient = Depends(get_cli
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
 @app.get("/api/workshops/{year}/inproceedings")
-async def read_conference(year: int, client: httpx.AsyncClient = Depends(get_client)):
+async def read_workshops_year_inproceedings(year: int, client: httpx.AsyncClient = Depends(get_client)):
     query = sparqlTemplates.WORKSHOPS_INPROCEEDINGS_FROM_PROCEEDINGS_TEMPLATE.replace('$YEAR', str(year))
     data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
 
 @app.get("/api/workshops/{year}/proceedings")
-async def read_conference_year(year: int, client: httpx.AsyncClient = Depends(get_client)):
+async def read_workshops_year_proceedings(year: int, client: httpx.AsyncClient = Depends(get_client)):
     query = sparqlTemplates.WORKSHOPS_YEAR_PROCEEDINGS_QUERY_TEMPLATE.replace('$YEAR', str(year))
     data = await sparql_post(query, client)
     return {"vars": data["head"]["vars"], "bindings": data["results"]["bindings"]}
@@ -253,6 +262,19 @@ def parse_order(sort_by: str | None, order: str, allowed: set[str] | None = None
 def get_label_var(entity_type: str) -> str:
     return f"?{entity_type.lower()}_label"
 
+# filter_<key> becomes part of a SPARQL variable name (?<key>_label) with no string
+# delimiter around it, so it can't be escaped the way a value can — it's either a
+# syntactically valid identifier or it's a SPARQL injection. Validate the shape
+# (matches how every real column name in this codebase is spelled) rather than
+# maintaining a static list of known entities, so new filterable columns need no
+# change here. Note: passing this check only makes a key *safe* to use, not
+# *meaningful* — filtering on a key with no matching bound variable in the query body
+# just filters out every row (see _ENTITY_TABLE_BODY for which ?..._label vars exist).
+_SAFE_FILTER_KEY = re.compile(r'^[A-Za-z][A-Za-z0-9]*$')
+
+def _sparql_str_escape(s: str) -> str:
+    return s.replace('\\', '\\\\').replace('"', '\\"')
+
 def build_filters(search_params: dict[str, str]) -> str :
     filters: dict[str, list[str]] = {}
     for key in search_params:
@@ -261,7 +283,10 @@ def build_filters(search_params: dict[str, str]) -> str :
         value = search_params[key];
         if value is None:
             continue
-        filters[key[len('filter_'):]] = value.split(',')
+        entity = key[len('filter_'):]
+        if not _SAFE_FILTER_KEY.fullmatch(entity):
+            continue
+        filters[entity] = value.split(',')
 
     if len(filters) == 0:
         return ''
@@ -274,7 +299,7 @@ def build_filters(search_params: dict[str, str]) -> str :
         label_var = get_label_var(key)
         contains_clauses = []
         for v in values:
-            contains_clauses.append(f'CONTAINS(LCASE({label_var}), LCASE("{v.lower().replace("'", "\\'")}"))')
+            contains_clauses.append(f'CONTAINS(LCASE({label_var}), LCASE("{_sparql_str_escape(v.lower())}"))')
         contains_string = f"{contains_clauses[0]}"
         for i in range(1, len(contains_clauses)):
             contains_string +=  f" || {contains_clauses[i]}"
@@ -328,9 +353,17 @@ async def delete_patch(
     _user: dict = Depends(auth_utils.require_admin),
     client: httpx.AsyncClient = Depends(get_client),
 ):
+    if not patch_store.patch_exists(filename):
+        raise HTTPException(404, f"Patch '{filename}' not found")
+
     meta = patch_store.read_patch_meta(filename)
     if meta is None:
-        raise HTTPException(404, f"Patch '{filename}' not found")
+        # Every patch writes its .meta.json sidecar in the same request right after
+        # the .nt file (see import_from_dblp/add_custom_workshop) — a missing sidecar
+        # here means something went wrong writing it, not an old patch predating the
+        # metadata feature. That should not happen; surface it loudly rather than
+        # reporting the patch as not found.
+        raise HTTPException(500, f"Patch '{filename}' is missing its metadata sidecar")
 
     live_reverted = None
     if meta.get("live_applied"):
@@ -338,7 +371,7 @@ async def delete_patch(
         live_reverted = True
         try:
             await sparql_update(delete_query, client)
-        except HTTPException:
+        except (HTTPException, httpx.HTTPError):
             live_reverted = False
 
     patch_store.delete_patch_files(filename)
@@ -374,7 +407,7 @@ async def import_from_dblp(
     live_ok = True
     try:
         await sparql_update(sparql, client)
-    except HTTPException:
+    except (HTTPException, httpx.HTTPError):
         live_ok = False
 
     triple_count = sum(1 for line in nt.splitlines() if line.strip())
@@ -411,7 +444,7 @@ async def add_custom_workshop(
     live_ok = True
     try:
         await sparql_update(sparql, client)
-    except HTTPException:
+    except (HTTPException, httpx.HTTPError):
         live_ok = False
 
     triple_count = sum(1 for line in nt.splitlines() if line.strip())
