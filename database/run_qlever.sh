@@ -2,7 +2,7 @@
 rebuild=$1
 echo $rebuild
 set -e
-if [ $rebuild = true ] ; then
+if [ "$rebuild" = true ] ; then
     qlever get-data
 else
     qlever index --overwrite-existing
