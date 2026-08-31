@@ -14,8 +14,7 @@
         const result:Record<string, string[]> = {};
         const searchParams:URLSearchParams = page.url.searchParams;
         const keys = searchParams.keys().toArray();
-        for(const key in keys){
-            const valueKey = keys[key]
+        for(const valueKey of keys){
             if (!valueKey.startsWith("filter_")) continue
             const value = searchParams.get(valueKey);
             if (value === null) continue;
