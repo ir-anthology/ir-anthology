@@ -14,10 +14,6 @@ export function getIDFromURI(dblp_uri: string){
     return dblp_uri.replace("https://dblp.org/", "").replaceAll("/","+")
 }
 
-export function getURIFromID(ir_id: string){
-    return "https://dblp.org/"+ir_id.replaceAll("+", "/")
-}
-
 export function slugifyName(name: string): string {
     return name
         .toLowerCase()

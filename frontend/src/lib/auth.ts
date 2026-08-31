@@ -22,5 +22,4 @@ export const logout = async () => {
     await userManager?.signoutRedirect();
 };
 export const getUser = () => userManager?.getUser();
-export const getToken = () => getUser().then(u => u?.access_token ?? null);
-export const getIdToken = () => getUser()?.then(u => u?.id_token ?? null);
+export const getToken = () => getUser()?.then(u => u?.access_token ?? null);
