@@ -8,8 +8,10 @@
     import { getIDFromURI, slugifyName, decodeYearCounts, decodeOrdered } from '$lib/helperFunctions';
     import { browser } from '$app/environment';
     import { loadPreferences, savePreferences } from '$lib/columnPreferences';
+    import { loadDensity, saveDensity, type Density } from '$lib/rowDensity';
     import { ENTITY_ENDPOINTS, FILTERABLE_ENTITIES, entityDefaultSort, resolveEntity, tableRequestParams, columnEntity } from '$lib/tableConfig';
     import ColumnSettings from './ColumnSettings.svelte';
+    import RowDensity from './RowDensity.svelte';
 
     // Presentation hints only — any column without an entry gets the w-24 fallback,
     // so new backend columns render without frontend changes.
@@ -60,6 +62,7 @@
 
     const HIDDEN_COLUMNS = ['URI', 'VenueURI', 'VenueType', 'authors', 'authorIds'];
     let userPrefs = $state(loadPreferences());
+    let density: Density = $state(loadDensity());
 
     let previousEntity: string | null = null;
     $effect(() => {
@@ -176,6 +179,11 @@
         resetPreferences();
     }
 
+    function handleDensityChange(d: Density) {
+        density = d;
+        saveDensity(d);
+    }
+
     // Extract abbreviation for the Venue (either last term in parentheses or uppercased last part from uri)
     function venueDisplayLabel(value: string | null | undefined, uri: string | null | undefined): string {
         if (value) {
@@ -192,7 +200,7 @@
 </script>
 
 <section class="bg-white rounded-lg shadow">
-    <table class="min-w-full divide-y divide-gray-200 table-fixed">
+    <table class="min-w-full divide-y divide-gray-200 table-fixed" data-density={density}>
         <thead class="bg-gray-50 sticky z-10 border-b-2 border-gray-300 shadow-[0_2px_3px_-1px_rgba(0,0,0,0.12)]" style="top: var(--table-top, 0px)">
             <tr>
                 {#each columns as col (col)}
@@ -202,7 +210,7 @@
                             class="bg-gray-50 px-2 pt-1 text-sm font-medium tracking-wider text-gray-500 whitespace-nowrap text-left border-l border-gray-300"
                         >Publications per year</th>
                     {:else}
-                        <th rowspan={hasYearsMatrix ? 2 : undefined} class="bg-gray-50 {COLUMN_WIDTHS[col] ?? 'w-24'} whitespace-nowrap">
+                        <th rowspan={hasYearsMatrix ? 2 : undefined} class="{col === 'Entity' ? 'bg-slate-50 sticky left-0 z-20 border-r border-gray-200 transition-colors' : 'bg-gray-50'} {COLUMN_WIDTHS[col] ?? 'w-24'} whitespace-nowrap">
                             <div class="flex items-center gap-1 {col === 'Entity' ? 'justify-start pl-4' : 'justify-center'}">
                                 {#if col === 'Entity'}
                                     <div class="relative inline-flex items-center shrink-0">
@@ -223,9 +231,15 @@
                                     <span class="text-sm font-medium tracking-wider text-gray-500">{col}</span>
                                 {/if}
                                 <button
-                                    class="text-sm cursor-pointer shrink-0 {current_sort_by === col ? 'text-gray-600' : 'text-gray-400'}"
+                                    class="p-1 rounded hover:bg-gray-100 transition-colors cursor-pointer shrink-0"
                                     onclick={() => handleSortClick(col)}
-                                >{current_sort_by === col ? (current_order === 'asc' ? '↑' : '↓') : '↕'}</button>
+                                    aria-label="Sort by {col}"
+                                >
+                                    <svg class="w-2.5 h-3.5" viewBox="0 0 10 14">
+                                        <polygon points="5,0 10,5.5 0,5.5" class={current_sort_by === col && current_order === 'asc' ? 'fill-link' : 'fill-gray-300'} />
+                                        <polygon points="5,14 10,8.5 0,8.5" class={current_sort_by === col && current_order === 'desc' ? 'fill-link' : 'fill-gray-300'} />
+                                    </svg>
+                                </button>
                                 {#if col === 'Entity'}
                                     <ColumnSettings
                                         {availableColumns}
@@ -233,6 +247,7 @@
                                         onToggle={handleColumnToggle}
                                         onReset={handleResetDefaults}
                                     />
+                                    <RowDensity {density} onChange={handleDensityChange} />
                                 {/if}
                             </div>
                         </th>
@@ -293,9 +308,16 @@
                                 {@const authors = decodeOrdered(row['authors']?.value ?? null, true)}
                                 {@const authorIds = decodeOrdered(row['authorIds']?.value ?? null)}
                                 <td
-									class="px-4 py-1.5 text-sm text-gray-900 wrap-break-word {COLUMN_WIDTHS[col] ??
+									class="sticky left-0 z-5 border-r border-gray-200 {i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} px-4 py-1.5 text-sm text-gray-900 wrap-break-word {COLUMN_WIDTHS[col] ??
 										'w-24'}"
 								>
+									{#if current_entity === 'Venue' && (row['VenueType']?.value || row['URI']?.value === 'https://dblp.org/workshops')}
+										{@const type = row['VenueType']?.value || 'Workshop'}
+										<span
+											class="mr-1 align-middle inline-flex rounded border border-current/20 px-1 py-0.5 text-[10px] font-bold {type === 'Conference' ? 'bg-blue-100 text-blue-800' : type === 'Journal' ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'}"
+											title={type}
+										>{type[0]}</span>
+									{/if}
 									{#if row['URI']?.value}
 										<a
 											href={buildURL(row['URI'].value, row['Entity']?.value ?? '')}
@@ -307,12 +329,6 @@
 										</a>
 									{:else}
 										{current_entity === 'Venue' ? venueDisplayLabel(cellData.value, undefined) : (cellData.value ?? '-')}
-									{/if}
-									{#if current_entity === 'Venue' && row['VenueType']?.value}
-										<span
-											class="ml-1 align-middle inline-flex rounded px-1 py-0.5 text-[10px] font-bold {row['VenueType'].value === 'Conference' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}"
-											title={row['VenueType'].value}
-										>{row['VenueType'].value[0]}</span>
 									{/if}
 									{#if authors.length > 0}
 										<div class="text-sm mt-0.5">
@@ -354,3 +370,19 @@
         </tbody>
     </table>
 </section>
+
+<style>
+	table[data-density='compact'] tbody td {
+		padding-block: 0.25rem;
+		font-size: 0.8125rem;
+	}
+	table[data-density='dense'] tbody td {
+		padding-block: 0.0625rem;
+		font-size: 0.75rem;
+	}
+	table[data-density='compact'] tbody td span.inline-flex,
+	table[data-density='dense'] tbody td span.inline-flex {
+		font-size: 9px;
+		padding-block: 0;
+	}
+</style>
