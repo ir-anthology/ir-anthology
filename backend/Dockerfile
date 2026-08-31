@@ -6,9 +6,14 @@ WORKDIR ${APP_HOME}
 
 RUN mkdir -p ${DATA_PATH}
 
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
 COPY ./ .
 
-RUN pip install "fastapi[standard]"
+RUN useradd --create-home --uid 1000 --shell /usr/sbin/nologin appuser \
+    && chown -R appuser:appuser ${APP_HOME}
+USER appuser
 
 EXPOSE 8000
 
