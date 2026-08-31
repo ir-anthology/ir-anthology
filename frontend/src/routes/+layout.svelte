@@ -86,7 +86,7 @@
 	<div class="w-full px-4">
 		<p class="text-sm text-gray-500 m-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:px-3">
 			<span class="inline-flex items-center flex-wrap gap-1">
-				<a style="color:#6c757d" href="/anthology/info/credits/">Credits</a>
+				<a style="color:#6c757d" href={resolve('/anthology/info/credits')}>Credits</a>
 				<span class="mx-1">•</span>
 				<a
 					style="color:#6c757d"
