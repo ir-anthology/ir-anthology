@@ -23,6 +23,11 @@ def save_patch_meta(filename: str, meta: dict) -> None:
     (PATCHES_DIR / f"{stem}.meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
 
+def patch_exists(filename: str) -> bool:
+    path = PATCHES_DIR / filename
+    return path.exists() and path.parent == PATCHES_DIR
+
+
 def read_patch_meta(filename: str) -> dict | None:
     stem = filename.removesuffix(".nt")
     path = PATCHES_DIR / f"{stem}.meta.json"
