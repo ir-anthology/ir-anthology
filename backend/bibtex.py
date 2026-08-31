@@ -94,7 +94,7 @@ def _bibtex_key(data: dict) -> str:
         authors = decode_ordered(data['authors'], strip_disambig=True)
         last = (authors[0].split(' ')[-1] if authors else '').lower()
     else:
-        editors = (data.get('editors') or '').split(',')
+        editors = decode_ordered(data.get('editors'), strip_disambig=True)
         last = (editors[0].split(' ')[-1] if editors else '').lower()
     creator = _remove_special(_simplify_for_key(last))
     title_words = _remove_special(_simplify_for_key((data.get('title') or '').lower())).split()
