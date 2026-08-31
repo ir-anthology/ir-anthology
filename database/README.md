@@ -19,7 +19,7 @@ QLever SPARQL triplestore seeded with a curated subset of the DBLP knowledge gra
 database/
 ├── Dockerfile                          adfreiburg/qlever base; entrypoint: run_qlever.sh; port 7016
 ├── Qleverfile                          qlever CLI configuration (port, memory, access token, …)
-├── run_qlever.sh                       Docker entrypoint: index + start, or re-fetch data
+├── run_qlever.sh                       Docker entrypoint: index+start (default), or fetch-only (arg "true")
 ├── get_data.sh                         data fetch script: paginates DBLP, writes chunks to DATA_PATH
 ├── streams.txt                         37 DBLP stream URIs (journals + conferences)
 ├── workshop_streams.txt                44 DBLP workshop stream URIs
@@ -51,6 +51,26 @@ The `Qleverfile` in this directory drives the `qlever` CLI:
 | `[server]` | `CACHE_MAX_SIZE` | `5G` |
 | `[server]` | `TIMEOUT` | `30s` |
 | `[runtime]` | `SYSTEM` | `native` (uses the locally installed `qlever-server` binary) |
+
+### Docker entrypoint (production)
+
+`run_qlever.sh` — the Docker image's entrypoint — starts `qlever-server` directly with
+its own hardcoded flags, independent of the Qleverfile above (which only drives the
+native `qlever` CLI, e.g. `qlever start`). Editing the Qleverfile has **no effect** on
+the Docker image; edit `run_qlever.sh` instead. Current flags (`qlever-server --help`
+for the authoritative description of each):
+
+| Flag | Value | Meaning |
+|---|---|---|
+| `-i` | `data/test` | Index basename (required) |
+| `-p` | `7016` | Port HTTP requests are served on |
+| `-m` | `10G` | Total memory limit for the server process |
+| `-c` | `30G` | Max memory for the query cache (`qlever-server`'s own default) |
+| `-e` | `1G` | Max size of a single cache entry (default is `5G`) |
+| `-k` | `1000` | Max number of cache entries (`qlever-server`'s own default) |
+| `-s` | `60s` | Default query timeout (Qleverfile's native-dev default is `30s` — the two are independent, not a typo) |
+| `-j` | `24` | Max number of queries processed simultaneously |
+| `-a` | `$SPARQL_ACCESS_TOKEN` | Access token for restricted API calls |
 
 ### Environment variables
 
@@ -88,10 +108,14 @@ docker run -p 7016:7016 \
   ir-anthology-database
 ```
 
-The Docker entrypoint (`run_qlever.sh`) re-indexes from the baked-in data on every start. Pass `true` as the first argument to re-fetch from DBLP instead:
+The Docker entrypoint (`run_qlever.sh`) has two distinct, **non-overlapping** modes, controlled by its first argument — this is deliberate, not incidental:
+
+- **Default (no argument, or `false`)**: indexes whatever data is already on disk and starts the server. Does **not** touch DBLP. This is the fast path (no ~15 min fetch), and it's the mode a container orchestrator like Kubernetes should restart a crashed pod with — a crash-restart should bring the server back up quickly from existing data, not silently trigger a full re-fetch.
+- **`true`**: **only** re-fetches fresh data from DBLP (see [Data fetch pipeline](#data-fetch-pipeline)) and exits. Does **not** index or start the server. This is meant to be run as a separate, deliberate, one-off operation against the shared data volume (e.g. a Kubernetes `Job`, or a manual `docker run`) — decoupled from the serving container's normal restart cycle. Follow it with a normal (default-argument) restart to actually index the newly-fetched data and bring the server up with it.
 
 ```sh
-docker run -p 7016:7016 ir-anthology-database true   # re-fetches from DBLP
+docker run -p 7016:7016 ir-anthology-database true   # one-off: fetch fresh data from DBLP, then exit
+docker run -p 7016:7016 -e SPARQL_ACCESS_TOKEN=your_secret ir-anthology-database   # index + serve (also used for crash-restarts)
 ```
 
 ## Data fetch pipeline
