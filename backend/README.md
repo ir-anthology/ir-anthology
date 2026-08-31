@@ -13,13 +13,14 @@ FastAPI REST API that translates HTTP requests into SPARQL queries against a QLe
 | Data validation | Pydantic v2 |
 | Data access | Raw SPARQL — no ORM |
 | Auth | GitLab OAuth2 token introspection (`/oauth/userinfo`) |
-| Dependencies | `pip install "fastapi[standard]"` — no `requirements.txt` |
+| Dependencies | `pip install -r requirements.txt` (pinned: `fastapi[standard]`, `httpx`, `pydantic`) |
 
 ## Project structure
 
 ```
 backend/
 ├── Dockerfile           python:3.14.5-trixie; entrypoint: fastapi run main.py; port 8000
+├── requirements.txt     pinned direct dependencies (fastapi[standard], httpx, pydantic)
 ├── main.py              all route handlers, shared httpx client, SPARQL helpers, Pydantic models
 ├── auth_utils.py        require_admin dependency — GitLab userinfo check per request
 ├── sparqlTemplates.py   all SPARQL SELECT/CONSTRUCT/INSERT string templates
@@ -50,12 +51,12 @@ These must be changed in source:
 
 ### CORS
 
-Allowed origins (regex): `https://.*\.webis\.de` and `http://localhost(:\d+)?`. Methods: GET, POST.
+Allowed origins (regex): `https://.*\.webis\.de` and `http://localhost(:\d+)?`. Methods: GET, POST, DELETE. Note `127.0.0.1` does not match the `localhost` pattern — a browser client must use `localhost`, not `127.0.0.1`, to avoid CORS errors.
 
 ## Commands
 
 ```sh
-pip install "fastapi[standard]"
+pip install -r requirements.txt
 
 fastapi dev main.py     # development — auto-reload, port 8000
 fastapi run main.py     # production
@@ -76,47 +77,52 @@ Interactive API docs are available at `http://localhost:8000/docs` when running.
 
 ### ID encoding
 
-Path segments labelled `{id}` are DBLP URIs with `/` replaced by `+`. `main.py` reverses this with:
-
-```python
-def get_uri_from_id(ir_id: str):
-    return "https://dblp.org/" + ir_id.replace("+", "/")
-```
-
-So `/api/conferences/journals+tois` maps to `https://dblp.org/journals/tois`.
+Path segments labelled `{id}` are DBLP URIs with `/` replaced by `+` (see `get_uri_from_id()` in `main.py`). So `/api/conferences/journals+tois` maps to `https://dblp.org/journals/tois`. The reconstructed URI is validated against SPARQL's IRIREF grammar and rejected with 400 if it contains a character that isn't legal inside `<...>` (this is also what stops the path segment from being used to inject SPARQL).
 
 ### Public endpoints
 
-| Method | Path | SPARQL template | Key response vars |
+**Tables** — four separate endpoints, one per entity, sharing the same paging/sort/filter query params (see below). Each merges in a `Years` column (a `"<year>@@<count>, ..."`-encoded string, see `decodeYearCounts()` in the frontend) except `/api/table/years` itself.
+
+| Method | Path | SPARQL template(s) | Key response vars |
 |---|---|---|---|
-| GET | `/api/table` | `TABLE_QUERY_TEMPLATE` | `Entity`, `URI`, `Publication`, `Venue`, `Author`, `Year` |
-| GET | `/api/conferences` | `ANTHOLOGY_CONFERENCES_QUERY_TEMPLATE` | `stream`, `venue_label`, `year`, `type` |
-| GET | `/api/conferences/{id}` | `VENUE_PROCEEDINGS_TEMPLATE` | `year`, `title`, `streamTitle`, `pub`, `count` |
-| GET | `/api/conferences/{id}/{year}/proceedings` | `PROCEEDINGS_QUERY_TEMPLATE` | `title`, `doi`, `pub`, `streamTitle` |
-| GET | `/api/conferences/{id}/{year}/inproceedings` | `INPROCEEDINGS_FROM_PROCEEDINGS_TEMPLATE` | `title`, `doi`, `book`, `pub`, `authors`, `authorIds` |
-| GET | `/api/workshops` | `ANTHOLOGY_WORKSHOPS_QUERY_TEMPLATE` | `stream`, `venue_label`, `year`, `type` |
-| GET | `/api/workshops/{year}/proceedings` | `WORKSHOPS_YEAR_PROCEEDINGS_QUERY_TEMPLATE` | `title`, `doi`, `pub`, `streamTitle` |
-| GET | `/api/workshops/{year}/inproceedings` | `WORKSHOPS_INPROCEEDINGS_FROM_PROCEEDINGS_TEMPLATE` | `title`, `doi`, `book`, `pub`, `authors`, `authorIds` |
-| GET | `/api/journals` | `ANTHOLOGY_JOURNALS_QUERY_TEMPLATE` | `stream`, `venue_label`, `year`, `type` |
-| GET | `/api/journals/{id}` | `JOURNAL_OVERVIEW_TEMPLATE` | `year`, `volume`, `number`, `journalTitle`, `count` |
-| GET | `/api/journals/{id}/{year}` | `ARTICLES_FROM_JOURNAL_TEMPLATE` | `title`, `journalTitle`, `volume`, `number`, `doi`, `pub`, `authors`, `authorIds` |
-| GET | `/api/people` | `PERSONS_TEMPLATE` | `person`, `name` |
-| GET | `/api/people/{id}` | `PERSON_TEMPLATE` | `title`, `year`, `doi`, `pub`, `booktitle`, `stream`, `authors`, `authorIds`, … |
-| GET | `/api/publications` | `PUBLICATIONS_TEMPLATE` | `pub`, `title` |
-| GET | `/api/publications/{id}` | `BIB_PUBLICATION_TEMPLATE` | all publication fields + `"bibtex"` string |
+| GET | `/api/table/authors` | `AUTHOR_TABLE_TEMPLATE` + `AUTHOR_YEAR_COUNTS_TEMPLATE` | `Entity`, `URI`, `Publications`, `Venues`, `Years` |
+| GET | `/api/table/venues` | `VENUE_TABLE_TEMPLATE` + `VENUE_YEAR_COUNTS_TEMPLATE` | `Entity`, `URI`, `Publications`, `Authors`, `VenueType`, `Years` |
+| GET | `/api/table/years` | `YEARS_TABLE_TEMPLATE` | `Entity`, `URI`, `Publications`, `Venues`, `Authors` |
+| GET | `/api/table/publications` | `PUBLICATION_TABLE_TEMPLATE` | `Entity`, `URI`, `Year`, `Venue`, `VenueURI`, `Authors`, `authors`, `authorIds` |
 
-`/api/publications/{id}` is the only endpoint that adds a non-SPARQL field: the response includes a `"bibtex"` key containing the generated BibTeX entry string (see [BibTeX generation](#bibtex-generation)).
-
-**`/api/table` query parameters:**
+**Table query parameters** (all four endpoints):
 
 | Param | Default | Description |
 |---|---|---|
-| `entity` | `Author` | One of: `Author`, `Venue`, `Publication`, `Year`, `2020s`, `2010s`, `2000s`, `Pre2000s` |
-| `sort_by` | `Publication` | SPARQL variable name to sort by |
-| `order` | `DESC` | `ASC` or `DESC` |
+| `sort_by` | entity-specific (see `entityDefaultSort` on the frontend) | Variable name to sort by; falls back to `Entity ASC` if invalid |
+| `order` | entity-specific | `ASC` or `DESC` |
 | `page` | `1` | 1-based page number |
 | `limit` | `50` | Results per page |
-| `filter_<key>` | — | Any param prefixed `filter_` becomes a SPARQL `FILTER(CONTAINS(...))` clause |
+| `filter_<key>` | — | Becomes `FILTER(CONTAINS(LCASE(?<key>_label), LCASE("value")))`. `<key>` must match `^[A-Za-z][A-Za-z0-9]*$` (validated to keep it safe to splice into a SPARQL variable name — see `_SAFE_FILTER_KEY` in `main.py`); it only has any effect if a `?<key>_label` variable is actually bound in `_ENTITY_TABLE_BODY` (today: `Author`, `Venue`, `Publication`, `Year`). Comma-separated values within one key are OR-ed. |
+
+**Everything else:**
+
+| Method | Path | SPARQL template | Key response vars |
+|---|---|---|---|
+| GET | `/api/conferences` | `ANTHOLOGY_CONFERENCES_QUERY_TEMPLATE` | `stream`, `venue_label`, `year`, `type` |
+| GET | `/api/conferences/{id}` | `VENUE_PROCEEDINGS_TEMPLATE` | `year`, `title`, `streamTitle`, `pub`, `type`, `proc` |
+| GET | `/api/conferences/{id}/{year}/inproceedings` | `INPROCEEDINGS_FROM_PROCEEDINGS_TEMPLATE` | `title`, `doi`, `book`, `pub`, `authors`, `authorIds` |
+| GET | `/api/conferences/{id}/{year}/proceedings` | `VENUE_YEAR_PROCEEDINGS_QUERY_TEMPLATE` | `title`, `doi`, `pub`, `streamTitle` |
+| GET | `/api/conferences/{id}/{year}/loose` | `CONFERENCE_LOOSE_PAPERS_TEMPLATE` | `title`, `doi`, `pub`, `streamTitle`, `authors`, `authorIds` |
+| GET | `/api/workshops` | `ANTHOLOGY_WORKSHOPS_QUERY_TEMPLATE` | `stream`, `venue_label`, `year`, `type` |
+| GET | `/api/workshops/proceedings` | `WORKSHOPS_PROCEEDINGS_TEMPLATE` | `year`, `title`, `streamTitle`, `pub`, `type`, `proc` |
+| GET | `/api/workshops/{year}/inproceedings` | `WORKSHOPS_INPROCEEDINGS_FROM_PROCEEDINGS_TEMPLATE` | `title`, `doi`, `book`, `pub`, `authors`, `authorIds` |
+| GET | `/api/workshops/{year}/proceedings` | `WORKSHOPS_YEAR_PROCEEDINGS_QUERY_TEMPLATE` | `title`, `doi`, `pub`, `streamTitle` |
+| GET | `/api/workshops/{year}/loose` | `WORKSHOPS_LOOSE_PAPERS_TEMPLATE` | `title`, `doi`, `pub`, `authors`, `authorIds` |
+| GET | `/api/journals` | `ANTHOLOGY_JOURNALS_QUERY_TEMPLATE` | `stream`, `venue_label`, `year`, `type` |
+| GET | `/api/journals/{id}` | `JOURNAL_OVERVIEW_TEMPLATE` | `year`, `volume`, `number`, `journalTitle`, `count` |
+| GET | `/api/journals/{id}/{year}` | `JOURNAL_YEAR_TEMPLATE` | `title`, `journalTitle`, `volume`, `number`, `doi`, `pub`, `authors`, `authorIds` |
+| GET | `/api/people` | `PEOPLE_TEMPLATE` | `person`, `name` |
+| GET | `/api/people/{id}` | `PERSON_TEMPLATE` | `title`, `year`, `doi`, `pub`, `name`, `book`, `booktitle`, `streamTitle`, `stream`, `authors`, `authorIds`, … |
+| GET | `/api/publications` | `PUBLICATIONS_TEMPLATE` | `pub`, `title` |
+| GET | `/api/publications/{id}` | `BIB_PUBLICATION_TEMPLATE` | `title`, `booktitle`, `pages`, `publisher`, `doi`, `url`, `year`, `book`, `pub`, `stream`, `streamTitle`, `volume`, `number`, `isbn`, `bibtexType`, `authors`, `authorIds`, `editors`, `editorIds`, … + `"bibtex"` string |
+
+`/api/publications/{id}` is the only endpoint that adds a non-SPARQL field: the response includes a `"bibtex"` key containing the generated BibTeX entry string (see [BibTeX generation](#bibtex-generation)).
 
 ### Admin endpoints
 
@@ -142,6 +148,12 @@ Returns all saved patch files with audit metadata.
   ]
 }
 ```
+
+#### DELETE /api/admin/patches/{filename}
+
+Deletes a patch's `.nt` and `.meta.json` files. If the patch's metadata says `live_applied: true`, first attempts to revert it from the live triplestore via `DELETE DATA` (built from the same N-Triples that were originally inserted). The files are removed from disk regardless of whether the live revert succeeds.
+
+Response: `{ "filename": "...", "live_reverted": true | false | null }` — `null` means the patch was never applied live in the first place, so there was nothing to revert; `false` means the live revert was attempted and failed (files are still deleted). 404 if the patch doesn't exist; 500 if it exists but is missing its metadata sidecar (see [Patch files](#patch-files)).
 
 #### POST /api/admin/import
 
@@ -229,7 +241,7 @@ Each import writes two files to `DATA_PATH/patches/`:
 - `<timestamp>_<label>.nt` — raw N-Triples, applied to the live triplestore via `INSERT DATA`
 - `<timestamp>_<label>.meta.json` — audit sidecar: timestamp, user name/email, action type, input parameters, triple count, and whether the live apply succeeded
 
-`patches.list_patches()` drives the list from `.nt` files and merges in the sidecar when present. Patches created before the audit sidecar feature was added appear without metadata fields (all are optional).
+`patches.list_patches()` drives the list from `.nt` files and merges in the sidecar. Every patch is expected to have both files — the sidecar is written in the same request right after the `.nt` file (see `import_from_dblp`/`add_custom_workshop` in `main.py`). A patch missing its sidecar indicates a bug, not an old/legacy patch; `DELETE /api/admin/patches/{filename}` treats that case as a 500, not a 404.
 
 ## DBLP import
 
@@ -238,7 +250,7 @@ Each import writes two files to `DATA_PATH/patches/`:
 - `_dedup()` removes duplicate N-Triples lines
 - `_extract_year_of_conference()` scans proceedings title triples with a regex and injects `ex:yearOfConference` triples (e.g. a title containing "2023" produces `<proc_iri> ex:yearOfConference "2023" .`)
 
-For `person` imports, the backend first queries its own triplestore for all known stream IRIs and uses them to filter the DBLP import to IR-relevant publications only.
+`person` imports (`dblp_fetch.fetch_person()`) are **not** filtered by venue/stream — they pull every publication, authorship, editorship, and signature triple DBLP has for that person IRI, regardless of whether it's IR-relevant. Importing a person can add publications from streams this anthology doesn't otherwise track.
 
 ## BibTeX generation
 
