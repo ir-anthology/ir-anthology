@@ -218,7 +218,9 @@ await client.post(
 
 **Author ordering:** a `GROUP_CONCAT` packs all authors into a single string with `"<ordinal>@@<name>"` entries (comma-separated). `bibtex.py`'s `decode_ordered()` unpacks and re-sorts by ordinal. The same encoding is used for `authorIds`.
 
-**`/api/table` filter injection:** `filter_<key>=value` query params become `FILTER(CONTAINS(LCASE(?label), LCASE("value")))` SPARQL clauses. Multiple values for the same key are OR-ed; multiple keys are AND-ed. The combined string is interpolated into `$FILTERS` in `TABLE_QUERY_TEMPLATE`.
+**`/api/table` filter injection:** `filter_<key>=value` query params become `FILTER(CONTAINS(LCASE(?label), LCASE("value")))` SPARQL clauses. Multiple values for the same key are OR-ed; multiple keys are AND-ed. The combined string is interpolated into `$FILTERS`, which appears in `_ENTITY_TABLE_BODY` (shared by `AUTHOR_TABLE_TEMPLATE`, `VENUE_TABLE_TEMPLATE`, and `YEARS_TABLE_TEMPLATE`) as well as `PUBLICATION_TABLE_TEMPLATE`.
+
+**For the full RDF vocabulary and query idioms** (workshop-stream collapse, ordinal-encoded author lists, the `ex:yearOfConference`/`dblp:yearOfEvent` distinction, etc.) **see [`SCHEMA.md`](./SCHEMA.md)** — written for an LLM agent to use before writing new SPARQL against this store.
 
 ### Write queries
 
