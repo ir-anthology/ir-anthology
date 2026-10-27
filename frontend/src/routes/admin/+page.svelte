@@ -1,0 +1,485 @@
+<script lang="ts">
+    import { getToken } from '$lib/auth';
+    import { importFromDblp, importCustomWorkshop, previewCustomWorkshop, fetchPatches, deletePatch, type ImportResult, type WorkshopProceeding, type PatchRecord } from '$lib/sparql/fetch';
+    import { SvelteSet } from 'svelte/reactivity';
+    import InfoIcon from '$lib/components/InfoIcon.svelte';
+
+    // PLACEHOLDER tooltips — replace each string with the real wording. Keys match the
+    // `type` passed to the importForm snippet, plus 'customWorkshop' for the unlisted
+    // workshop form. Newlines are rendered by the browser inside a title tooltip.
+    const HELP: Record<string, string> = {
+        stream: 'Import a journal or conference from DBLP by its IRI of the form https://dblp.org/streams/journals/<abbrev> or https://dblp.org/streams/conf/<abbrev>.\nIf no year is given, fetches all publications, authors and editors.\nOtherwise articles or proceedings get filtered by year and everything connected to them gets imported.',
+        workshop: 'Import a workshop from DBLP by its IRI of the form https://dblp.org/streams/conf/<abbrev>.\nIf there is no IRI for the workshop because it is not a stream, use the custom workshop import!\nIf no year is given, fetches all publications, authors and editors.\nOtherwise proceedings get filtered by year and everything connected to them gets imported.',
+        person: 'Import an author or editor from DBLP by their IRI of the form https://dblp.org/pid/<something>/<something>.\nFetches all their publications with their authors and editors, even if they are outside of the IR scope.',
+        publication: 'Import a single publication from DBLP by its IRI of the form https://dblp.org/rec/[journals|conf]/<abbrev>/<id>.\nFetches the publication and its authors and editors.',
+        customWorkshop: 'Import a workshop that has no IRI from DBLP because it is not a stream.\nFirst finds proceedings based on the provided title, abbreviation, and, if provided, year,\nthen lets you select which of the matching proceedings should be imported as part of the workshop.'
+    };
+
+    // Visible notes rendered under a form's heading, for text too important to hide in a
+    // hover tooltip (there is no hover on touch devices, and `title` does not show on
+    // keyboard focus either). Keyed like HELP, so a form without an entry renders none.
+    const NOTE: Record<string, string> = {
+        workshop: 'DBLP makes no distinction between a conference and a workshop! Using this form with a conference will add the Workshop type that identifies this conference as a workshop in our schema!'
+    };
+
+    const { data } = $props();
+    const profile = $derived(data.user.profile);
+    const groups = $derived(profile['groups_direct'] as string[] | undefined);
+    const isAdmin = $derived(groups?.includes('auth/auth-webis-admin') ?? false);
+    const name = $derived(profile.name ?? profile.nickname ?? profile.sub);
+
+    type FormState = {
+        iri: string;
+        year: string;
+        loading: boolean;
+        result: ImportResult | null;
+        error: string | null;
+        undoing: boolean;
+    };
+
+    type CustomWorkshopState = {
+        abbreviation: string;
+        title: string;
+        year: string;
+        loading: boolean;
+        result: ImportResult | null;
+        error: string | null;
+        undoing: boolean;
+        step: 'form' | 'select' | 'done';
+        proceedings: WorkshopProceeding[];
+        selectedProcs: Set<string>;
+    };
+
+    function makeForm(): FormState {
+        return { iri: '', year: '', loading: false, result: null, error: null, undoing: false };
+    }
+
+    const stream      = $state(makeForm());
+    const workshop    = $state(makeForm());
+    const person      = $state(makeForm());
+    const publication = $state(makeForm());
+    const customWorkshop = $state<CustomWorkshopState>({
+        abbreviation: '', title: '', year: '', loading: false, result: null, error: null, undoing: false,
+        step: 'form', proceedings: [], selectedProcs: new Set(),
+    });
+
+    // Shared by the import forms and the custom-workshop form: undoes the patch
+    // that was just created (removes the patch file, and if it was applied live,
+    // reverts the live triples too) — same action as the Delete button in the
+    // Patches panel below, just surfaced right where the result appears.
+    async function undo(state: { result: ImportResult | null; error: string | null; undoing: boolean }) {
+        if (!state.result) return;
+        state.undoing = true;
+        state.error = null;
+        try {
+            const token = await getToken();
+            await deletePatch(state.result.filename, token);
+            state.result = null;
+        } catch (e) {
+            state.error = e instanceof Error ? e.message : 'Unknown error';
+        } finally {
+            state.undoing = false;
+        }
+    }
+
+    // Journals and conferences share ONE form because the backend treats them
+    // identically — main.py dispatches both to fetch_stream(is_workshop=false), and
+    // whether articles or proceedings get filtered by year is decided from the data
+    // (does this stream have proceedings that year), not from this parameter. The only
+    // thing it still affects is the label stored in the patch metadata and shown in the
+    // Patches panel, so derive that from the IRI to keep the history accurate.
+    function backendType(form: FormState, type: string): string {
+        if (type !== 'stream') return type;
+        return form.iri.includes('/streams/journals/') ? 'journal' : 'conference';
+    }
+
+    async function submit(form: FormState, type: string) {
+        form.result = null;
+        form.error = null;
+        form.loading = true;
+        try {
+            const token = await getToken();
+            const year = parseInt(form.year);
+            form.result = await importFromDblp(form.iri.trim(), backendType(form, type), isNaN(year) ? undefined : year, token);
+        } catch (e) {
+            form.error = e instanceof Error ? e.message : 'Unknown error';
+        } finally {
+            form.loading = false;
+        }
+    }
+
+    let patches = $state<PatchRecord[] | null>(null);
+    let patchesLoading = $state(false);
+    let patchesError = $state<string | null>(null);
+    let deleteError = $state<string | null>(null);
+    let deletingFilenames = new SvelteSet<string>();
+
+    async function loadPatches() {
+        patchesLoading = true;
+        patchesError = null;
+        try {
+            const token = await getToken();
+            patches = await fetchPatches(token);
+        } catch (e) {
+            patchesError = e instanceof Error ? e.message : 'Unknown error';
+        } finally {
+            patchesLoading = false;
+        }
+    }
+
+    async function handleDeletePatch(filename: string) {
+        if (!confirm(`Delete patch "${filename}"?\n\nIf it was applied live, its triples will also be removed from the live database.`)) return;
+        deletingFilenames.add(filename);
+        deleteError = null;
+        try {
+            const token = await getToken();
+            await deletePatch(filename, token);
+            patches = patches?.filter((p) => p.filename !== filename) ?? null;
+        } catch (e) {
+            deleteError = e instanceof Error ? e.message : 'Unknown error';
+        } finally {
+            deletingFilenames.delete(filename);
+        }
+    }
+
+    async function submitCustomWorkshop() {
+        customWorkshop.result = null;
+        customWorkshop.error = null;
+        customWorkshop.loading = true;
+        try {
+            const token = await getToken();
+            const year = parseInt(customWorkshop.year);
+            const { proceedings } = await previewCustomWorkshop(
+                customWorkshop.abbreviation.trim(),
+                customWorkshop.title.trim(),
+                isNaN(year) ? undefined : year,
+                token,
+            );
+            if (proceedings.length === 0) {
+                customWorkshop.error = 'No proceedings found on DBLP matching the given name/abbreviation';
+                return;
+            }
+            customWorkshop.proceedings = proceedings;
+            customWorkshop.selectedProcs = new Set(proceedings.map(p => p.proc));
+            customWorkshop.step = 'select';
+        } catch (e) {
+            customWorkshop.error = e instanceof Error ? e.message : 'Unknown error';
+        } finally {
+            customWorkshop.loading = false;
+        }
+    }
+
+    async function confirmCustomWorkshop() {
+        customWorkshop.result = null;
+        customWorkshop.error = null;
+        customWorkshop.loading = true;
+        try {
+            const token = await getToken();
+            const year = parseInt(customWorkshop.year);
+            customWorkshop.result = await importCustomWorkshop(
+                customWorkshop.abbreviation.trim(),
+                customWorkshop.title.trim(),
+                isNaN(year) ? undefined : year,
+                [...customWorkshop.selectedProcs],
+                token,
+            );
+            customWorkshop.step = 'form';
+            customWorkshop.proceedings = [];
+            customWorkshop.selectedProcs = new Set();
+        } catch (e) {
+            customWorkshop.error = e instanceof Error ? e.message : 'Unknown error';
+        } finally {
+            customWorkshop.loading = false;
+        }
+    }
+
+    function resetCustomWorkshop() {
+        customWorkshop.step = 'form';
+        customWorkshop.proceedings = [];
+        customWorkshop.selectedProcs = new Set();
+        customWorkshop.result = null;
+        customWorkshop.error = null;
+    }
+</script>
+
+<div class="max-w-2xl">
+    <div class="flex items-center gap-4 mb-8">
+        {#if profile.picture}
+            <img src={profile.picture} alt="avatar" class="w-14 h-14 rounded-full border border-gray-200">
+        {/if}
+        <div>
+            <h1 class="text-2xl font-semibold">Welcome, {name}.</h1>
+                {#if isAdmin}
+                    <span class="text-xs font-medium bg-red-100 text-red-700 border border-red-200 rounded px-2 py-0.5">Admin</span>
+                {/if}
+        </div>
+    </div>
+
+    {#if !isAdmin}
+        <p class="text-gray-500 text-sm">You don't have admin permissions.</p>
+    {:else}
+        <div class="flex flex-col gap-6">
+
+            {#snippet importForm(label: string, form: FormState, type: string, withYear: boolean)}
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h2 class="text-base font-semibold {NOTE[type] ? 'mb-1' : 'mb-3'} flex items-center gap-1.5">
+                        Add {label}
+                        <InfoIcon text={HELP[type]} class="h-4 w-4" />
+                    </h2>
+                    {#if NOTE[type]}
+                        <p class="text-xs text-gray-500 mb-3">{NOTE[type]}</p>
+                    {/if}
+                    <form onsubmit={(e) => { e.preventDefault(); submit(form, type); }} class="flex flex-col gap-2">
+                        <div class="flex gap-2">
+                            <input
+                                type="url"
+                                placeholder="{label} IRI (e.g. https://dblp.org/…)"
+                                bind:value={form.iri}
+                                required
+                                class="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-gray-500"
+                            />
+                            {#if withYear}
+                                <input
+                                    type="number"
+                                    placeholder="Year (optional)"
+                                    bind:value={form.year}
+                                    min="1900"
+                                    max="2100"
+                                    class="w-36 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-gray-500"
+                                />
+                            {/if}
+                            <button
+                                type="submit"
+                                disabled={form.loading}
+                                class="px-4 py-1.5 text-sm bg-gray-800 text-white rounded hover:bg-gray-700 disabled:opacity-50 cursor-pointer"
+                            >
+                                {form.loading ? 'Importing…' : 'Import'}
+                            </button>
+                        </div>
+                        {#if form.result}
+                            <p class="text-sm text-red-700 flex items-center gap-2">
+                                <span>
+                                    Added {form.result.triples} triple{form.result.triples === 1 ? '' : 's'}
+                                    — saved as <code class="font-mono">{form.result.filename}</code>
+                                    {form.result.live_applied ? '· applied live' : '· live update failed, patch saved'}
+                                </span>
+                                <button
+                                    type="button"
+                                    onclick={() => undo(form)}
+                                    disabled={form.undoing}
+                                    class="text-xs px-2 py-0.5 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 cursor-pointer"
+                                >
+                                    {form.undoing ? 'Undoing…' : 'Undo'}
+                                </button>
+                            </p>
+                        {/if}
+                        {#if form.error}
+                            <p class="text-sm text-red-600">{form.error}</p>
+                        {/if}
+                    </form>
+                </div>
+            {/snippet}
+
+            {@render importForm('Journal or Conference', stream, 'stream', true)}
+            {@render importForm('Workshop',    workshop,    'workshop',    true)}
+            {@render importForm('Person',      person,      'person',      false)}
+            {@render importForm('Publication', publication, 'publication', false)}
+
+            <div class="border border-gray-200 rounded-lg p-4">
+                <h2 class="text-base font-semibold mb-1 flex items-center gap-1.5">
+                    Add Unlisted Workshop
+                    <InfoIcon text={HELP.customWorkshop} class="h-4 w-4" />
+                </h2>
+                <p class="text-xs text-gray-500 mb-3">Searches DBLP proceedings by title/abbreviation and groups matching papers under a custom workshop stream.</p>
+                <form onsubmit={(e) => { e.preventDefault(); submitCustomWorkshop(); }} class="flex flex-col gap-2">
+                    <input
+                        type="text"
+                        placeholder="Full title"
+                        bind:value={customWorkshop.title}
+                        required
+                        disabled={customWorkshop.step !== 'form'}
+                        class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-gray-500 disabled:bg-gray-50 disabled:text-gray-400"
+                    />
+                    <input
+                        type="text"
+                        placeholder="Abbreviation"
+                        bind:value={customWorkshop.abbreviation}
+                        required
+                        disabled={customWorkshop.step !== 'form'}
+                        class="w-full border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-gray-500 disabled:bg-gray-50 disabled:text-gray-400"
+                    />
+                    <div class="flex gap-2">
+                        <input
+                            type="number"
+                            placeholder="Year (optional)"
+                            bind:value={customWorkshop.year}
+                            min="1900"
+                            max="2100"
+                            disabled={customWorkshop.step !== 'form'}
+                            class="w-36 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-gray-500 disabled:bg-gray-50 disabled:text-gray-400"
+                        />
+                        {#if customWorkshop.step === 'form'}
+                            <button
+                                type="submit"
+                                disabled={customWorkshop.loading}
+                                class="px-4 py-1.5 text-sm bg-gray-800 text-white rounded hover:bg-gray-700 disabled:opacity-50 cursor-pointer"
+                            >
+                                {customWorkshop.loading ? 'Searching…' : 'Search'}
+                            </button>
+                        {/if}
+                    </div>
+
+                    {#if customWorkshop.step === 'select'}
+                        <div class="mt-1 flex flex-col gap-1">
+                            <p class="text-xs text-gray-500">Select the proceedings to include:</p>
+                            <ul class="flex flex-col gap-1">
+                                {#each customWorkshop.proceedings as p (p.proc)}
+                                    <li>
+                                        <label class="flex items-center gap-2 text-sm cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={customWorkshop.selectedProcs.has(p.proc)}
+                                                onchange={(e) => {
+                                                    if (e.currentTarget.checked) customWorkshop.selectedProcs.add(p.proc);
+                                                    else customWorkshop.selectedProcs.delete(p.proc);
+                                                }}
+                                            />
+                                            <a href={p.proc} class="link">{p.title}</a> ({p.year})
+                                        </label>
+                                    </li>
+                                {/each}
+                            </ul>
+                            <div class="flex gap-2 mt-1">
+                                <button
+                                    type="button"
+                                    onclick={confirmCustomWorkshop}
+                                    disabled={customWorkshop.loading || customWorkshop.selectedProcs.size === 0}
+                                    class="px-4 py-1.5 text-sm bg-gray-800 text-white rounded hover:bg-gray-700 disabled:opacity-50 cursor-pointer"
+                                >
+                                    {customWorkshop.loading ? 'Importing…' : 'Confirm'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onclick={resetCustomWorkshop}
+                                    class="px-4 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 cursor-pointer text-sm"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    {/if}
+
+                    {#if customWorkshop.result}
+                        <p class="text-sm text-red-700 flex items-center gap-2">
+                            <span>
+                                Added {customWorkshop.result.triples} triple{customWorkshop.result.triples === 1 ? '' : 's'}
+                                — saved as <code class="font-mono">{customWorkshop.result.filename}</code>
+                                {customWorkshop.result.live_applied ? '· applied live' : '· live update failed, patch saved'}
+                            </span>
+                            <button
+                                type="button"
+                                onclick={() => undo(customWorkshop)}
+                                disabled={customWorkshop.undoing}
+                                class="text-xs px-2 py-0.5 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 cursor-pointer"
+                            >
+                                {customWorkshop.undoing ? 'Undoing…' : 'Undo'}
+                            </button>
+                        </p>
+                    {/if}
+                    {#if customWorkshop.error}
+                        <p class="text-sm text-red-600">{customWorkshop.error}</p>
+                    {/if}
+                </form>
+            </div>
+
+            <div class="border border-gray-200 rounded-lg p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-base font-semibold">Patches</h2>
+                    <button
+                        onclick={loadPatches}
+                        disabled={patchesLoading}
+                        class="px-4 py-1.5 text-sm bg-gray-800 text-white rounded hover:bg-gray-700 disabled:opacity-50 cursor-pointer"
+                    >
+                        {patchesLoading ? 'Loading…' : 'Show Patches'}
+                    </button>
+                </div>
+                {#if patchesError}
+                    <p class="text-sm text-red-600">{patchesError}</p>
+                {:else if patches !== null}
+                    {#if patches.length === 0}
+                        <p class="text-sm text-gray-500">No patches found.</p>
+                    {:else}
+                        <div class="max-h-96 overflow-y-auto">
+                            <table class="w-full text-xs border-collapse">
+                                <thead class="sticky top-0 bg-gray-50">
+                                    <tr class="text-left text-gray-500 border-b border-gray-200">
+                                        <th class="py-1.5 pr-3 font-medium">Time</th>
+                                        <th class="py-1.5 pr-3 font-medium">User</th>
+                                        <th class="py-1.5 pr-3 font-medium">Action</th>
+                                        <th class="py-1.5 pr-3 font-medium">Details</th>
+                                        <th class="py-1.5 pr-3 font-medium text-right">Triples</th>
+                                        <th class="py-1.5 pr-3 font-medium">Live</th>
+                                        <th class="py-1.5 font-medium">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {#each patches as p (p.filename)}
+                                        {@const det = p.details}
+                                        <tr class="border-b border-gray-100 align-top">
+                                            <td class="py-1.5 pr-3 whitespace-nowrap text-gray-500 font-mono">
+                                                {p.timestamp ? p.timestamp.replace('T', ' ').replace('+00:00', 'Z').slice(0, 19) + 'Z' : p.filename.slice(0, 19)}
+                                            </td>
+                                            <td class="py-1.5 pr-3 whitespace-nowrap">{p.user_name ?? '—'}</td>
+                                            <td class="py-1.5 pr-3 whitespace-nowrap">{p.action ?? '—'}</td>
+                                            <td class="py-1.5 pr-3 text-gray-700">
+                                                {#if det}
+                                                    {#if p.action === 'import'}
+                                                        <span class="font-medium">{String(det.type)}</span>
+                                                        {#if det.iri}<a href={String(det.iri)} class="link ml-1 break-all">{String(det.iri).split('/').at(-1)}</a>{/if}
+                                                        {#if det.year}<span class="text-gray-400 ml-1">({det.year})</span>{/if}
+                                                    {:else if p.action === 'custom_workshop'}
+                                                        <span class="font-medium">{String(det.abbreviation ?? '')}</span>
+                                                        {#if det.title}<span class="text-gray-500 ml-1">{String(det.title)}</span>{/if}
+                                                        {#if det.year}<span class="text-gray-400 ml-1">({det.year})</span>{/if}
+                                                    {:else}
+                                                        {JSON.stringify(det)}
+                                                    {/if}
+                                                {:else}
+                                                    <span class="font-mono text-gray-400">{p.filename}</span>
+                                                {/if}
+                                            </td>
+                                            <td class="py-1.5 pr-3 text-right">{p.triples ?? '—'}</td>
+                                            <td class="py-1.5 pr-3">
+                                                {#if p.live_applied === true}
+                                                    <span class="text-green-600">✓</span>
+                                                {:else if p.live_applied === false}
+                                                    <span class="text-red-500">✗</span>
+                                                {:else}
+                                                    <span class="text-gray-400">—</span>
+                                                {/if}
+                                            </td>
+                                            <td class="py-1.5">
+                                                <button
+                                                    type="button"
+                                                    onclick={() => handleDeletePatch(p.filename)}
+                                                    disabled={deletingFilenames.has(p.filename)}
+                                                    class="text-xs px-2 py-0.5 border border-red-300 text-red-600 rounded hover:bg-red-50 disabled:opacity-50 cursor-pointer"
+                                                >
+                                                    {deletingFilenames.has(p.filename) ? 'Deleting…' : 'Delete'}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    {/each}
+                                </tbody>
+                            </table>
+                        </div>
+                    {/if}
+                {/if}
+                {#if deleteError}
+                    <p class="text-sm text-red-600 mt-2">{deleteError}</p>
+                {/if}
+            </div>
+
+        </div>
+    {/if}
+</div>

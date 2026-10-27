@@ -1,0 +1,15 @@
+PREFIX dblp: <https://dblp.org/rdf/schema#>
+PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
+CONSTRUCT { ?pub dblp:title ?title }
+WHERE {
+  {
+    SELECT DISTINCT ?pub WHERE {
+      ?pub dblp:publishedInStream <__STREAM__> ;
+           dblp:bibtexType bibtex:Proceedings .
+    }
+  }
+  ?pub dblp:title ?title .
+}
+ORDER BY ?pub ?title
+LIMIT __LIMIT__
+OFFSET __OFFSET__

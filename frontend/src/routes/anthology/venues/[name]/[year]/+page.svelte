@@ -1,54 +1,184 @@
 <script lang="ts">
     import { resolve } from '$app/paths';
     import { page } from '$app/state';
-    import { getIDFromURI } from '$lib/helperFunctions';
-    const year = page.url.pathname.split("/").at(-1)
-    const {data} = $props();
+    import { getIDFromURI, decodeOrdered, slugifyName } from '$lib/helperFunctions';
+    import VenueTypeBadge from '$lib/components/VenueTypeBadge.svelte';
 
+    const { data } = $props()
+    const urlParts = page.url.pathname.split('/')
+    const year = urlParts.at(-1)!
+    const venueName = urlParts.at(-2)!
 </script>
+
 {#if Object.keys(data).includes("articles")}
-    {@const articles = data["articles"]}
-    {#each articles?.keys() as volume (volume)}
-        {@const volumes = articles?.get(volume)}
-        {#each volumes?.keys() as issue (issue)}
-            {@const entries = volumes?.get(issue)}
-            {year} Volume {volume} Issue {issue}
-            <br>
-            {#each entries as entry (entry)}
-                DOI: {entry.doi} dblp:{entry.pub} <a href={resolve(`/anthology/publications/${getIDFromURI(entry.pub)}`)}> {entry.title} </a>
-                <br>
+    {@const articles = data.articles ?? new Map()}
+    {@const journalTitle = data.journalTitle ?? ''}
+    {@const venueAbbrev = journalTitle.split('_')[0].toUpperCase()}
+
+    <nav class="text-sm mb-4">
+        <a href={resolve('/anthology')} class="link">Main</a> » 
+        <a href={resolve(`/anthology/venues/${venueName}`)} class="link">{venueAbbrev}</a> »
+    </nav>
+
+    <h1 class="text-3xl font-bold flex items-start gap-3 mb-4">
+        <VenueTypeBadge type={data.venueType} />
+        <span>{journalTitle} ({year})</span>
+    </h1>
+
+    <hr class="mb-6">
+
+    <div class="border border-gray-200 rounded-lg p-4 mb-8">
+        <h2 class="text-base font-semibold mb-2">Content</h2>
+        <!-- Grid rather than per-row flex: the middle column sizes to the widest label
+                 across ALL rows, so every count badge starts at the same x instead of
+                 shifting with the issue number's digit count. `contents` makes each
+                 <li>'s children the actual grid items. -->
+        <ul class="grid grid-cols-[max-content_max-content_max-content] items-center gap-x-2 gap-y-1">
+            {#each articles.keys() as vol (vol)}
+                {#each (articles.get(vol) ?? new Map()).keys() as iss (iss)}
+                    {@const count = (articles.get(vol)?.get(iss) ?? []).length}
+                    <li class="contents">
+                        <span class="text-gray-400">•</span>
+                        <a href="#v{vol}i{iss}" class="link">
+                            {year} Volume {vol} Issue {iss}
+                        </a>
+                        <span class="badge-count justify-self-start">{count} {count === 1 ? 'paper' : 'papers'}</span>
+                    </li>
+                {/each}
             {/each}
-            <br>
+        </ul>
+    </div>
+
+    {#each articles.keys() as vol (vol)}
+        {#each (articles.get(vol) ?? new Map()).keys() as iss (iss)}
+            {@const entries = articles.get(vol)?.get(iss) ?? []}
+
+            <p class="mb-2"><a href={resolve(`/anthology/venues/${venueName}/${year}#`)} class="text-sm text-gray-500 hover:underline">↑ up</a></p>
+
+            <h2 id="v{vol}i{iss}" class="text-2xl font-bold">
+                {year} Volume {vol} Issue {iss}
+            </h2>
+            <hr class="border-gray-300 mb-4">
+
+            {#each entries as entry (entry.pub)}
+                {@const authors = decodeOrdered(entry.authors, true)}
+                {@const authorIds = decodeOrdered(entry.authorIds)}
+                <div class="flex gap-3 mb-4 items-start">
+                    <div class="flex gap-1 shrink-0 mt-0.5">
+                        {#if entry.doi}
+                            <a href="https://doi.org/{entry.doi}" class="badge-doi">doi</a>
+                        {/if}
+                        <a href={entry.pub ?? '#'} class="badge-dblp">dblp</a>
+                    </div>
+                    <div>
+                        <a href={resolve(`/anthology/publications/${getIDFromURI(entry.pub ?? '')}`)} class="link font-semibold">
+                            {entry.title}
+                        </a>
+                        {#if authors.length > 0}
+                            <div class="text-sm mt-0.5">
+                                {#each authors as author, i (i)}
+                                    {#if i > 0}<span class="text-gray-400 px-1.5"> | </span>{/if}{#if authorIds[i]}<a href={resolve(`/anthology/people/${slugifyName(author)}/${getIDFromURI(authorIds[i])}`)} class="link">{author}</a>{:else}{author}{/if}
+                                {/each}
+                            </div>
+                        {/if}
+                    </div>
+                </div>
+            {/each}
         {/each}
-        <br>
     {/each}
 {:else}
-    {#each data.proceedings as proceeding (proceeding)}
-        <h1>{proceeding.title}</h1>
-        Anthology ID: MISSING
-        <br>
-        Year: {proceeding.year}
-        <br>
-        Venue: <a href={resolve(`/anthology/venues/${proceeding.name}`)}>{proceeding.name}</a>
-        <br>
-        Publisher: {proceeding.publisher}
-        <br>
-        URL: {proceeding.url}<!--Replace with DBLP-URL-->
-        <br>
-        DOI: {proceeding.doi}
-        <br>
-        DBLP: {proceeding.pub}<!--Replace with DBLP-URL-->
-        <br>
-        BibTeX: TODO
-        <!--Show Papers from that year-->
-        <br>
-        {#each data.inproceedings[proceeding.pub] as inproceeding (inproceeding)}
-            <a href={resolve(`/anthology/publications/${inproceeding.id}`)}>{inproceeding.title}</a> {inproceeding.pub}
-            <br>
+    {@const proceedings = data.proceedings}
+    {@const streamTitle = data.streamTitle ?? ''}
+    {@const venueAbbrev = streamTitle.split('_')[0].toUpperCase()}
+
+    <nav class="text-sm mb-4">
+        <a href={resolve('/anthology')} class="link">Main</a> »
+        <a href={resolve(`/anthology/venues/${venueName}`)} class="link">{venueAbbrev}</a> »
+    </nav>
+
+    <h1 class="text-3xl font-bold flex items-start gap-3 mb-2">
+        <VenueTypeBadge type={data.venueType} />
+        <span>{streamTitle} ({year})</span>
+    </h1>
+
+    <hr class="mb-4">
+
+    {#each proceedings as proceeding (proceeding.pub)}
+        {@const procId = getIDFromURI(proceeding.pub ?? '')}
+        <p class="mb-6"><a href={resolve(`/anthology/venues/${venueName}/${year}#`)} class="text-sm hover:underline">↑ up</a></p>
+        <p id={procId} class="mb-4">
+            <a href={resolve(`/anthology/publications/${procId}`)} class="link text-2xl leading-snug">
+                {proceeding.title}
+            </a>
+        </p>
+
+        <div class="flex gap-3 mb-4 items-start">
+            <div class="flex gap-1 shrink-0 mt-0.5">
+                {#if proceeding.doi}
+                    <a href="https://doi.org/{proceeding.doi}" class="badge-doi">doi</a>
+                {/if}
+                <a href={proceeding.pub ?? '#'} class="badge-dblp">dblp</a>
+            </div>
+            <div>
+                <a href={resolve(`/anthology/publications/${procId}`)} class="link-title">
+                    {proceeding.title}
+                </a>
+            </div>
+        </div>
+
+        {#each data.inproceedings[proceeding.pub ?? ''] ?? [] as paper (paper.pub)}
+            {@const authors = decodeOrdered(paper.authors, true)}
+            {@const authorIds = decodeOrdered(paper.authorIds)}
+            <div class="flex gap-3 mb-4 items-start">
+                <div class="flex gap-1 shrink-0 mt-0.5">
+                    {#if paper.doi}
+                        <a href="https://doi.org/{paper.doi}" class="badge-doi">doi</a>
+                    {/if}
+                    <a href={paper.pub} class="badge-dblp">dblp</a>
+                </div>
+                <div>
+                    <a href={resolve(`/anthology/publications/${paper.id}`)} class="link-title">
+                        {paper.title}
+                    </a>
+                    {#if authors.length > 0}
+                        <div class="text-sm mt-0.5">
+                            {#each authors as author, i (i)}
+                                {#if i > 0}<span class="text-gray-400 px-1.5"> | </span>{/if}{#if authorIds[i]}<a href={resolve(`/anthology/people/${slugifyName(author)}/${getIDFromURI(authorIds[i])}`)} class="link">{author}</a>{:else}{author}{/if}
+                            {/each}
+                        </div>
+                    {/if}
+                </div>
+            </div>
         {/each}
-        <br>
-        <br>
     {/each}
+
+    {#if data.loosePapers && data.loosePapers.length > 0}
+        <p class="mb-6"><a href={resolve(`/anthology/venues/${venueName}/${year}#`)} class="text-sm hover:underline">↑ up</a></p>
+        <p id="loose" class="mb-4 text-2xl leading-snug font-semibold">Papers without proceedings</p>
+        <hr class="border-gray-300 mb-4">
+        {#each data.loosePapers as paper (paper.pub)}
+            {@const authors = decodeOrdered(paper.authors, true)}
+            {@const authorIds = decodeOrdered(paper.authorIds)}
+            <div class="flex gap-3 mb-4 items-start">
+                <div class="flex gap-1 shrink-0 mt-0.5">
+                    {#if paper.doi}
+                        <a href="https://doi.org/{paper.doi}" class="badge-doi">doi</a>
+                    {/if}
+                    <a href={paper.pub} class="badge-dblp">dblp</a>
+                </div>
+                <div>
+                    <a href={resolve(`/anthology/publications/${paper.id}`)} class="link-title">
+                        {paper.title}
+                    </a>
+                    {#if authors.length > 0}
+                        <div class="text-sm mt-0.5">
+                            {#each authors as author, i (i)}
+                                {#if i > 0}<span class="text-gray-400 px-1.5"> | </span>{/if}{#if authorIds[i]}<a href={resolve(`/anthology/people/${slugifyName(author)}/${getIDFromURI(authorIds[i])}`)} class="link">{author}</a>{:else}{author}{/if}
+                            {/each}
+                        </div>
+                    {/if}
+                </div>
+            </div>
+        {/each}
+    {/if}
 {/if}
-
-

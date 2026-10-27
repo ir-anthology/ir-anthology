@@ -6,22 +6,25 @@ on:
     branches: ['main']
     paths:
       - 'database/**'
+      # Because SPARQL templates
+      - 'backend/sparqlTemplates.py'
+      # Because default sort per entity
+      - 'frontend/src/lib/tableConfig.ts'
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
+permissions:
+  contents: read
+  packages: write
+  attestations: write
+  id-token: write
+  artifact-metadata: write
+
 jobs:
   build-and-push-image:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-      packages: write
-      attestations: write
-      id-token: write
-      artifact-metadata: write
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -33,11 +36,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      #- name: Extract metadata (tags, labels) for Docker
-      #  id: meta
-      #  uses: docker/metadata-action@v6
-      #  with:
-      #    images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+      # Needs the live SPARQL endpoint
+      - name: Generate warm-up queries
+        run: python3 backend/scripts/gen_warmup_queries.py
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -50,8 +51,6 @@ jobs:
           file: database/Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-database:latest
-          #tags: nightly
-          #labels: ${{ steps.meta.outputs.labels }}
 
       - name: Generate artifact attestation
         uses: actions/attest@v4

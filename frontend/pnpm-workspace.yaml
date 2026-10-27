@@ -1,3 +1,13 @@
 onlyBuiltDependencies:
   - '@tailwindcss/oxide'
   - esbuild
+storeDir: .pnpm-store
+engineStrict: true
+supportedArchitectures:
+  os:
+    - linux
+    - win32
+  cpu:
+    - x64
+  libc:
+    - glibc
