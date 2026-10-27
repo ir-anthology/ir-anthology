@@ -30,6 +30,7 @@ database/
 ├── add_stream.rq                       CONSTRUCT: stream node triples (label, type, …)
 ├── add_workshop_stream.rq              CONSTRUCT: stream node triples + injects rdf:type ex:Workshop
 ├── get_proceedings_titles_from_stream.rq  CONSTRUCT: proceedings titles (used to extract conference year)
+├── warmup/                             warm-up queries pinned at startup (generated, not committed)
 └── data/                               index files and fetched chunks (not committed)
     ├── chunks/                         raw .nt files produced by get_data.sh
     └── patches/                        .nt patch files applied by the backend admin panel
@@ -57,20 +58,27 @@ The `Qleverfile` in this directory drives the `qlever` CLI:
 `run_qlever.sh` — the Docker image's entrypoint — starts `qlever-server` directly with
 its own hardcoded flags, independent of the Qleverfile above (which only drives the
 native `qlever` CLI, e.g. `qlever start`). Editing the Qleverfile has **no effect** on
-the Docker image; edit `run_qlever.sh` instead. Current flags (`qlever-server --help`
-for the authoritative description of each):
+the Docker image; edit `run_qlever.sh` instead — that includes `WARMUP_CMD`, which only
+runs under `qlever start` and is therefore never executed here. The entrypoint also
+backgrounds a warm-up pass before `exec`ing the server, which pins the landing-page
+queries from `warmup/*.rq`. Those files are **generated, never committed**: the
+database image build renders them from `backend/sparqlTemplates.py` via
+`backend/scripts/gen_warmup_queries.py`, so they cannot drift from the queries the
+backend actually sends (QLever's cache key is the query string). Current flags
+(`qlever-server --help` for the authoritative description of each):
 
 | Flag | Value | Meaning |
 |---|---|---|
 | `-i` | `data/test` | Index basename (required) |
 | `-p` | `7016` | Port HTTP requests are served on |
-| `-m` | `10G` | Total memory limit for the server process |
-| `-c` | `30G` | Max memory for the query cache (`qlever-server`'s own default) |
-| `-e` | `1G` | Max size of a single cache entry (default is `5G`) |
-| `-k` | `1000` | Max number of cache entries (`qlever-server`'s own default) |
+| `-m` | `50G` | Limit on total memory for query processing **and** caching — the cache is counted inside this, so `-c` must stay below it |
+| `-c` | `25G` | Max memory for all cache entries, pinned and not (`qlever-server`'s own default is `30G`; lowered to sit under `-m`) |
+| `-e` | `1G` | Max size of a single cache entry (default is `5G`). Larger results are not cached **unless pinned** |
+| `-k` | `50000` | Max number of cache entries (`qlever-server`'s own default is `1000`). Raised because entry count, not size, was evicting the cache: a single table request creates 15–39 entries, so 1000 was exhausted by roughly 25 filtered searches while using under 2% of the memory budget |
 | `-s` | `60s` | Default query timeout (Qleverfile's native-dev default is `30s` — the two are independent, not a typo) |
 | `-j` | `24` | Max number of queries processed simultaneously |
 | `-a` | `$SPARQL_ACCESS_TOKEN` | Access token for restricted API calls |
+| `--enable-metrics` | — | Exposes a Prometheus `/metrics` endpoint on the main server port; reading it requires a valid access token |
 
 ### Environment variables
 
@@ -153,6 +161,10 @@ Each `.rq` file uses two placeholders substituted by `get_data.sh` with `sed`:
 **Workshop streams** use `add_workshop_stream.rq` instead of `add_stream.rq`. The only difference is that `add_workshop_stream.rq` also injects `<stream> rdf:type ex:Workshop .` so the backend can distinguish workshops from conferences and journals.
 
 ## RDF vocabulary
+
+For the full vocabulary reference and query idioms (written for an LLM agent to use
+before writing SPARQL against this store), see
+[`../backend/SCHEMA.md`](../backend/SCHEMA.md). Summary:
 
 The triplestore uses the DBLP vocabulary plus a small IR Anthology extension:
 
