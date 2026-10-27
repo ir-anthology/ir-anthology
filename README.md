@@ -23,6 +23,15 @@ Open the repository in VS Code and choose **Reopen in Container** when prompted.
 - Environment variables `DATA_PATH` and `SPARQL_ACCESS_TOKEN=1234` are pre-set
 - Port 7016 (QLever SPARQL endpoint) is forwarded to the host
 
+### Git hooks
+
+One-time, per clone — enables the hook in `.githooks/` that keeps `backend/SCHEMA.md`
+in step with the sources it is generated from:
+
+```sh
+git config core.hooksPath .githooks
+```
+
 ### Database
 
 Run from the `database/` directory. The `Qleverfile` in that directory configures all options.
