@@ -12,3 +12,6 @@ README.md
 # NOT excluded — the production image is built with pre-fetched/indexed data already
 # in place ("baked-in data", see README.md's Docker entrypoint section).
 data/patches/
+
+# Repo tooling, not runtime: CI-only consistency checks.
+scripts/
