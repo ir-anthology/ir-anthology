@@ -2,6 +2,9 @@ import re
 import httpx
 from fastapi import HTTPException
 
+# Single source for SPARQL string escaping — see sparqlTemplates.py.
+from sparqlTemplates import sparql_str_escape
+
 DBLP_ENDPOINT = "https://sparql.dblp.org/sparql"
 CUSTOM_WORKSHOP_STREAM_BASE = "https://ir.webis.de/anthology/venues/workshops+"
 _PAGE = 100_000
@@ -521,18 +524,14 @@ async def fetch_person(
     return _dedup("\n".join(p for p in parts if p))
 
 
-def _sparql_str_escape(s: str) -> str:
-    return s.replace('\\', '\\\\').replace('"', '\\"')
-
-
 async def _find_proceedings_by_title(
     client: httpx.AsyncClient,
     title: str,
     abbreviation: str,
     year: int | None,
 ) -> list[dict]:
-    abbreviation_filter = f'CONTAINS(?title, " {_sparql_str_escape(abbreviation)} ") || CONTAINS(?title, " {_sparql_str_escape(abbreviation)}@") || CONTAINS(?title, " {_sparql_str_escape(abbreviation)},")'
-    title_filter = f'CONTAINS(?title, " {_sparql_str_escape(title)} ") || CONTAINS(?title, " {_sparql_str_escape(title)},")'
+    abbreviation_filter = f'CONTAINS(?title, " {sparql_str_escape(abbreviation)} ") || CONTAINS(?title, " {sparql_str_escape(abbreviation)}@") || CONTAINS(?title, " {sparql_str_escape(abbreviation)},")'
+    title_filter = f'CONTAINS(?title, " {sparql_str_escape(title)} ") || CONTAINS(?title, " {sparql_str_escape(title)},")'
     query = f"""PREFIX dblp: <https://dblp.org/rdf/schema#>
 PREFIX bibtex: <http://purl.org/net/nknouf/ns/bibtex#>
 SELECT DISTINCT ?proc ?title WHERE {{
@@ -584,7 +583,7 @@ async def fetch_custom_workshop(
     display_title = title + " (" + abbreviation + ")"
     custom_triples = [
         f'<{stream_iri}> <{RDF_NS}type> <{EX_NS}Workshop> .',
-        f'<{stream_iri}> <{DBLP_NS}primaryStreamTitle> "{_sparql_str_escape(display_title)}" .',
+        f'<{stream_iri}> <{DBLP_NS}primaryStreamTitle> "{sparql_str_escape(display_title)}" .',
     ]
     for iri in proc_iris:
         custom_triples.append(f'<{iri}> <{DBLP_NS}publishedInStream> <{stream_iri}> .')

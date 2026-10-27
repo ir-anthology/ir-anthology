@@ -1,3 +1,6 @@
+import re
+from dataclasses import dataclass
+
 # Shared body for the per-entity table templates below. It binds every label
 # variable that build_filters may reference (?publication_label, ?venue_label,
 # ?author_label, ?year_label) and performs the workshop -> synthetic venue collapse.
@@ -46,8 +49,8 @@ VENUE_TABLE_TEMPLATE = f'''
 {_ENTITY_TABLE_PREFIXES}
 SELECT (?venue_label AS ?Entity)
   (?venue_URI AS ?URI)
-  (COUNT(DISTINCT ?publication_label) AS ?Publications)
   (COUNT(DISTINCT ?author_label)      AS ?Authors)
+  (COUNT(DISTINCT ?publication_label) AS ?Publications)
   (STRAFTER(STR(?venue_rdf_type), "#") AS ?VenueType)
 WHERE {{
 {_ENTITY_TABLE_BODY}
@@ -662,3 +665,167 @@ WHERE {
 }
 GROUP BY ?title ?year ?pub ?name ?booktitle ?streamTitle ?journalVolume ?journalNumber ?stream ?book
 '''
+
+# ---------------------------------------------------------------------------
+# Query construction
+# ---------------------------------------------------------------------------
+
+# Characters SPARQL's IRIREF grammar forbids inside <...> (RFC 3987 + the SPARQL spec):
+# <>"{}|^`\ and all control characters/space (#x00-#x20). There's no escape sequence for
+# these inside an IRIREF, so a ir_id containing one is rejected rather than substituted.
+_IRI_FORBIDDEN_CHARS = frozenset('<>"{}|^`\\') | {chr(c) for c in range(0x21)}
+
+def get_uri_from_id(ir_id: str) -> str:
+    uri = "https://dblp.org/" + ir_id.replace("+", "/")
+    if any(c in _IRI_FORBIDDEN_CHARS for c in uri):
+        raise ValueError("Invalid identifier")
+    return uri
+
+WORKSHOPS_VENUE_URI = "https://dblp.org/workshops"
+
+
+@dataclass(frozen=True)
+class TableSpec:
+    """Everything that distinguishes one entity table from another.
+    """
+
+    template: str
+    allowed_sorts: frozenset[str]
+    # Columns that sort by a different variable than they display.
+    sort_aliases: dict[str, str] | None = None
+    # Set together: the per-year count template merged in by main._merge_year_counts,
+    # and the raw triple-pattern variable its $SEED must target (see build_year_seed).
+    year_counts_template: str | None = None
+    year_seed_var: str | None = None
+
+
+TABLES: dict[str, TableSpec] = {
+    "Author": TableSpec(
+        template=AUTHOR_TABLE_TEMPLATE,
+        allowed_sorts=frozenset({"Entity", "Publications", "Venues"}),
+        year_counts_template=AUTHOR_YEAR_COUNTS_TEMPLATE,
+        year_seed_var="?author_URI",
+    ),
+    "Venue": TableSpec(
+        template=VENUE_TABLE_TEMPLATE,
+        allowed_sorts=frozenset({"Entity", "Publications", "Authors"}),
+        sort_aliases={"Entity": "venue_sort"},
+        year_counts_template=VENUE_YEAR_COUNTS_TEMPLATE,
+        year_seed_var="?stream_URI",
+    ),
+    "Year": TableSpec(
+        template=YEARS_TABLE_TEMPLATE,
+        allowed_sorts=frozenset({"Entity", "Publications", "Venues", "Authors"}),
+    ),
+    "Publication": TableSpec(
+        template=PUBLICATION_TABLE_TEMPLATE,
+        allowed_sorts=frozenset({"Entity", "Year", "Authors", "Venue"}),
+        sort_aliases={"Venue": "venuePair"},
+    ),
+}
+
+def build_year_seed(entity: str, bindings: list) -> str | None:
+    """Build the $SEED clause for the *_YEAR_COUNTS templates from the URIs of one result page.
+
+    The seed restricts the per-year aggregation to the entities on the current page.
+    It must target a raw triple-pattern variable (TableSpec.year_seed_var) — a VALUES on
+    the BIND-computed ?entity_URI is not pushed down by the SPARQL engine, which
+    would force aggregation over all ~100k entities (seconds instead of ~0.2s).
+
+    Venue is special: the "Workshops" row uses the synthetic WORKSHOPS_VENUE_URI,
+    which matches no triple. It is expressed as a UNION branch matching all
+    ex:Workshop streams instead; the query body then collapses those back onto the
+    synthetic URI. Returns None if the page contains no seedable URIs.
+    """
+    uris = [b["URI"]["value"] for b in bindings if b.get("URI", {}).get("type") == "uri"]
+    if len(uris) == 0:
+        return None
+    if entity == "Venue":
+        streams = [u for u in uris if u != WORKSHOPS_VENUE_URI]
+        clauses = []
+        if streams:
+            values = " ".join(f"<{u}>" for u in streams)
+            clauses.append(f"{{ VALUES ?stream_URI {{ {values} }} }}")
+        if WORKSHOPS_VENUE_URI in uris:
+            clauses.append("{ ?stream_URI a ex:Workshop . }")
+        return " UNION ".join(clauses)
+    values = " ".join(f"<{u}>" for u in uris)
+    return f"VALUES {TABLES[entity].year_seed_var} {{ {values} }}"
+
+def parse_order(sort_by: str | None, order: str, allowed: set[str] | None = None, aliases: dict[str, str] | None = None) -> str:
+    # The frontend always sends explicit sort params. This static fallback is only a
+    # safety net for malformed or legacy requests: LIMIT/OFFSET paging without an
+    # ORDER BY would be nondeterministic, and ?Entity exists in every table template.
+    if sort_by is None or (allowed is not None and sort_by not in allowed):
+        sort_by, order = "Entity", "ASC"
+
+    # some columns sort by a different variable than they display (e.g. the venues
+    # Entity column shows abbreviations and sorts by ?venue_sort)
+    sort_var = (aliases or {}).get(sort_by, sort_by)
+    direction = "ASC" if (order or '').upper() == 'ASC' else 'DESC'
+    return f"ORDER BY {direction}(?{sort_var})"
+
+def get_label_var(entity_type: str) -> str:
+    return f"?{entity_type.lower()}_label"
+
+# filter_<key> becomes part of a SPARQL variable name (?<key>_label) with no string
+# delimiter around it, so it can't be escaped the way a value can — it's either a
+# syntactically valid identifier or it's a SPARQL injection. Validate the shape
+# (matches how every real column name in this codebase is spelled) rather than
+# maintaining a static list of known entities, so new filterable columns need no
+# change here. Note: passing this check only makes a key *safe* to use, not
+# *meaningful* — filtering on a key with no matching bound variable in the query body
+# just filters out every row (see _ENTITY_TABLE_BODY for which ?..._label vars exist).
+_SAFE_FILTER_KEY = re.compile(r'^[A-Za-z][A-Za-z0-9]*$')
+
+def sparql_str_escape(s: str) -> str:
+    """Escape a string for use inside a SPARQL "..." literal. Shared with dblp_fetch."""
+    return s.replace('\\', '\\\\').replace('"', '\\"')
+
+def build_filters(search_params: dict[str, str]) -> str :
+    filters: dict[str, list[str]] = {}
+    for key in search_params:
+        if not key.startswith('filter_'):
+            continue
+        value = search_params[key];
+        if value is None:
+            continue
+        entity = key[len('filter_'):]
+        if not _SAFE_FILTER_KEY.fullmatch(entity):
+            continue
+        filters[entity] = value.split(',')
+
+    if len(filters) == 0:
+        return ''
+
+    filter_clauses: list[str] = []
+    for key in filters:
+        values = filters[key]
+        if  len(values) == 0:
+            continue;
+        label_var = get_label_var(key)
+        contains_clauses = []
+        for v in values:
+            contains_clauses.append(f'CONTAINS(LCASE({label_var}), LCASE("{sparql_str_escape(v.lower())}"))')
+        contains_string = f"{contains_clauses[0]}"
+        for i in range(1, len(contains_clauses)):
+            contains_string +=  f" || {contains_clauses[i]}"
+        filter_clauses.append(f"FILTER({contains_string})")
+
+    filter_string = f"{filter_clauses[0]}"
+    for i in range(1, len(filter_clauses)):
+        filter_string += f"\n  {filter_clauses[i]}"
+    return filter_string;
+
+
+def compose_table_query(template: str, *, filters: str, order: str, limit: int, offset: int) -> str:
+    """Substitute the four placeholders every *_TABLE_TEMPLATE carries.
+
+    Kept here rather than inline in main.py's _run_table_page so the warm-up query
+    generator composes queries the exact same way instead of keeping its own copy.
+    """
+    return (template
+            .replace('$FILTERS', filters)
+            .replace('$ORDER', order)
+            .replace('$LIMIT', str(limit))
+            .replace('$OFFSET', str(offset)))
