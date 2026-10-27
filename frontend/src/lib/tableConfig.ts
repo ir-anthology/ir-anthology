@@ -9,13 +9,21 @@ export const ENTITY_ENDPOINTS: Record<string, string> = {
 	Publication: 'table/publications',
 };
 
+
+export const ENTITY_LABELS: Record<string, string> = {
+	Author: 'Authors',
+	Venue: 'Venues',
+	Year: 'Years',
+	Publication: 'Publications',
+};
+
 export const DEFAULT_ENTITY = 'Venue';
 
 // Must match the default_sort/default_order each backend endpoint applies when
 // no sort params are present — only used for the header sort indicators.
 const ENTITY_DEFAULT_SORT: Record<string, { sort_by: string; order: string }> = {
 	Author: { sort_by: 'Publications', order: 'desc' },
-	Venue: { sort_by: 'Entity', order: 'asc' },
+	Venue: { sort_by: 'Publications', order: 'desc' },
 	Year: { sort_by: 'Entity', order: 'desc' },
 	Publication: { sort_by: 'Year', order: 'desc' },
 };

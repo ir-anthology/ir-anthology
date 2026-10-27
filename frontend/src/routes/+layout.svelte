@@ -1,14 +1,27 @@
 <script lang="ts">
 	import './layout.css';
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 	import { getUser, logout, userManager } from '$lib/auth';
+	import SearchBar from '$lib/components/SearchBar.svelte';
+	import ResetButton from '$lib/components/ResetButton.svelte';
+	import NavDrawer from '$lib/components/NavDrawer.svelte';
 
 	let { children } = $props();
 
 	let userName = $state<string | null>(null);
 	let userPicture = $state<string | null>(null);
 	let isAdmin = $state(false);
+
+	let navHeight = $state(0);
+	let sidebarOpen = $state(true);
+
+	// The sidebar (filters/links) is specific to the DataTable page — its sub-routes
+	// (venue/person/publication detail pages, credits, etc.) render entirely different
+	// content and don't have filters to show.
+	const isDataTablePage = $derived(page.route.id === '/anthology');
+	const showSidebar = $derived(isDataTablePage && sidebarOpen);
 
 	function applyUser(profile: { name?: string | null; nickname?: string | null; sub?: string; picture?: string | null; groups_direct?: string[] | null }) {
 		userName = profile.name ?? profile.nickname ?? profile.sub ?? null;
@@ -35,52 +48,80 @@
     <!--<link rel="stylesheet" href="https://assets.webis.de/css/style.css">-->
 </svelte:head>
 
-<div class="min-h-screen flex flex-col">
+<div class="min-h-screen flex flex-col {isDataTablePage ? 'w-max min-w-full' : ''}">
 
 <nav
-	class="w-full shadow-sm mb-3 md:mb-4 xl:mb-5"
+	class="w-full shadow-sm sticky top-0 z-50 {isDataTablePage ? 'left-0 w-screen' : ''}"
 	style="background: linear-gradient(to bottom, #f8f9fa, #e9ecef)"
+	bind:clientHeight={navHeight}
 >
-	<div class="w-full px-4 h-17.5 flex items-center justify-between">
-		<div class="flex items-center gap-4">
+	<div class="w-full px-4 h-17.5 flex items-center justify-between gap-4">
+		<div class="flex items-center gap-3 shrink-0">
+			{#if isDataTablePage}
+				<button
+					type="button"
+					onclick={() => (sidebarOpen = !sidebarOpen)}
+					class="p-2 -ml-2 rounded-lg text-gray-500 hover:bg-gray-200/60 hover:text-gray-900 transition-colors cursor-pointer bg-transparent border-none"
+					aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+					aria-expanded={sidebarOpen}
+				>
+					<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+						<line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+					</svg>
+				</button>
+			{/if}
 			<a
 				class="flex items-center h-10 text-xl font-normal text-black/90 no-underline"
 				href={resolve('/')}
 			>
 				<span><span style="color:#951515"><b>IR</b></span> Anthology</span>
 			</a>
-			<a href={resolve('/community')} class="text-sm text-gray-600 no-underline hover:text-black transition-colors">Community</a>
 		</div>
-		{#if userName}
-			<div class="relative group">
-				<button class="flex items-center gap-2 text-black/80 hover:text-black bg-transparent border-none cursor-pointer">
-					{#if isAdmin}
-						<span class="text-xs font-medium bg-red-100 text-red-700 border border-red-200 rounded px-2 py-0.5">Admin</span>
-					{/if}
-					{#if userPicture}
-						<img src={userPicture} alt="avatar" class="w-8 h-8 rounded-full border border-gray-300">
-					{/if}
-					<span class="text-sm font-medium">{userName}</span>
-				</button>
-				<div class="absolute right-0 top-full w-40 bg-white rounded shadow-lg border border-gray-100 z-50
-				opacity-0 invisible [transition:opacity_0s_100ms,visibility_0s_100ms]
-				group-hover:opacity-100 group-hover:visible group-hover:[transition:opacity_0s,visibility_0s]
-				before:absolute before:inset-x-0 before:-top-2 before:h-2 before:content-['']">
-					<a href={resolve('/admin')} class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 no-underline">Admin</a>
-					<button onclick={logout} class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-none bg-transparent cursor-pointer">Log out</button>
-				</div>
+		<div class="flex items-center gap-4 min-w-0">
+			<div class="flex-1 min-w-0">
+				<SearchBar />
 			</div>
-		{/if}
+			<div class="shrink-0">
+				<ResetButton />
+			</div>
+			{#if userName}
+				<div class="relative group shrink-0">
+					<button class="flex items-center gap-2 text-black/80 hover:text-black bg-transparent border-none cursor-pointer">
+						{#if isAdmin}
+							<span class="text-xs font-medium bg-red-100 text-red-700 border border-red-200 rounded px-2 py-0.5">Admin</span>
+						{/if}
+						{#if userPicture}
+							<img src={userPicture} alt="avatar" class="w-8 h-8 rounded-full border border-gray-300">
+						{/if}
+						<span class="text-sm font-medium">{userName}</span>
+					</button>
+					<div class="absolute right-0 top-full w-40 bg-white rounded shadow-lg border border-gray-100 z-50
+					opacity-0 invisible [transition:opacity_0s_100ms,visibility_0s_100ms]
+					group-hover:opacity-100 group-hover:visible group-hover:[transition:opacity_0s,visibility_0s]
+					before:absolute before:inset-x-0 before:-top-2 before:h-2 before:content-['']">
+						<a href={resolve('/admin')} class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 no-underline">Admin</a>
+						<button onclick={logout} class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-none bg-transparent cursor-pointer">Log out</button>
+					</div>
+				</div>
+			{/if}
+		</div>
 	</div>
 
 </nav>
 
-<main class="flex-1 px-6 md:px-10">
+{#if isDataTablePage}
+	<NavDrawer open={sidebarOpen} topOffset={navHeight} />
+{/if}
+
+<main
+	class="flex-1 px-6 md:px-10 transition-[padding-left] duration-200 [--frozen-left:0px] {isDataTablePage ? '' : 'mt-3 md:mt-4 xl:mt-5'} {showSidebar ? 'md:pl-64 md:[--frozen-left:16rem]' : ''}"
+	style="--table-top: {navHeight}px"
+>
 	{@render children()}
 </main>
 
 <footer
-	class="mt-3 md:mt-6 xl:mt-12 py-4"
+	class="mt-3 md:mt-6 xl:mt-12 py-4 {isDataTablePage ? 'sticky left-0 w-screen' : ''}"
 	style="background: linear-gradient(180deg, #f3f4f6 0%, #e5e7eb 100%)"
 >
 	<div class="w-full px-4">

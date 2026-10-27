@@ -80,8 +80,8 @@
                 {#each section.items as item (item.label)}
                     <li>
                         <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external URLs, not app routes -->
-                        <a href={item.href} target="_blank" rel="noopener noreferrer" class="link">
-                            {item.label}<span class="text-gray-400 text-xs align-super ml-0.5">&nearr;</span>
+                        <a href={item.href} class="link">
+                            {item.label}
                         </a>
                     </li>
                 {/each}

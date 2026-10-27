@@ -53,7 +53,9 @@
 			stroke="currentColor"
 			stroke-width="1.5"
 		>
-			<path stroke-linecap="round" d="M3.5 6h17M3.5 12h17M3.5 18h17" />
+			<circle cx="11" cy="11" r="7" />
+			<path stroke-linecap="round" d="M21 21l-4.35-4.35" />
+			<path stroke-linecap="round" d="M11 8v6M8 11h6" />
 		</svg>
 	</button>
 

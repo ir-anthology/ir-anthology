@@ -59,7 +59,7 @@ async function loadConference(name: string, year: string){
     const looseRaw = parseSparqlResult(looseData);
     const loosePapers = looseRaw.map(p => ({ ...p, id: getIDFromURI(p.pub ?? '') }));
     const streamTitle = proceedings[0]?.streamTitle ?? looseRaw[0]?.streamTitle ?? '';
-    return {"proceedings": proceedings, "inproceedings": return_inproceedings, "loosePapers": loosePapers, "streamTitle": streamTitle};
+    return {"venueType": "Conference", "proceedings": proceedings, "inproceedings": return_inproceedings, "loosePapers": loosePapers, "streamTitle": streamTitle};
 }
 
 async function loadJournal(name:string, year:string){
@@ -77,7 +77,7 @@ async function loadJournal(name:string, year:string){
         }
         groupedData.get(volume)?.get(issue)?.push(entry)
     }
-    return { articles: groupedData, journalTitle }
+    return { venueType: 'Journal', articles: groupedData, journalTitle }
 }
 
 async function loadWorkshops(year: string){
@@ -100,5 +100,5 @@ async function loadWorkshops(year: string){
     }
     const loosePapers = parseSparqlResult(looseData).map(p => ({ ...p, id: getIDFromURI(p.pub ?? '') }));
     const streamTitle = proceedings[0]?.streamTitle ?? 'Workshops';
-    return {"proceedings": proceedings, "inproceedings": return_inproceedings, "loosePapers": loosePapers, "streamTitle": streamTitle};
+    return {"venueType": "Workshop", "proceedings": proceedings, "inproceedings": return_inproceedings, "loosePapers": loosePapers, "streamTitle": streamTitle};
 }

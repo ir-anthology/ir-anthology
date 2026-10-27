@@ -5,6 +5,7 @@
     import { resolve } from '$app/paths';
     import { browser } from '$app/environment';
     import { FILTERABLE_ENTITIES } from '$lib/tableConfig';
+    import InfoIcon from './InfoIcon.svelte';
 
     const current_entity = $derived(browser ? (page.url.searchParams.get("entity") ?? "Venue") : "Venue");
 
@@ -67,18 +68,9 @@
         onkeydown={handleKeydown}
         bind:value={searchValue}
         placeholder="Search {current_entity}s..."
-        class="block w-full pl-12 pr-10 py-3 rounded-full border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700 placeholder-gray-400"
+        class="block w-full pl-12 pr-10 py-3 rounded-lg border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-700 placeholder-gray-400"
     />
-    <div
-        class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-help"
-        title={helpText}
-    >
-        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-            <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
-            ></path>
-        </svg>
+    <div class="absolute inset-y-0 right-0 pr-4 flex items-center">
+        <InfoIcon text={helpText} />
     </div>
 </div>

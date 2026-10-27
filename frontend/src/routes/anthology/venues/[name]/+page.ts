@@ -73,7 +73,7 @@ async function loadConference(venueId: string) {
     }
 
     const sorted = new Map([...groupedByYear.entries()].sort((a, b) => parseInt(b[0]) - parseInt(a[0])))
-    return { type: 'conference', name: streamTitle, yearGroups: sorted, venue_id: venueId }
+    return { type: 'conference', venueType: 'Conference', name: streamTitle, yearGroups: sorted, venue_id: venueId }
 }
 
 async function loadJournal(id: string) {
@@ -90,7 +90,7 @@ async function loadJournal(id: string) {
         })
     }
     const sorted = new Map([...groupedByYear.entries()].sort((a, b) => parseInt(b[0]) - parseInt(a[0])))
-    return { type: 'journal', articles: sorted, journalTitle }
+    return { type: 'journal', venueType: 'Journal', articles: sorted, journalTitle }
 }
 
 async function loadWorkshops() {
@@ -133,5 +133,5 @@ async function loadWorkshops() {
     }
 
     const sorted = new Map([...groupedByYear.entries()].sort((a, b) => parseInt(b[0]) - parseInt(a[0])))
-    return { type: 'conference', name: streamTitle, yearGroups: sorted, venue_id: "workshops" }
+    return { type: 'conference', venueType: 'Workshop', name: streamTitle, yearGroups: sorted, venue_id: "workshops" }
 }

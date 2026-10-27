@@ -2,6 +2,7 @@
     import { resolve } from '$app/paths';
     import { page } from '$app/state';
     import { getIDFromURI, decodeOrdered, slugifyName } from '$lib/helperFunctions';
+    import VenueTypeBadge from '$lib/components/VenueTypeBadge.svelte';
 
     const { data } = $props()
     const urlParts = page.url.pathname.split('/')
@@ -19,22 +20,29 @@
         <a href={resolve(`/anthology/venues/${venueName}`)} class="link">{venueAbbrev}</a> »
     </nav>
 
-    <h1 class="text-3xl font-bold mb-4">{journalTitle} ({year})</h1>
+    <h1 class="text-3xl font-bold flex items-start gap-3 mb-4">
+        <VenueTypeBadge type={data.venueType} />
+        <span>{journalTitle} ({year})</span>
+    </h1>
 
     <hr class="mb-6">
 
     <div class="border border-gray-200 rounded-lg p-4 mb-8">
         <h2 class="text-base font-semibold mb-2">Content</h2>
-        <ul class="space-y-1">
+        <!-- Grid rather than per-row flex: the middle column sizes to the widest label
+                 across ALL rows, so every count badge starts at the same x instead of
+                 shifting with the issue number's digit count. `contents` makes each
+                 <li>'s children the actual grid items. -->
+        <ul class="grid grid-cols-[max-content_max-content_max-content] items-center gap-x-2 gap-y-1">
             {#each articles.keys() as vol (vol)}
                 {#each (articles.get(vol) ?? new Map()).keys() as iss (iss)}
                     {@const count = (articles.get(vol)?.get(iss) ?? []).length}
-                    <li class="flex items-center gap-2">
+                    <li class="contents">
                         <span class="text-gray-400">•</span>
                         <a href="#v{vol}i{iss}" class="link">
                             {year} Volume {vol} Issue {iss}
                         </a>
-                        <span class="badge-count">{count} {count === 1 ? 'paper' : 'papers'}</span>
+                        <span class="badge-count justify-self-start">{count} {count === 1 ? 'paper' : 'papers'}</span>
                     </li>
                 {/each}
             {/each}
@@ -88,7 +96,10 @@
         <a href={resolve(`/anthology/venues/${venueName}`)} class="link">{venueAbbrev}</a> »
     </nav>
 
-    <h1 class="text-3xl font-bold mb-2">{streamTitle} ({year})</h1>
+    <h1 class="text-3xl font-bold flex items-start gap-3 mb-2">
+        <VenueTypeBadge type={data.venueType} />
+        <span>{streamTitle} ({year})</span>
+    </h1>
 
     <hr class="mb-4">
 

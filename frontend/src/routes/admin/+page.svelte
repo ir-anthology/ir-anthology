@@ -2,6 +2,25 @@
     import { getToken } from '$lib/auth';
     import { importFromDblp, importCustomWorkshop, previewCustomWorkshop, fetchPatches, deletePatch, type ImportResult, type WorkshopProceeding, type PatchRecord } from '$lib/sparql/fetch';
     import { SvelteSet } from 'svelte/reactivity';
+    import InfoIcon from '$lib/components/InfoIcon.svelte';
+
+    // PLACEHOLDER tooltips — replace each string with the real wording. Keys match the
+    // `type` passed to the importForm snippet, plus 'customWorkshop' for the unlisted
+    // workshop form. Newlines are rendered by the browser inside a title tooltip.
+    const HELP: Record<string, string> = {
+        stream: 'Import a journal or conference from DBLP by its IRI of the form https://dblp.org/streams/journals/<abbrev> or https://dblp.org/streams/conf/<abbrev>.\nIf no year is given, fetches all publications, authors and editors.\nOtherwise articles or proceedings get filtered by year and everything connected to them gets imported.',
+        workshop: 'Import a workshop from DBLP by its IRI of the form https://dblp.org/streams/conf/<abbrev>.\nIf there is no IRI for the workshop because it is not a stream, use the custom workshop import!\nIf no year is given, fetches all publications, authors and editors.\nOtherwise proceedings get filtered by year and everything connected to them gets imported.',
+        person: 'Import an author or editor from DBLP by their IRI of the form https://dblp.org/pid/<something>/<something>.\nFetches all their publications with their authors and editors, even if they are outside of the IR scope.',
+        publication: 'Import a single publication from DBLP by its IRI of the form https://dblp.org/rec/[journals|conf]/<abbrev>/<id>.\nFetches the publication and its authors and editors.',
+        customWorkshop: 'Import a workshop that has no IRI from DBLP because it is not a stream.\nFirst finds proceedings based on the provided title, abbreviation, and, if provided, year,\nthen lets you select which of the matching proceedings should be imported as part of the workshop.'
+    };
+
+    // Visible notes rendered under a form's heading, for text too important to hide in a
+    // hover tooltip (there is no hover on touch devices, and `title` does not show on
+    // keyboard focus either). Keyed like HELP, so a form without an entry renders none.
+    const NOTE: Record<string, string> = {
+        workshop: 'DBLP makes no distinction between a conference and a workshop! Using this form with a conference will add the Workshop type that identifies this conference as a workshop in our schema!'
+    };
 
     const { data } = $props();
     const profile = $derived(data.user.profile);
@@ -35,8 +54,7 @@
         return { iri: '', year: '', loading: false, result: null, error: null, undoing: false };
     }
 
-    const journal     = $state(makeForm());
-    const conference  = $state(makeForm());
+    const stream      = $state(makeForm());
     const workshop    = $state(makeForm());
     const person      = $state(makeForm());
     const publication = $state(makeForm());
@@ -64,6 +82,17 @@
         }
     }
 
+    // Journals and conferences share ONE form because the backend treats them
+    // identically — main.py dispatches both to fetch_stream(is_workshop=false), and
+    // whether articles or proceedings get filtered by year is decided from the data
+    // (does this stream have proceedings that year), not from this parameter. The only
+    // thing it still affects is the label stored in the patch metadata and shown in the
+    // Patches panel, so derive that from the IRI to keep the history accurate.
+    function backendType(form: FormState, type: string): string {
+        if (type !== 'stream') return type;
+        return form.iri.includes('/streams/journals/') ? 'journal' : 'conference';
+    }
+
     async function submit(form: FormState, type: string) {
         form.result = null;
         form.error = null;
@@ -71,7 +100,7 @@
         try {
             const token = await getToken();
             const year = parseInt(form.year);
-            form.result = await importFromDblp(form.iri.trim(), type, isNaN(year) ? undefined : year, token);
+            form.result = await importFromDblp(form.iri.trim(), backendType(form, type), isNaN(year) ? undefined : year, token);
         } catch (e) {
             form.error = e instanceof Error ? e.message : 'Unknown error';
         } finally {
@@ -193,7 +222,13 @@
 
             {#snippet importForm(label: string, form: FormState, type: string, withYear: boolean)}
                 <div class="border border-gray-200 rounded-lg p-4">
-                    <h2 class="text-base font-semibold mb-3">Add {label}</h2>
+                    <h2 class="text-base font-semibold {NOTE[type] ? 'mb-1' : 'mb-3'} flex items-center gap-1.5">
+                        Add {label}
+                        <InfoIcon text={HELP[type]} class="h-4 w-4" />
+                    </h2>
+                    {#if NOTE[type]}
+                        <p class="text-xs text-gray-500 mb-3">{NOTE[type]}</p>
+                    {/if}
                     <form onsubmit={(e) => { e.preventDefault(); submit(form, type); }} class="flex flex-col gap-2">
                         <div class="flex gap-2">
                             <input
@@ -222,7 +257,7 @@
                             </button>
                         </div>
                         {#if form.result}
-                            <p class="text-sm text-green-700 flex items-center gap-2">
+                            <p class="text-sm text-red-700 flex items-center gap-2">
                                 <span>
                                     Added {form.result.triples} triple{form.result.triples === 1 ? '' : 's'}
                                     — saved as <code class="font-mono">{form.result.filename}</code>
@@ -245,14 +280,16 @@
                 </div>
             {/snippet}
 
-            {@render importForm('Journal',     journal,     'journal',     true)}
-            {@render importForm('Conference',  conference,  'conference',  true)}
+            {@render importForm('Journal or Conference', stream, 'stream', true)}
             {@render importForm('Workshop',    workshop,    'workshop',    true)}
             {@render importForm('Person',      person,      'person',      false)}
             {@render importForm('Publication', publication, 'publication', false)}
 
             <div class="border border-gray-200 rounded-lg p-4">
-                <h2 class="text-base font-semibold mb-1">Add Unlisted Workshop</h2>
+                <h2 class="text-base font-semibold mb-1 flex items-center gap-1.5">
+                    Add Unlisted Workshop
+                    <InfoIcon text={HELP.customWorkshop} class="h-4 w-4" />
+                </h2>
                 <p class="text-xs text-gray-500 mb-3">Searches DBLP proceedings by title/abbreviation and groups matching papers under a custom workshop stream.</p>
                 <form onsubmit={(e) => { e.preventDefault(); submitCustomWorkshop(); }} class="flex flex-col gap-2">
                     <input
@@ -307,7 +344,7 @@
                                                     else customWorkshop.selectedProcs.delete(p.proc);
                                                 }}
                                             />
-                                            <a href={p.proc} target="_blank" rel="noopener noreferrer" class="link">{p.title}</a> ({p.year})
+                                            <a href={p.proc} class="link">{p.title}</a> ({p.year})
                                         </label>
                                     </li>
                                 {/each}
@@ -333,7 +370,7 @@
                     {/if}
 
                     {#if customWorkshop.result}
-                        <p class="text-sm text-green-700 flex items-center gap-2">
+                        <p class="text-sm text-red-700 flex items-center gap-2">
                             <span>
                                 Added {customWorkshop.result.triples} triple{customWorkshop.result.triples === 1 ? '' : 's'}
                                 — saved as <code class="font-mono">{customWorkshop.result.filename}</code>
@@ -398,7 +435,7 @@
                                                 {#if det}
                                                     {#if p.action === 'import'}
                                                         <span class="font-medium">{String(det.type)}</span>
-                                                        {#if det.iri}<a href={String(det.iri)} target="_blank" rel="noopener noreferrer" class="link ml-1 break-all">{String(det.iri).split('/').at(-1)}</a>{/if}
+                                                        {#if det.iri}<a href={String(det.iri)} class="link ml-1 break-all">{String(det.iri).split('/').at(-1)}</a>{/if}
                                                         {#if det.year}<span class="text-gray-400 ml-1">({det.year})</span>{/if}
                                                     {:else if p.action === 'custom_workshop'}
                                                         <span class="font-medium">{String(det.abbreviation ?? '')}</span>

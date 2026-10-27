@@ -9,7 +9,8 @@
     import { browser } from '$app/environment';
     import { loadPreferences, savePreferences } from '$lib/columnPreferences';
     import { loadDensity, saveDensity, type Density } from '$lib/rowDensity';
-    import { ENTITY_ENDPOINTS, FILTERABLE_ENTITIES, entityDefaultSort, resolveEntity, tableRequestParams, columnEntity } from '$lib/tableConfig';
+    import { venueTypeColorClass } from '$lib/venueType';
+    import { ENTITY_ENDPOINTS, ENTITY_LABELS, FILTERABLE_ENTITIES, entityDefaultSort, resolveEntity, tableRequestParams, columnEntity } from '$lib/tableConfig';
     import ColumnSettings from './ColumnSettings.svelte';
     import RowDensity from './RowDensity.svelte';
 
@@ -18,6 +19,15 @@
     const COLUMN_WIDTHS: Record<string, string> = {
 		Entity: 'w-auto min-w-[200px] max-w-md',
 	};
+
+    // Width for any column without an entry above. CONSTRAINT: it has to fit the widest
+    // header label (currently "Publications", ~84px) PLUS the fade strip that overhangs
+    // from the frozen Entity column into whatever follows it. At the previous w-24 (96px)
+    // the label had only 6px of slack per side and the 10px fade clipped ~5px off its
+    // left edge. w-28 (112px) clears it. Widen this if a longer column label is added.
+    const DEFAULT_COLUMN_WIDTH = 'w-28';
+
+    const DIVIDER = 'border-l border-gray-300';
 
     let {vars, bindings } = $props();
 
@@ -197,21 +207,46 @@
         }
         return value ?? '-';
     }
+
+    function groupDigits(digits: string): string {
+        return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    }
+
+    // Publications/Authors/Venues etc. are plain counts and read better grouped;
+    // Venue is a text label and Year is a calendar year (never grouped) — both stay as-is.
+    function formatCellValue(col: string, value: string): string {
+        if (col === 'Venue' || col === 'Year') return value;
+        return /^\d+$/.test(value) ? groupDigits(value) : value;
+    }
+
+    function cellAlignClass(col: string): string {
+        return col === 'Venue' ? 'text-center' : 'text-right';
+    }
+
+    const dividerColumns = $derived(
+        new Set(columns.filter((col: string, i: number) => i > 0 && columns[i - 1] !== 'Entity'))
+    );
+
+    function colDividerClass(col: string): string {
+        return dividerColumns.has(col) ? DIVIDER : '';
+    }
+
+    const yearsDivider = $derived(colDividerClass('Years'));
 </script>
 
 <section class="bg-white rounded-lg shadow">
-    <table class="min-w-full divide-y divide-gray-200 table-fixed" data-density={density}>
+    <table class="min-w-full divide-y divide-gray-200 table-fixed border-separate border-spacing-0" data-density={density}>
         <thead class="bg-gray-50 sticky z-10 border-b-2 border-gray-300 shadow-[0_2px_3px_-1px_rgba(0,0,0,0.12)]" style="top: var(--table-top, 0px)">
             <tr>
                 {#each columns as col (col)}
                     {#if col === 'Years'}
                         <th
                             colspan={yearsList.length}
-                            class="bg-gray-50 px-2 pt-1 text-sm font-medium tracking-wider text-gray-500 whitespace-nowrap text-left border-l border-gray-300"
+                            class="bg-gray-50 px-2 pt-1 text-sm font-medium tracking-wider text-gray-500 whitespace-nowrap text-left {yearsDivider}"
                         >Publications per year</th>
                     {:else}
-                        <th rowspan={hasYearsMatrix ? 2 : undefined} class="{col === 'Entity' ? 'bg-slate-50 sticky left-0 z-20 border-r border-gray-200 transition-colors' : 'bg-gray-50'} {COLUMN_WIDTHS[col] ?? 'w-24'} whitespace-nowrap">
-                            <div class="flex items-center gap-1 {col === 'Entity' ? 'justify-start pl-4' : 'justify-center'}">
+                        <th class="{col === 'Entity' ? 'frozen-col bg-slate-50 sticky left-[var(--frozen-left,0px)] z-20 border-r border-gray-200 transition-colors' : 'bg-gray-50'} {colDividerClass(col)} {COLUMN_WIDTHS[col] ?? DEFAULT_COLUMN_WIDTH} pt-1 whitespace-nowrap">
+                            <div class="flex items-center {col === 'Entity' ? 'justify-start pl-4' : 'justify-center'}">
                                 {#if col === 'Entity'}
                                     <div class="relative inline-flex items-center shrink-0">
                                         <select
@@ -220,7 +255,7 @@
                                             onchange={(e) => handleEntityChange(e.currentTarget.value)}
                                         >
                                             {#each entityOptions as opt (opt)}
-                                                <option value={opt}>{opt}</option>
+                                                <option value={opt}>{ENTITY_LABELS[opt] ?? opt}</option>
                                             {/each}
                                         </select>
                                         <svg class="absolute right-1.5 w-3 h-3 pointer-events-none {current_entity === col ? 'text-link' : 'text-gray-400'}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -229,6 +264,32 @@
                                     </div>
                                 {:else}
                                     <span class="text-sm font-medium tracking-wider text-gray-500">{col}</span>
+                                {/if}
+                            </div>
+                        </th>
+                    {/if}
+                {/each}
+            </tr>
+            <tr>
+                {#each columns as col (col)}
+                    {#if col === 'Years'}
+                        {#each yearsList as year, i (year)}
+                            <th
+                                class="bg-gray-50 w-9 px-0.5 pb-1 text-sm font-medium text-gray-500 whitespace-nowrap {i === 0 ? yearsDivider : year % 10 === 9 ? DIVIDER : ''}"
+                                title={String(year)}
+                            >{String(year % 100).padStart(2, '0')}</th>
+                        {/each}
+                    {:else}
+                        <th class="{col === 'Entity' ? 'frozen-col bg-slate-50 sticky left-[var(--frozen-left,0px)] z-20 border-r border-gray-200 transition-colors' : 'bg-gray-50'} {colDividerClass(col)} {COLUMN_WIDTHS[col] ?? DEFAULT_COLUMN_WIDTH} pb-1 whitespace-nowrap">
+                            <div class="flex items-center gap-1 justify-end pr-4">
+                                {#if col === 'Entity'}
+                                    <ColumnSettings
+                                        {availableColumns}
+                                        {visibleColumns}
+                                        onToggle={handleColumnToggle}
+                                        onReset={handleResetDefaults}
+                                    />
+                                    <RowDensity {density} onChange={handleDensityChange} />
                                 {/if}
                                 <button
                                     class="p-1 rounded hover:bg-gray-100 transition-colors cursor-pointer shrink-0"
@@ -240,30 +301,11 @@
                                         <polygon points="5,14 10,8.5 0,8.5" class={current_sort_by === col && current_order === 'desc' ? 'fill-link' : 'fill-gray-300'} />
                                     </svg>
                                 </button>
-                                {#if col === 'Entity'}
-                                    <ColumnSettings
-                                        {availableColumns}
-                                        {visibleColumns}
-                                        onToggle={handleColumnToggle}
-                                        onReset={handleResetDefaults}
-                                    />
-                                    <RowDensity {density} onChange={handleDensityChange} />
-                                {/if}
                             </div>
                         </th>
                     {/if}
                 {/each}
             </tr>
-            {#if hasYearsMatrix}
-                <tr>
-                    {#each yearsList as year (year)}
-                        <th
-                            class="bg-gray-50 w-9 px-0.5 pb-1 text-sm font-medium text-gray-500 whitespace-nowrap {year % 10 === 9 ? 'border-l border-gray-300' : ''}"
-                            title={String(year)}
-                        >{String(year % 100).padStart(2, '0')}</th>
-                    {/each}
-                </tr>
-            {/if}
         </thead>
         <tbody>
             {#if navigating.to}
@@ -288,41 +330,39 @@
                                 : cellData?.value}
                             {#if col === 'Years'}
                                 {@const yearCounts = decodeYearCounts(row['Years']?.value)}
-                                {#each yearsList as year (year)}
+                                {#each yearsList as year, i (year)}
                                     {@const count = yearCounts.get(year)}
-                                    {@const border = year % 10 === 9 ? 'border-l border-gray-300' : ''}
+                                    {@const border = i === 0 ? yearsDivider : year % 10 === 9 ? DIVIDER : ''}
                                     {#if count !== undefined}
                                         <td
-                                            class="link px-0.5 text-sm text-center cursor-pointer hover:bg-gray-100 transition-colors {border}"
+                                            class="link px-0.5 pr-1.5 text-sm text-right cursor-pointer hover:bg-gray-100 transition-colors {border}"
                                             title="{count} publication{count === 1 ? '' : 's'} in {year}"
                                             onclick={() => handleCellClick('Publication', row, year)}
                                             role="button"
                                             tabindex="0"
                                             onkeydown={(e) => e.key === 'Enter' && handleCellClick('Publication', row, year)}
-                                        >{count}</td>
+                                        >{groupDigits(String(count))}</td>
                                     {:else}
-                                        <td class="px-0.5 text-sm text-center {border}"></td>
+                                        <td class="px-0.5 text-sm text-right {border}"></td>
                                     {/if}
                                 {/each}
                             {:else if col === 'Entity'}
                                 {@const authors = decodeOrdered(row['authors']?.value ?? null, true)}
                                 {@const authorIds = decodeOrdered(row['authorIds']?.value ?? null)}
                                 <td
-									class="sticky left-0 z-5 border-r border-gray-200 {i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} px-4 py-1.5 text-sm text-gray-900 wrap-break-word {COLUMN_WIDTHS[col] ??
-										'w-24'}"
+									class="frozen-col sticky left-[var(--frozen-left,0px)] z-5 border-r border-gray-200 {i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} px-4 py-1.5 text-sm text-gray-900 wrap-break-word {COLUMN_WIDTHS[col] ??
+										DEFAULT_COLUMN_WIDTH}"
 								>
 									{#if current_entity === 'Venue' && (row['VenueType']?.value || row['URI']?.value === 'https://dblp.org/workshops')}
 										{@const type = row['VenueType']?.value || 'Workshop'}
 										<span
-											class="mr-1 align-middle inline-flex rounded border border-current/20 px-1 py-0.5 text-[10px] font-bold {type === 'Conference' ? 'bg-blue-100 text-blue-800' : type === 'Journal' ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'}"
+											class="mr-1 align-middle inline-flex w-4 justify-center rounded border border-current/20 py-0.5 text-[10px] font-bold {venueTypeColorClass(type)}"
 											title={type}
 										>{type[0]}</span>
 									{/if}
 									{#if row['URI']?.value}
 										<a
 											href={buildURL(row['URI'].value, row['Entity']?.value ?? '')}
-											target="_blank"
-											rel="noopener noreferrer"
 											class="link"
 										>
 											{current_entity === 'Venue' ? venueDisplayLabel(cellData.value, row['URI']?.value) : (cellData.value ?? '-')}
@@ -340,18 +380,18 @@
 								</td>
                             {:else if cellDisplay && ENTITY_ENDPOINTS[columnEntity(col)]}
                                 <td
-                                    class="link px-4 py-1.5 text-sm text-center cursor-pointer hover:bg-gray-100 transition-colors {COLUMN_WIDTHS[
+                                    class="link px-4 py-1.5 text-sm {cellAlignClass(col)} {colDividerClass(col)} cursor-pointer hover:bg-gray-100 transition-colors {COLUMN_WIDTHS[
                                             col
-                                        ] ?? 'w-24'}"
+                                        ] ?? DEFAULT_COLUMN_WIDTH}"
                                         onclick={() => handleCellClick(col, row)}
                                         role="button"
                                         tabindex="0"
                                         onkeydown={(e) => e.key === 'Enter' && handleCellClick(col, row)}
-                                    >{cellDisplay}</td>
+                                    >{formatCellValue(col, cellDisplay)}</td>
                             {:else if cellDisplay}
-                                <td class="px-4 py-1.5 text-sm text-center {COLUMN_WIDTHS[col] ?? 'w-24'}">{cellDisplay}</td>
+                                <td class="px-4 py-1.5 text-sm {cellAlignClass(col)} {colDividerClass(col)} {COLUMN_WIDTHS[col] ?? DEFAULT_COLUMN_WIDTH}">{formatCellValue(col, cellDisplay)}</td>
                             {:else}
-                                <td class="px-4 py-1.5 text-sm text-gray-400 text-center {COLUMN_WIDTHS[col] ?? 'w-24'}">
+                                <td class="px-4 py-1.5 text-sm text-gray-400 {cellAlignClass(col)} {colDividerClass(col)} {COLUMN_WIDTHS[col] ?? DEFAULT_COLUMN_WIDTH}">
 									-
 								</td>
                             {/if}
@@ -384,5 +424,19 @@
 	table[data-density='dense'] tbody td span.inline-flex {
 		font-size: 9px;
 		padding-block: 0;
+	}
+
+	.frozen-col::after {
+		content: '';
+		position: absolute;
+		left: 100%;
+		margin-left: 1px;
+		top: 0;
+		bottom: 0;
+		width: 10px;
+		background: inherit;
+		-webkit-mask-image: linear-gradient(to right, #000 0, #000 45%, transparent 100%);
+		mask-image: linear-gradient(to right, #000 0, #000 45%, transparent 100%);
+		pointer-events: none;
 	}
 </style>
