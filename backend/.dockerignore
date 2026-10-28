@@ -1,0 +1,22 @@
+# Mirrors database/.dockerignore (see audit #22) — the backend image had none, so
+# `COPY ./ .` was shipping build tooling, docs and host bytecode into production.
+.git
+.gitignore
+.env
+.vscode
+.DS_Store
+
+# Build/CI inputs, not runtime: the Dockerfile itself and the generator scripts that
+# produce SCHEMA.md and database/warmup/*.rq.
+Dockerfile*
+scripts/
+
+# Documentation. SCHEMA.md is a reference for people and coding agents reading the
+# repo; the running API never opens it.
+README.md
+SCHEMA.md
+
+# Host-built bytecode. The image runs python:3.14.5-trixie, so a cache built by a
+# different interpreter is at best dead weight and at worst confusing staleness.
+__pycache__/
+*.py[cod]
