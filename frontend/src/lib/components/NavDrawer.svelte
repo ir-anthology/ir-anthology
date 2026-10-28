@@ -1,7 +1,10 @@
 <script lang="ts">
     import { page } from '$app/state';
+    import { goto } from '$app/navigation';
     import { resolve } from '$app/paths';
     import { browser } from '$app/environment';
+    import { SvelteURLSearchParams } from 'svelte/reactivity';
+    import { FILTERABLE_ENTITIES } from '$lib/tableConfig';
     import FilterField from './FilterField.svelte';
 
     let { open, topOffset }: { open: boolean; topOffset: number } = $props();
@@ -22,13 +25,48 @@
     });
     const hasActiveFilters = $derived(Object.keys(filters).length > 0);
 
-    // Not wired to real filtering yet — inputs are presentational only for now.
     let inputValues = $state<Record<string, string>>({
         venue: '',
         author: '',
         publication: '',
         year: ''
     });
+
+    // Commit a field's value as a filter on Enter. Deliberately the same mechanism
+    // the rest of the app already uses: a `filter_<Entity>` search param holding a
+    // comma-separated list, which FilterField renders as individually removable
+    // chips. These fields say "Add", so a value is APPENDED to whatever is already
+    // filtered on that entity (like clicking a count cell does) rather than
+    // replacing it the way the search bar does.
+    async function addFilter(fieldKey: string) {
+        const entity = FILTERABLE_ENTITIES.find((f) => f.toLowerCase() === fieldKey);
+        const value = inputValues[fieldKey].trim();
+        if (!entity || !value) return;
+
+        const params = new SvelteURLSearchParams(page.url.searchParams.toString());
+        const current = params.get(`filter_${entity}`);
+        const values = current ? current.split(',') : [];
+        inputValues[fieldKey] = '';
+        // Re-adding something already filtered on would only duplicate the chip.
+        if (values.includes(value)) return;
+
+        values.push(value);
+        params.set(`filter_${entity}`, values.join(','));
+        await goto(resolve(`/anthology?${params.toString()}`));
+    }
+
+    // Clears ONLY the filters. Deliberately different from the ResetButton next to
+    // the search bar, which goto()s a bare /anthology and so also drops the entity
+    // selection and the sort — here everything except filter_* is carried over.
+    async function clearFilters() {
+        const params = new SvelteURLSearchParams(page.url.searchParams.toString());
+        // snapshot the keys: deleting while iterating the live iterator skips entries
+        for (const key of [...params.keys()]) {
+            if (key.startsWith('filter_')) params.delete(key);
+        }
+        const query = params.toString();
+        await goto(resolve(query ? `/anthology?${query}` : '/anthology'));
+    }
 
     const fields: { key: string; placeholder: string }[] = [
         { key: 'venue', placeholder: 'Add venue' },
@@ -52,6 +90,7 @@
                 <span class="flex-1 text-[10px] font-semibold tracking-wider uppercase text-gray-400">Filters</span>
                 <button
                     type="button"
+                    onclick={clearFilters}
                     disabled={!hasActiveFilters}
                     class="border border-gray-200 bg-white text-gray-500 text-[9px] tracking-wide uppercase rounded px-1.5 py-0.5 leading-normal hover:bg-gray-100 hover:text-gray-900 disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-gray-500 disabled:cursor-default"
                     title="Clear all filters"
@@ -97,6 +136,7 @@
                         <input
                             type="text"
                             bind:value={inputValues[field.key]}
+                            onkeydown={(e) => e.key === 'Enter' && addFilter(field.key)}
                             placeholder={field.placeholder}
                             autocomplete="off"
                             spellcheck="false"
