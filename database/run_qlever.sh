@@ -28,5 +28,5 @@ else
       done
     ) &
 
-    exec qlever-server -i data/test -j 24 -p 7016 -m 50G -c 25G -e 1G -k 50000 -s 60s -a $SPARQL_ACCESS_TOKEN --enable-metrics
+    exec qlever-server -i data/test -j 24 -p 7016 -m 50G -c 25G -e 1G -k 500000 -s 60s -a $SPARQL_ACCESS_TOKEN --enable-metrics
 fi

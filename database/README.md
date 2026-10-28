@@ -74,7 +74,7 @@ backend actually sends (QLever's cache key is the query string). Current flags
 | `-m` | `50G` | Limit on total memory for query processing **and** caching — the cache is counted inside this, so `-c` must stay below it |
 | `-c` | `25G` | Max memory for all cache entries, pinned and not (`qlever-server`'s own default is `30G`; lowered to sit under `-m`) |
 | `-e` | `1G` | Max size of a single cache entry (default is `5G`). Larger results are not cached **unless pinned** |
-| `-k` | `50000` | Max number of cache entries (`qlever-server`'s own default is `1000`). Raised because entry count, not size, was evicting the cache: a single table request creates 15–39 entries, so 1000 was exhausted by roughly 25 filtered searches while using under 2% of the memory budget |
+| `-k` | `500000` | Max number of cache entries (`qlever-server`'s own default is `1000`). Raised because entry count, not size, was evicting the cache: a single table request creates 15–39 entries, so 1000 was exhausted by roughly 25 filtered searches while using under 2% of the memory budget |
 | `-s` | `60s` | Default query timeout (Qleverfile's native-dev default is `30s` — the two are independent, not a typo) |
 | `-j` | `24` | Max number of queries processed simultaneously |
 | `-a` | `$SPARQL_ACCESS_TOKEN` | Access token for restricted API calls |
