@@ -23,6 +23,18 @@
 	const isDataTablePage = $derived(page.route.id === '/anthology');
 	const showSidebar = $derived(isDataTablePage && sidebarOpen);
 
+	// Exactly one of these applies, rather than stacking px-6/md:pl-64 overrides
+	// whose winner depends on the order Tailwind emits the utilities in. With the
+	// sidebar closed the table goes flush to the viewport edge, which also lines it
+	// up with the frozen Entity column (--frozen-left is 0px in that state).
+	const mainPaddingLeft = $derived(
+		!isDataTablePage
+			? 'pl-6 md:pl-10'
+			: showSidebar
+				? 'pl-6 md:pl-64 md:[--frozen-left:16rem]'
+				: 'pl-0'
+	);
+
 	function applyUser(profile: { name?: string | null; nickname?: string | null; sub?: string; picture?: string | null; groups_direct?: string[] | null }) {
 		userName = profile.name ?? profile.nickname ?? profile.sub ?? null;
 		userPicture = profile.picture ?? null;
@@ -114,7 +126,7 @@
 {/if}
 
 <main
-	class="flex-1 px-6 md:px-10 transition-[padding-left] duration-200 [--frozen-left:0px] {isDataTablePage ? '' : 'mt-3 md:mt-4 xl:mt-5'} {showSidebar ? 'md:pl-64 md:[--frozen-left:16rem]' : ''}"
+	class="flex-1 pr-6 md:pr-10 transition-[padding-left] duration-200 [--frozen-left:0px] {isDataTablePage ? '' : 'mt-3 md:mt-4 xl:mt-5'} {mainPaddingLeft}"
 	style="--table-top: {navHeight}px"
 >
 	{@render children()}
