@@ -1,16 +1,20 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import { anchoredMenu } from '$lib/anchoredMenu';
 	import type { Density } from '$lib/rowDensity';
 
 	let { density, onChange }: { density: Density; onChange: (d: Density) => void } = $props();
 
 	let isOpen = $state(false);
 	let dropdownRef: HTMLElement | null = $state(null);
+	let anchorRef: HTMLElement | null = $state(null);
+	let menuRef: HTMLElement | null = $state(null);
 
 	function handleClickOutside(event: MouseEvent) {
-		if (dropdownRef && !dropdownRef.contains(event.target as Node)) {
-			isOpen = false;
-		}
+		const target = event.target as Node;
+		// menuRef is portaled to <body>, so it is NOT inside dropdownRef
+		if (dropdownRef?.contains(target) || menuRef?.contains(target)) return;
+		isOpen = false;
 	}
 
 	function handleKeydown(event: KeyboardEvent) {
@@ -42,6 +46,7 @@
 		class="p-1.5 rounded hover:bg-gray-100 transition-colors"
 		onclick={() => (isOpen = !isOpen)}
 		aria-label="Row density"
+		bind:this={anchorRef}
 		aria-expanded={isOpen}
 		aria-haspopup="true"
 	>
@@ -61,7 +66,9 @@
 
 	{#if isOpen}
 		<div
-			class="absolute right-0 mt-2 w-max min-w-40 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
+			bind:this={menuRef}
+			use:anchoredMenu={{ anchor: anchorRef }}
+			class="fixed w-max min-w-40 overflow-y-auto bg-white rounded-lg shadow-lg border border-gray-200 z-[60]"
 			role="menu"
 			aria-orientation="vertical"
 			aria-labelledby="row-density-menu"
