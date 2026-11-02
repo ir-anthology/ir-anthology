@@ -7,6 +7,9 @@ __pycache__/
 node_modules/
 data/
 **/index.db*
+# ...except pnpm's store index: without it the vendored store's files/ are unaddressable
+# and `pnpm install --offline` fails on the first package. Its -wal/-shm stay ignored.
+!frontend/.pnpm-store/v11/index.db
 claude_notes.txt
 database/warmup/
 

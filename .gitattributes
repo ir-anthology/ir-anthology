@@ -6,3 +6,6 @@
 
 # Never normalize the committed pnpm store — would break integrity hashes
 .pnpm-store/** binary
+# A pattern containing a slash is anchored to this file's directory, so the line
+# above only covers a root-level store; the vendored one lives under frontend/.
+frontend/.pnpm-store/** binary
