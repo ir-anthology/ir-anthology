@@ -1,0 +1,15 @@
+PREFIX dblp: <https://dblp.org/rdf/schema#>
+PREFIX ex: <https://ir.webis.de/kg#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+CONSTRUCT { ?stream ?p ?o }
+WHERE {
+  {
+    VALUES ?stream { <__STREAM__> }
+	?stream ?p ?o .
+  }  UNION  {
+    VALUES (?stream ?p ?o) { (<__STREAM__> rdf:type ex:Workshop)}
+  }
+}
+ORDER BY ?stream ?p ?o
+LIMIT __LIMIT__
+OFFSET __OFFSET__

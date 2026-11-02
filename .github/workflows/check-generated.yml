@@ -1,0 +1,51 @@
+name: Consistency checks
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'database/**'
+  push:
+    branches: ['main']
+    paths:
+      - 'backend/**'
+      - 'database/**'
+
+permissions:
+  contents: read
+
+jobs:
+  schema-doc:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Regenerate SCHEMA.md
+        run: python3 backend/scripts/gen_schema_doc.py
+
+      - name: Fail if SCHEMA.md is out of date
+        run: |
+          # 'git status --porcelain' rather than 'git diff --exit-code': a plain diff
+          # reports nothing for an UNTRACKED file, so if SCHEMA.md were never
+          # committed the check would pass vacuously. --porcelain catches both the
+          # modified and the untracked case.
+          if [ -n "$(git status --porcelain -- backend/SCHEMA.md)" ]; then
+            git --no-pager diff -- backend/SCHEMA.md
+            echo "::error file=backend/SCHEMA.md::SCHEMA.md is out of date with sparqlTemplates.py. Run 'python3 backend/scripts/gen_schema_doc.py' and commit the result."
+            exit 1
+          fi
+
+  # database/README.md's entrypoint flag table vs the flags run_qlever.sh actually
+  # passes. That table has drifted twice; the drift is invisible at runtime because
+  # the server happily runs on the real flags while the docs describe different ones.
+  qlever-flags:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      # stdlib-only and offline, so no dependency install is needed.
+      - name: Check the entrypoint flag table matches run_qlever.sh
+        run: python3 database/scripts/check_readme_flags.py

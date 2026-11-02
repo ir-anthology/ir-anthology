@@ -1,0 +1,41 @@
+#!/usr/bin/env sh
+# Keeps backend/SCHEMA.md in step with the sources it is generated from
+# (backend/sparqlTemplates.py for the query text, backend/main.py for the
+# "Used by: GET /api/..." captions).
+#
+# Enable once per clone:
+#
+#     git config core.hooksPath .githooks
+#
+# Only SCHEMA.md is checked here. database/warmup/*.rq is deliberately NOT: that
+# generator needs the backend's third-party dependencies AND a live SPARQL endpoint,
+# which is far too much to ask on every commit. Those files are build artifacts,
+# generated during the database image build (.github/workflows/deploy-database-image.yml).
+set -e
+
+REPO=$(git rev-parse --show-toplevel)
+SCHEMA=backend/SCHEMA.md
+
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "pre-commit: python3 not found — skipping the $SCHEMA freshness check" >&2
+    exit 0
+fi
+
+# The generator resolves its paths from its own location, so cwd does not matter.
+python3 "$REPO/backend/scripts/gen_schema_doc.py" >/dev/null
+
+cd "$REPO"
+# Two cases to catch: regeneration left unstaged changes, or the file is untracked
+# (a plain `git diff` reports nothing at all for an untracked file).
+if ! git diff --quiet -- "$SCHEMA" \
+   || [ -n "$(git ls-files --others --exclude-standard -- "$SCHEMA")" ]; then
+    echo >&2
+    echo "pre-commit: $SCHEMA was out of date and has just been regenerated." >&2
+    echo "            Stage it, then commit again:" >&2
+    echo >&2
+    echo "                git add $SCHEMA" >&2
+    echo >&2
+    echo "            To commit anyway, bypass with: git commit --no-verify" >&2
+    echo >&2
+    exit 1
+fi

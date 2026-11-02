@@ -4,9 +4,9 @@
 </script>
 
 <button
-    onclick={() => goto(resolve('/'))}
+    onclick={() => goto(resolve('/anthology'))}
     class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition"
-    title="Reset filters"
+    title="Reset table"
 >
     <svg class="h-6 w-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path

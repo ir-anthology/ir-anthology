@@ -1,0 +1,16 @@
+PREFIX dblp: <https://dblp.org/rdf/schema#>
+CONSTRUCT {
+  ?author ?p ?o .
+}
+WHERE {
+  {
+    SELECT DISTINCT ?author WHERE {
+      ?pub dblp:publishedInStream <__STREAM__> .
+      ?pub dblp:authoredBy ?author .
+    }
+  }
+  ?author ?p ?o .
+}
+ORDER BY ?author ?p ?o
+LIMIT __LIMIT__
+OFFSET __OFFSET__

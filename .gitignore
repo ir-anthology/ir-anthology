@@ -2,9 +2,13 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,macos,windows,linux,svelte
 ### Custom ###
 .vscode/
-.devcontainer/
-.pnpm-store/
 build/
+__pycache__/
+node_modules/
+data/
+**/index.db*
+claude_notes.txt
+database/warmup/
 
 ### Linux ###
 *~
