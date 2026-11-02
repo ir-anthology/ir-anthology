@@ -78,7 +78,8 @@ backend actually sends (QLever's cache key is the query string). Current flags
 | `-s` | `60s` | Default query timeout (Qleverfile's native-dev default is `30s` — the two are independent, not a typo) |
 | `-j` | `24` | Max number of queries processed simultaneously |
 | `-a` | `$SPARQL_ACCESS_TOKEN` | Access token for restricted API calls |
-| `--enable-metrics` | — | Exposes a Prometheus `/metrics` endpoint on the main server port; reading it requires a valid access token |
+| `--no-metrics-log` | — | Disables the per-query JSONL log (`data/test.metrics-log.jsonl`) that `qlever-server` otherwise writes **by default** — it is never rotated and had reached 7.1 GB in production. Unrelated to `--enable-metrics` below |
+| `--enable-metrics` | — | Exposes a Prometheus `/metrics` endpoint on the main server port; reading it requires a valid access token. Serves in-memory counters only — it does not write the JSONL log above |
 
 ### Environment variables
 
