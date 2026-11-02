@@ -19,14 +19,17 @@ else
     # backend/scripts/gen_warmup_queries.py — do NOT hand-edit them. QLever's cache
     # key is the exact query string, so a copy that drifts from the templates pins
     # queries nobody issues and the landing views stay slow with no error at all.
+    # pin-result is explicit on purpose: on v0.6.0 pin-subresults already pins the
+    # final result too (same 46 pinned entries with or without it), but the landing
+    # views depend on that root staying cached, so don't leave it to version details.
     ( until curl -sf localhost:7016 -d cmd=cache-stats >/dev/null 2>&1; do sleep 2; done
       for f in warmup/*.rq; do
           [ -e "$f" ] || continue
           curl -s localhost:7016 --data-urlencode query@"$f" \
-               --data pin-subresults=true --data send=0 \
+               --data pin-subresults=true --data pin-result=true --data send=0 \
                --data access-token="$SPARQL_ACCESS_TOKEN" >/dev/null
       done
     ) &
 
-    exec qlever-server -i data/test -j 24 -p 7016 -m 50G -c 25G -e 1G -k 500000 -s 60s -a $SPARQL_ACCESS_TOKEN --enable-metrics
+    exec qlever-server -i data/test -j 24 -p 7016 -m 50G -c 25G -e 1G -k 500000 -s 60s -a $SPARQL_ACCESS_TOKEN --no-metrics-log --enable-metrics
 fi
