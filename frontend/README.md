@@ -79,6 +79,28 @@ pnpm format                      # auto-format with prettier
 pnpm test                        # vitest (unit + browser/component tests via Playwright)
 ```
 
+### Offline install
+
+Every dependency is committed in `.pnpm-store/` (`storeDir` in `pnpm-workspace.yaml`), so
+the frontend can be installed without npm — with no network at all, or after packages
+have disappeared from the registry. Node 24.16.0 is the only prerequisite; pnpm itself is
+vendored too and is run straight from the store:
+
+```sh
+node .pnpm-store/v11/links/@/pnpm/11.0.9/69b4330841477b4191f1e88a72413980ce1c09d4f6922c493cf13b8109a4a84c/node_modules/pnpm/bin/pnpm.mjs \
+  install --frozen-lockfile --offline
+```
+
+Use that path rather than a globally installed `pnpm`: a newer global pnpm first tries to
+switch to the pinned 11.0.9, and newer pnpm 11 releases (e.g. 11.7) also check package
+release dates against the registry before installing — both need the network.
+
+The store only covers what was installed when it was last committed. After changing
+dependencies, run an online `pnpm install` and commit the new files under `.pnpm-store/`
+together with `pnpm-lock.yaml` — including `v11/index.db`, without which pnpm cannot find
+any of them. Bumping `packageManager` also needs the new pnpm's `links/@/pnpm/<version>/`
+directory committed and the path above updated.
+
 ## Prerendering
 
 `svelte.config.js` options:

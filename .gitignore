@@ -10,6 +10,10 @@ data/
 # ...except pnpm's store index: without it the vendored store's files/ are unaddressable
 # and `pnpm install --offline` fails on the first package. Its -wal/-shm stay ignored.
 !frontend/.pnpm-store/v11/index.db
+# ...and the unpacked pnpm itself (package.json pins it via packageManager), so an
+# offline rebuild can run it with plain node — see frontend/README.md.
+!frontend/.pnpm-store/v11/links/**/
+!frontend/.pnpm-store/v11/links/**
 claude_notes.txt
 database/warmup/
 
