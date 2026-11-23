@@ -5,7 +5,7 @@
     import {navigating} from '$app/state'
     import { resolve } from '$app/paths';
     import { fetchBackend } from '$lib/sparql/fetch';
-    import { getIDFromURI, slugifyName, decodeYearCounts, decodeOrdered } from '$lib/helperFunctions';
+    import { getIDFromURI, slugifyName, decodeYearCounts, decodeOrdered, groupDigits } from '$lib/helperFunctions';
     import { browser } from '$app/environment';
     import { loadPreferences, savePreferences } from '$lib/columnPreferences';
     import { loadDensity, saveDensity, type Density } from '$lib/rowDensity';
@@ -206,10 +206,6 @@
             if (last) return last;
         }
         return value ?? '-';
-    }
-
-    function groupDigits(digits: string): string {
-        return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     }
 
     // Publications/Authors/Venues etc. are plain counts and read better grouped;

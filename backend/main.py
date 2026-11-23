@@ -108,6 +108,22 @@ async def read_table_years(params: Annotated[TableParams, Query()], client: http
 async def read_table_publications(params: Annotated[TableParams, Query()], client: httpx.AsyncClient = Depends(get_client), *, request: Request):
     return await _entity_table("Publication", params, request, client)
 
+@app.get("/api/stats")
+async def read_stats(client: httpx.AsyncClient = Depends(get_client)):
+    """Totals for the landing page, keyed like the frontend's ENTITY_ENDPOINTS: each
+    count is the number of rows of that entity's unfiltered table (see STATS_TEMPLATE)."""
+    data = await sparql_post(sparqlTemplates.STATS_TEMPLATE, client)
+    row = data["results"]["bindings"][0]
+    return {
+        "counts": {
+            "Publication": int(row["Publications"]["value"]),
+            "Venue": int(row["Venues"]["value"]),
+            "Author": int(row["Authors"]["value"]),
+            "Year": int(row["Years"]["value"]),
+        },
+        "first_year": int(row["FirstYear"]["value"]),
+    }
+
 @app.get("/api/conferences")
 async def read_conferences_overview(client: httpx.AsyncClient = Depends(get_client)):
     query = sparqlTemplates.ANTHOLOGY_CONFERENCES_QUERY_TEMPLATE

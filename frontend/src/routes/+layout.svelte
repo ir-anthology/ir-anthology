@@ -21,18 +21,23 @@
 	// (venue/person/publication detail pages, credits, etc.) render entirely different
 	// content and don't have filters to show.
 	const isDataTablePage = $derived(page.route.id === '/anthology');
+	// The landing page centers its content vertically, so <main> passes its height on.
+	const isLandingPage = $derived(page.route.id === '/');
 	const showSidebar = $derived(isDataTablePage && sidebarOpen);
 
-	// Exactly one of these applies, rather than stacking px-6/md:pl-64 overrides
-	// whose winner depends on the order Tailwind emits the utilities in. With the
-	// sidebar closed the table goes flush to the viewport edge, which also lines it
-	// up with the frozen Entity column (--frozen-left is 0px in that state).
-	const mainPaddingLeft = $derived(
+	// Exactly one of these applies, rather than stacking pr-10/md:pr-64 overrides
+	// whose winner depends on the order Tailwind emits the utilities in. On the
+	// table page the table goes flush to the left viewport edge, which lines it up
+	// with the frozen Entity column (sticky at --frozen-left: 0px). The sidebar sits
+	// on the right, so while it is open it reserves its width there instead: a
+	// narrow table ends next to it, and scrolling a wide one to the end brings the
+	// last column out from under it.
+	const mainPadding = $derived(
 		!isDataTablePage
-			? 'pl-6 md:pl-10'
+			? 'pl-6 md:pl-10 pr-6 md:pr-10'
 			: showSidebar
-				? 'pl-6 md:pl-64 md:[--frozen-left:16rem]'
-				: 'pl-0'
+				? 'pl-0 pr-6 md:pr-64'
+				: 'pl-0 pr-6 md:pr-10'
 	);
 
 	function applyUser(profile: { name?: string | null; nickname?: string | null; sub?: string; picture?: string | null; groups_direct?: string[] | null }) {
@@ -69,19 +74,6 @@
 >
 	<div class="w-full px-4 h-17.5 flex items-center justify-between gap-4">
 		<div class="flex items-center gap-3 shrink-0">
-			{#if isDataTablePage}
-				<button
-					type="button"
-					onclick={() => (sidebarOpen = !sidebarOpen)}
-					class="p-2 -ml-2 rounded-lg text-gray-500 hover:bg-gray-200/60 hover:text-gray-900 transition-colors cursor-pointer bg-transparent border-none"
-					aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
-					aria-expanded={sidebarOpen}
-				>
-					<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
-						<line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
-					</svg>
-				</button>
-			{/if}
 			<a
 				class="flex items-center h-10 text-xl font-normal text-black/90 no-underline"
 				href={resolve('/')}
@@ -90,12 +82,14 @@
 			</a>
 		</div>
 		<div class="flex items-center gap-4 min-w-0">
-			<div class="flex-1 min-w-0">
-				<SearchBar />
-			</div>
-			<div class="shrink-0">
-				<ResetButton />
-			</div>
+			{#if isDataTablePage}
+				<div class="flex-1 min-w-0">
+					<SearchBar />
+				</div>
+				<div class="shrink-0">
+					<ResetButton />
+				</div>
+			{/if}
 			{#if userName}
 				<div class="relative group shrink-0">
 					<button class="flex items-center gap-2 text-black/80 hover:text-black bg-transparent border-none cursor-pointer">
@@ -116,6 +110,20 @@
 					</div>
 				</div>
 			{/if}
+			<!-- Last in the bar: the sidebar it toggles opens on this side. -->
+			{#if isDataTablePage}
+				<button
+					type="button"
+					onclick={() => (sidebarOpen = !sidebarOpen)}
+					class="p-2 -mr-2 shrink-0 rounded-lg text-gray-500 hover:bg-gray-200/60 hover:text-gray-900 transition-colors cursor-pointer bg-transparent border-none"
+					aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+					aria-expanded={sidebarOpen}
+				>
+					<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+						<line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
+					</svg>
+				</button>
+			{/if}
 		</div>
 	</div>
 
@@ -126,7 +134,7 @@
 {/if}
 
 <main
-	class="flex-1 pr-6 md:pr-10 transition-[padding-left] duration-200 [--frozen-left:0px] {isDataTablePage ? '' : 'mt-3 md:mt-4 xl:mt-5'} {mainPaddingLeft}"
+	class="flex-1 transition-[padding] duration-200 [--frozen-left:0px] {isDataTablePage ? '' : 'mt-3 md:mt-4 xl:mt-5'} {isLandingPage ? 'flex flex-col' : ''} {mainPadding}"
 	style="--table-top: {navHeight}px"
 >
 	{@render children()}
@@ -149,7 +157,7 @@
 				</a>
 			</span>
 			<span class="inline-flex items-center flex-wrap gap-1 justify-end">
-				©2023
+				©2026
 				<a style="color:#6c757d" href="https://webis.de/">Webis Group</a>
 				<span class="mx-1">•</span>
 				<a href="https://github.com/ir-anthology/ir-anthology" aria-label="GitHub repository">

@@ -185,6 +185,10 @@ def main_() -> int:
             continue
         rendered[f"{name}-years.rq"] = spec.year_counts_template.replace("$SEED", seed).replace("$FILTERS", "")
 
+    # The landing page's totals (GET /api/stats): no parameters, so the query string
+    # is the template itself.
+    rendered["stats.rq"] = T.STATS_TEMPLATE
+
     for stale in OUT_DIR.glob("*.rq"):
         if stale.name not in rendered:
             stale.unlink()

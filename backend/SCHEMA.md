@@ -316,6 +316,43 @@ LIMIT $LIMIT
 OFFSET $OFFSET
 ```
 
+#### `STATS_TEMPLATE`
+
+Used by: `GET /api/stats`
+
+```sparql
+PREFIX dblp: <https://dblp.org/rdf/schema#>
+PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+PREFIX ex: <https://ir.webis.de/kg#>
+
+SELECT (COUNT(DISTINCT ?publication_URI) AS ?Publications)
+  (COUNT(DISTINCT ?venue_URI)            AS ?Venues)
+  (COUNT(DISTINCT ?named_author)         AS ?Authors)
+  (COUNT(DISTINCT ?year)                 AS ?Years)
+  (MIN(STR(?year))                       AS ?FirstYear)
+WHERE {
+
+  ?publication_URI dblp:title ?publication_label ;
+                   dblp:yearOfPublication ?pubYear ;
+                   dblp:authoredBy ?author_URI ;
+                   dblp:publishedInStream ?stream_URI .
+
+  OPTIONAL { ?publication_URI ex:yearOfConference ?eventYear }
+  BIND(COALESCE(?eventYear, ?pubYear) AS ?year)
+  BIND(STR(?year) AS ?year_label)
+
+  OPTIONAL { ?stream_URI a ex:Workshop . BIND(true AS ?isWorkshop) }
+  ?stream_URI dblp:primaryStreamTitle ?stream_label .
+  BIND(IF(BOUND(?isWorkshop), <https://dblp.org/workshops>, ?stream_URI) AS ?venue_URI)
+  BIND(IF(BOUND(?isWorkshop), "Workshops", ?stream_label) AS ?venue_label)
+  OPTIONAL { ?author_URI dblp:primaryCreatorName ?author_label . }
+
+  
+
+  BIND(IF(BOUND(?author_label), ?author_URI, ?no_author) AS ?named_author)
+}
+```
+
 #### `YEARS_TABLE_TEMPLATE`
 
 Used by: `GET /api/table/years`

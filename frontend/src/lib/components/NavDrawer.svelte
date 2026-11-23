@@ -77,9 +77,9 @@
 </script>
 
 <aside
-    class="fixed left-0 bottom-0 z-40 w-64 flex flex-col bg-white border-r border-gray-200 shadow-sm overflow-y-auto transition-transform duration-200 {open
+    class="fixed right-0 bottom-0 z-40 w-64 flex flex-col bg-white border-l border-gray-200 shadow-sm overflow-y-auto transition-transform duration-200 {open
         ? 'translate-x-0'
-        : '-translate-x-full'}"
+        : 'translate-x-full'}"
     style="top: {topOffset}px"
     aria-label="Site navigation"
     aria-hidden={!open}
