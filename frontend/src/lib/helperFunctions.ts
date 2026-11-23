@@ -47,3 +47,9 @@ export function decodeYearCounts(raw: string | null | undefined): Map<number, nu
     }
     return counts
 }
+
+// Thousands grouping for counts ("75478" -> "75 478", with a narrow no-break space),
+// shared by the table and the landing page so a number reads the same everywhere.
+export function groupDigits(digits: string): string {
+    return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}

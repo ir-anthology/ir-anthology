@@ -40,8 +40,8 @@ export function anchoredMenu(node: HTMLElement, params: AnchoredMenuParams) {
 
 		const { offsetWidth: w, offsetHeight: h } = node;
 
-		// Grow rightwards from the trigger: that is into the table, away from the
-		// sidebar. Then clamp, so a narrow window pulls it back on screen.
+		// Grow rightwards from the trigger, into the table. Then clamp, so a narrow
+		// window pulls it back on screen.
 		const left = Math.min(Math.max(a.left, margin), Math.max(margin, window.innerWidth - w - margin));
 
 		// Below the trigger, flipping above only if that would overflow.

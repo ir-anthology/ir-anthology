@@ -72,6 +72,26 @@ LIMIT $LIMIT
 OFFSET $OFFSET
 '''
 
+# Landing-page totals, built on the same _ENTITY_TABLE_BODY as the entity tables (no
+# filters), so each number counts what the table behind its link lists: Venues counts
+# all workshops as the one "Workshops" row; Authors counts people (URIs) that have a
+# name, like the author table's GROUP BY ?author_label ?author_URI HAVING BOUND —
+# names alone are not unique (dblp:primaryCreatorName "Wei Wang" has 41 URIs).
+# ?no_author is never bound: IF() yields an unbound value for nameless authors, and
+# COUNT skips it. FirstYear compares STR()s: ?year mixes xsd:gYear and plain strings.
+STATS_TEMPLATE = f'''
+{_ENTITY_TABLE_PREFIXES}
+SELECT (COUNT(DISTINCT ?publication_URI) AS ?Publications)
+  (COUNT(DISTINCT ?venue_URI)            AS ?Venues)
+  (COUNT(DISTINCT ?named_author)         AS ?Authors)
+  (COUNT(DISTINCT ?year)                 AS ?Years)
+  (MIN(STR(?year))                       AS ?FirstYear)
+WHERE {{
+{_ENTITY_TABLE_BODY.replace('$FILTERS', '')}
+  BIND(IF(BOUND(?author_label), ?author_URI, ?no_author) AS ?named_author)
+}}
+'''
+
 YEARS_TABLE_TEMPLATE = f'''
 {_ENTITY_TABLE_PREFIXES}
 SELECT (?year AS ?Entity)
