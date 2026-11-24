@@ -15,7 +15,7 @@
 	let isAdmin = $state(false);
 
 	let navHeight = $state(0);
-	let sidebarOpen = $state(true);
+	let sidebarOpen = $state(false);
 
 	// The sidebar (filters/links) is specific to the DataTable page — its sub-routes
 	// (venue/person/publication detail pages, credits, etc.) render entirely different
