@@ -1,5 +1,33 @@
+<script module lang="ts">
+	// The count-up plays once per browser-tab session: coming back from the matrix
+	// (or reloading) shows the numbers straight away. sessionStorage is cleared when
+	// the tab closes; the module variable covers browsers where it throws (e.g.
+	// storage blocked), for as long as the app stays loaded.
+	const COUNTED_UP_KEY = 'ir-anthology:landing-counted-up';
+	let countedUp = false;
+
+	function hasCountedUp(): boolean {
+		if (countedUp) return true;
+		try {
+			return sessionStorage.getItem(COUNTED_UP_KEY) === '1';
+		} catch {
+			return false;
+		}
+	}
+
+	function markCountedUp() {
+		countedUp = true;
+		try {
+			sessionStorage.setItem(COUNTED_UP_KEY, '1');
+		} catch {
+			// the module variable still covers this page load
+		}
+	}
+</script>
+
 <script lang="ts">
 	import { onMount, untrack } from 'svelte';
+	import { browser } from '$app/environment';
 	import { Tween, prefersReducedMotion } from 'svelte/motion';
 	import { quartOut } from 'svelte/easing';
 	import { resolve } from '$app/paths';
@@ -25,13 +53,17 @@
 	const COUNT_UP_MS = 1800;
 	const counters = Object.fromEntries(ENTITIES.map((e) => [e, new Tween(0, { easing: quartOut })]));
 	let mounted = $state(false);
+	// Decided once per visit of the page, so fresh numbers arriving during the first
+	// count-up don't cut it short.
+	const skipCountUp = browser && hasCountedUp();
 
 	// Runs again when the fresh numbers arrive: then the count continues from where it is.
 	$effect(() => {
 		if (!stats) return;
-		const duration = prefersReducedMotion.current ? 0 : COUNT_UP_MS;
+		const duration = skipCountUp || prefersReducedMotion.current ? 0 : COUNT_UP_MS;
 		const counts = stats.counts;
 		untrack(() => {
+			if (duration > 0) markCountedUp();
 			for (const [entity, counter] of Object.entries(counters)) {
 				counter.set(counts[entity], { duration });
 			}
@@ -70,7 +102,7 @@
 	<h1 class="m-0 text-5xl font-bold tracking-tight text-gray-900 sm:text-6xl">
 		The <span class="text-[#951515]">IR</span> Anthology
 	</h1>
-	<p class="mt-4 mb-0 text-base text-gray-600">Information is nothing without retrieval</p>
+	<p class="mt-4 mb-0 text-2xl text-gray-600">Information is nothing without retrieval</p>
 
 	<nav
 		aria-label="Browse the anthology"
@@ -95,7 +127,7 @@
 				{:else}
 					<span class="my-1 h-7 w-20 animate-pulse rounded bg-gray-200" aria-hidden="true"></span>
 				{/if}
-				<span class="text-sm text-gray-600 group-hover:text-link">
+				<span class="text-xl text-gray-600 group-hover:text-link">
 					{ENTITY_LABELS[entity]}
 					<span
 						aria-hidden="true"
